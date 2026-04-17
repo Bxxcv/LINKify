@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tokobudi - Link Bio</title>
+  
+  <!-- FIX SEO: Open Graph Tags buat Preview WhatsApp -->
+  <meta property="og:title" content="Tokobudi - Link Bio">
+  <meta property="og:description" content="Link Bio Toko Online Terpercaya">
+  <meta property="og:image" content="https://picsum.photos/id/64/200/200">
+  <meta property="og:type" content="website">
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="css/style.css">
@@ -23,8 +30,9 @@
 
     <!-- Profile Header -->
     <header class="text-center mb-10">
+      <!-- FIX POLISH: Border ikut berubah warna saat ganti tema -->
       <div class="w-28 h-28 mx-auto mb-5 p-1 rounded-full bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600">
-        <img id="profileImg" src="https://picsum.photos/id/64/200/200" class="w-full h-full rounded-full object-cover border-4 border-[#0A0A0A]">
+        <img id="profileImg" src="https://picsum.photos/id/64/200/200" class="w-full h-full rounded-full object-cover border-4" style="border-color: var(--bg);">
       </div>
       <h1 id="username" class="text-3xl font-extrabold tracking-tight">@tokobudi</h1>
       <p id="bio" class="text-white/50 mt-2 text-sm max-w-xs mx-auto leading-relaxed">Loading...</p>
@@ -38,11 +46,11 @@
 
     <!-- Produk Grid -->
     <div id="productList" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-      <div class="skeleton h-72 rounded-2xl"></div>
-      <div class="skeleton h-72 rounded-2xl hidden sm:block"></div>
+      <div class="skeleton h-80 rounded-2xl"></div>
+      <div class="skeleton h-80 rounded-2xl hidden sm:block"></div>
     </div>
 
-    <!-- Footer Baru -->
+    <!-- Footer -->
     <footer class="text-center border-t border-white/10 pt-6 mt-10 pb-24">
       <p class="text-white/30 text-xs font-medium tracking-widest uppercase">Powered by Tokobudi</p>
     </footer>

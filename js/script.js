@@ -1,7 +1,6 @@
 import { db } from './firebase.js';
 import { collection, getDocs, query, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// FUNGSI PENGAMAN XSS
 function escapeHtml(unsafe) {
   if (!unsafe) return '';
   return String(unsafe).replace(/[&<>"']/g, function(m) {
@@ -10,13 +9,24 @@ function escapeHtml(unsafe) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // FIX AMNESIA: Cek localstorage dulu sebelum render
+  const savedTheme = localStorage.getItem('tokobudi_theme');
+  if (savedTheme) {
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    // Update ikon langsung sebelum lucide jalan
+    const themeBtn = document.getElementById('themeBtn');
+    if(themeBtn) themeBtn.innerHTML = `<i data-lucide="${savedTheme === 'light' ? 'moon' : 'sun'}" class="lucide"></i>`;
+  }
+
   await loadSettings();
   await loadProducts();
   lucide.createIcons();
   
   document.getElementById('themeBtn').onclick = () => {
     const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
-    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    const newTheme = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('tokobudi_theme', newTheme); // SIMPAN KE MEMORY
     document.getElementById('themeBtn').innerHTML = `<i data-lucide="${isDark? 'moon' : 'sun'}" class="lucide"></i>`;
     lucide.createIcons();
   };
@@ -41,6 +51,14 @@ async function loadSettings() {
     }
     
     document.title = `${s.username || '@tokobudi'} - Link Bio`;
+    
+    // FIX SEO: Update OG Tags secara dinamis
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    const ogDesc = document.querySelector('meta[property="og:description"]');
+    const ogImg = document.querySelector('meta[property="og:image"]');
+    if(ogTitle) ogTitle.content = document.title;
+    if(ogDesc) ogDesc.content = s.bio || 'Link Bio Toko Online';
+    if(ogImg) ogImg.content = s.logo || '';
   }
 }
 
@@ -50,7 +68,12 @@ async function loadProducts() {
   const container = document.getElementById('productList');
   
   if (querySnapshot.empty) {
-    container.innerHTML = `<p class="col-span-1 sm:col-span-2 text-center text-white/50 text-sm">Belum ada produk</p>`;
+    container.innerHTML = `
+      <div class="col-span-1 sm:col-span-2 text-center py-16">
+        <i data-lucide="package-open" class="lucide w-16 h-16 mx-auto text-white/20 mb-4"></i>
+        <p class="text-white/40 text-sm">Belum ada produk untuk ditampilkan</p>
+      </div>`;
+    lucide.createIcons();
     return;
   }
   
@@ -63,21 +86,37 @@ async function loadProducts() {
     const pesanWa = `Halo, saya mau pesan:%0A- Produk: ${escapeHtml(p.nama)}%0A- Harga: Rp ${p.harga.toLocaleString('id-ID')}`;
     const finalLink = `${linkWa}?text=${pesanWa}`;
     
+    // FIX JEBAKAN SHOPEE: Kartu jadi DIV, tombol WA & Shopee dipisah
+    let shopeeButton = '';
+    if (p.shopee) {
+      shopeeButton = `
+        <a href="${escapeHtml(p.shopee)}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-orange-500/20 hover:text-orange-400 text-center flex items-center justify-center gap-1.5 transition-colors">
+          <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i> Shopee
+        </a>`;
+    }
+    
     container.innerHTML += `
-      <a href="${finalLink}" target="_blank" rel="noopener noreferrer" class="product-card glass rounded-2xl overflow-hidden">
+      <div class="product-card glass rounded-2xl overflow-hidden">
         <div class="relative">
-          <img src="${escapeHtml(p.img)}" alt="${escapeHtml(p.nama)}" class="w-full h-48 sm:h-32 object-cover">
+          <img src="${escapeHtml(p.img)}" alt="${escapeHtml(p.nama)}" class="w-full h-48 sm:h-40 object-cover" onerror="this.src='https://placehold.co/600x400/171717/404040?text=Gambar+Error'">
           ${p.stok < 5 && p.stok > 0? `<div class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-lg">Sisa ${p.stok}</div>` : ''}
           ${p.stok == 0? `<div class="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-lg">HABIS</div>` : ''}
-          ${p.shopee? `<div class="absolute top-2 right-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-lg">Shopee</div>` : ''}
         </div>
         <div class="p-4">
-          <h2 class="font-bold text-sm leading-tight mb-1">${escapeHtml(p.nama)}</h2>
-          <p class="text-amber-400 font-bold text-base">Rp${p.harga.toLocaleString('id-ID')}</p>
+          <h2 class="font-bold text-sm leading-tight mb-1 line-clamp-2">${escapeHtml(p.nama)}</h2>
+          <p class="text-amber-400 font-extrabold text-lg mb-3">Rp${p.harga.toLocaleString('id-ID')}</p>
+          
+          <div class="flex gap-2 ${p.shopee ? '' : ''}">
+            <a href="${finalLink}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2.5 rounded-xl text-xs font-bold bg-[#25D366] text-white text-center flex items-center justify-center gap-1.5 hover:bg-[#20BD5A] transition-colors">
+              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Pesan WA
+            </a>
+            ${shopeeButton}
+          </div>
         </div>
-      </a>
+      </div>
     `;
   });
+  lucide.createIcons(); // render ikon baru yang di inject
 }
 
 window.shareLink = () => {
