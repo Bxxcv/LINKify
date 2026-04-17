@@ -2,7 +2,7 @@ const CLOUDINARY_CLOUD_NAME = "dxq06iq2r";
 const CLOUDINARY_UPLOAD_PRESET = "tokobudi_unsigned";
 
 import { auth, db } from './firebase.js';
-import { onAuthStateChanged, signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { onAuthStateChanged, signOut, updatePassword, updateEmail, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, getDoc, query, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // DOM Elements - Umum
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 onAuthStateChanged(auth, (user) => {
   if (user) {
     adminEmailSpan.textContent = user.email;
-    document.getElementById('new-email-input').value = user.email; // Isi email saat ini
+    document.getElementById('new-email-input').value = user.email;
     loadProducts();
     loadSettings();
   } else {
@@ -60,8 +60,9 @@ function setupTabs() {
   });
 }
 
-// ==================== KEAMANAN AKUN (BARU) ====================
+// ==================== KEAMANAN AKUN (EMAIL & PASSWORD) ====================
 saveAccountBtn.addEventListener('click', async () => {
+  const newEmail = document.getElementById('new-email-input').value;
   const newPassword = document.getElementById('new-password-input').value;
   const currentPassword = document.getElementById('reauth-password-input').value;
 
@@ -69,12 +70,9 @@ saveAccountBtn.addEventListener('click', async () => {
     return alert('⚠️ Wajib masukkan password lama untuk keamanan!');
   }
 
-  if (!newPassword) {
-    return alert('Masukkan password baru jika ingin mengganti.');
-  }
-
-  if (newPassword.length < 6) {
-    return alert('Password baru minimal 6 karakter!');
+  // Cek apa ada perubahan
+  if (newEmail === auth.currentUser.email && !newPassword) {
+    return alert('Tidak ada perubahan email atau password.');
   }
 
   saveAccountBtn.disabled = true;
@@ -86,16 +84,30 @@ saveAccountBtn.addEventListener('click', async () => {
     const credential = EmailAuthProvider.credential(user.email, currentPassword);
     await reauthenticateWithCredential(user, credential);
 
-    // 2. Kalau sukses, baru update password
-    await updatePassword(user, newPassword);
+    // 2. Proses Ganti Email (kalau diubah)
+    if (newEmail !== user.email) {
+      if (!newEmail.includes('@')) throw new Error('Format email baru salah!');
+      await updateEmail(user, newEmail);
+    }
+
+    // 3. Proses Ganti Password (kalau diisi)
+    if (newPassword) {
+      if (newPassword.length < 6) throw new Error('Password baru minimal 6 karakter!');
+      await updatePassword(user, newPassword);
+    }
+
+    alert('✅ Akun berhasil diperbarui! Kamu akan keluar untuk login ulang.');
     
-    alert('✅ Password berhasil diubah!');
-    document.getElementById('new-password-input').value = '';
-    document.getElementById('reauth-password-input').value = '';
+    // 4. Wajib Logout karena data session sudah berubah
+    await signOut(auth);
     
   } catch (error) {
     if (error.code === 'auth/wrong-password') {
       alert('❌ Password lama yang lu masukkan SALAH!');
+    } else if (error.code === 'auth/email-already-in-use') {
+      alert('❌ Email baru sudah terdaftar di akun lain!');
+    } else if (error.code === 'auth/invalid-email') {
+      alert('❌ Format email baru tidak valid!');
     } else if (error.code === 'auth/weak-password') {
       alert('❌ Password baru terlalu lemah (min 6 karakter).');
     } else {
@@ -103,7 +115,7 @@ saveAccountBtn.addEventListener('click', async () => {
     }
   } finally {
     saveAccountBtn.disabled = false;
-    saveAccountBtn.innerHTML = '<i data-lucide="key" class="w-4 h-4"></i> Update Password';
+    saveAccountBtn.innerHTML = '<i data-lucide="key" class="w-4 h-4"></i> Update Akun';
     lucide.createIcons();
   }
 });
