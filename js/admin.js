@@ -5,12 +5,9 @@ import { auth, db } from './firebase.js';
 import { onAuthStateChanged, signOut, updatePassword, updateEmail, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, getDoc, query, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// DOM Elements - Umum
 const logoutBtn = document.getElementById('logout-btn');
 const adminEmailSpan = document.getElementById('admin-email');
 const saveAccountBtn = document.getElementById('save-account-btn');
-
-// DOM Elements - Produk
 const productsList = document.getElementById('products-list');
 const addProductBtn = document.getElementById('add-product-btn');
 const productModal = document.getElementById('product-modal');
@@ -20,8 +17,6 @@ const modalTitle = document.getElementById('modal-title');
 const saveProductBtn = document.getElementById('save-product-btn');
 const imagePreview = document.getElementById('image-preview');
 const fileInput = document.getElementById('product-image-file');
-
-// DOM Elements - Pengaturan
 const logoPreview = document.getElementById('logo-preview');
 const logoFileInput = document.getElementById('logo-file');
 const logoUrlInput = document.getElementById('logo-url');
@@ -35,6 +30,31 @@ document.addEventListener('DOMContentLoaded', () => {
   lucide.createIcons();
   setupTabs();
 });
+
+// ==================== FUNGSI TOAST PREMIUM (BUANG ALERT) ====================
+function showToast(message, isError = false) {
+  const toast = document.getElementById('toast');
+  const box = document.getElementById('toast-box');
+  const msg = document.getElementById('toast-msg');
+  
+  msg.innerText = message;
+  if (isError) {
+    box.className = "glass rounded-2xl p-4 text-sm font-bold text-center flex items-center justify-center gap-2 border border-red-500/30 text-red-400";
+    box.innerHTML = `<i data-lucide="alert-circle" class="w-5 h-5"></i><span>${message}</span>`;
+  } else {
+    box.className = "glass rounded-2xl p-4 text-sm font-bold text-center flex items-center justify-center gap-2 border border-green-500/30 text-green-400";
+    box.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i><span>${message}</span>`;
+  }
+  lucide.createIcons();
+  
+  toast.classList.remove('-translate-y-10', 'opacity-0', 'pointer-events-none');
+  toast.classList.add('translate-y-0', 'opacity-100');
+  
+  setTimeout(() => {
+    toast.classList.add('-translate-y-10', 'opacity-0', 'pointer-events-none');
+    toast.classList.remove('translate-y-0', 'opacity-100');
+  }, 3000);
+}
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
@@ -60,59 +80,43 @@ function setupTabs() {
   });
 }
 
-// ==================== KEAMANAN AKUN (EMAIL & PASSWORD) ====================
+// ==================== KEAMANAN AKUN ====================
 saveAccountBtn.addEventListener('click', async () => {
   const newEmail = document.getElementById('new-email-input').value;
   const newPassword = document.getElementById('new-password-input').value;
   const currentPassword = document.getElementById('reauth-password-input').value;
 
-  if (!currentPassword) {
-    return alert('⚠️ Wajib masukkan password lama untuk keamanan!');
-  }
-
-  // Cek apa ada perubahan
-  if (newEmail === auth.currentUser.email && !newPassword) {
-    return alert('Tidak ada perubahan email atau password.');
-  }
+  if (!currentPassword) return showToast('Wajib masukkan password lama!', true);
+  if (newEmail === auth.currentUser.email && !newPassword) return showToast('Tidak ada perubahan.', true);
 
   saveAccountBtn.disabled = true;
-  saveAccountBtn.textContent = 'Memverifikasi...';
+  saveAccountBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Memverifikasi...';
+  lucide.createIcons();
 
   try {
     const user = auth.currentUser;
-    // 1. WAJIB: Re-authenticate dulu pakai password lama
     const credential = EmailAuthProvider.credential(user.email, currentPassword);
     await reauthenticateWithCredential(user, credential);
 
-    // 2. Proses Ganti Email (kalau diubah)
     if (newEmail !== user.email) {
-      if (!newEmail.includes('@')) throw new Error('Format email baru salah!');
+      if (!newEmail.includes('@')) throw new Error('Format email salah!');
       await updateEmail(user, newEmail);
     }
 
-    // 3. Proses Ganti Password (kalau diisi)
     if (newPassword) {
-      if (newPassword.length < 6) throw new Error('Password baru minimal 6 karakter!');
+      if (newPassword.length < 6) throw new Error('Password min 6 karakter!');
       await updatePassword(user, newPassword);
     }
 
-    alert('✅ Akun berhasil diperbarui! Kamu akan keluar untuk login ulang.');
-    
-    // 4. Wajib Logout karena data session sudah berubah
-    await signOut(auth);
+    showToast('Akun berhasil diperbarui! Keluar otomatis...');
+    setTimeout(() => signOut(auth), 1500);
     
   } catch (error) {
-    if (error.code === 'auth/wrong-password') {
-      alert('❌ Password lama yang lu masukkan SALAH!');
-    } else if (error.code === 'auth/email-already-in-use') {
-      alert('❌ Email baru sudah terdaftar di akun lain!');
-    } else if (error.code === 'auth/invalid-email') {
-      alert('❌ Format email baru tidak valid!');
-    } else if (error.code === 'auth/weak-password') {
-      alert('❌ Password baru terlalu lemah (min 6 karakter).');
-    } else {
-      alert('Gagal update: ' + error.message);
-    }
+    let msg = error.message;
+    if (error.code === 'auth/wrong-password') msg = 'Password lama SALAH!';
+    else if (error.code === 'auth/email-already-in-use') msg = 'Email baru sudah dipakai!';
+    else if (error.code === 'auth/weak-password') msg = 'Password baru terlalu lemah!';
+    showToast(msg, true);
   } finally {
     saveAccountBtn.disabled = false;
     saveAccountBtn.innerHTML = '<i data-lucide="key" class="w-4 h-4"></i> Update Akun';
@@ -122,12 +126,18 @@ saveAccountBtn.addEventListener('click', async () => {
 
 // ==================== PRODUK CRUD ====================
 async function loadProducts() {
-  productsList.innerHTML = '<div class="skeleton h-24 rounded-2xl"></div>';
+  productsList.innerHTML = '<div class="skeleton h-28 rounded-2xl"></div>';
   const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
   const querySnapshot = await getDocs(q);
   productsList.innerHTML = '';
   if (querySnapshot.empty) {
-    productsList.innerHTML = '<p class="text-center text-white/50 text-sm py-8">Belum ada produk.</p>';
+    // FIX: Empty state yang lebih keren
+    productsList.innerHTML = `
+      <div class="text-center py-16">
+        <i data-lucide="package-open" class="lucide w-20 h-20 mx-auto text-white/10 mb-4"></i>
+        <p class="text-white/30 text-sm font-medium">Belum ada produk ditambahkan</p>
+      </div>`;
+    lucide.createIcons();
     return;
   }
   querySnapshot.forEach((docSnap) => {
@@ -197,6 +207,7 @@ productsList.addEventListener('click', async (e) => {
     if (confirm('Yakin mau hapus produk ini?')) {
       await deleteDoc(doc(db, "products", id));
       loadProducts();
+      showToast('Produk berhasil dihapus!');
     }
   }
 });
@@ -209,16 +220,18 @@ productForm.addEventListener('submit', async (e) => {
   
   if (file) {
     saveProductBtn.disabled = true;
-    saveProductBtn.textContent = 'Upload foto...';
+    saveProductBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Upload foto...';
+    lucide.createIcons();
     finalImageUrl = await uploadToCloudinary(file);
     if (!finalImageUrl) {
       saveProductBtn.disabled = false;
-      saveProductBtn.textContent = 'Simpan Produk';
+      saveProductBtn.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4"></i> Simpan Produk';
+      lucide.createIcons();
       return;
     }
   }
   
-  if (!finalImageUrl) return alert('Gambar wajib diisi!');
+  if (!finalImageUrl) return showToast('Gambar wajib diisi!', true);
   
   const productData = {
     nama: document.getElementById('product-name').value,
@@ -232,19 +245,22 @@ productForm.addEventListener('submit', async (e) => {
   };
   
   saveProductBtn.disabled = true;
-  saveProductBtn.textContent = 'Menyimpan...';
+  saveProductBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menyimpan...';
+  lucide.createIcons();
   
   try {
     if (id) {
       await updateDoc(doc(db, "products", id), productData);
+      showToast('Produk berhasil diperbarui!');
     } else {
       productData.createdAt = serverTimestamp();
       await addDoc(collection(db, "products"), productData);
+      showToast('Produk berhasil ditambahkan!');
     }
     closeModal();
     loadProducts();
   } catch (error) {
-    alert('Gagal menyimpan produk: ' + error.message);
+    showToast('Gagal menyimpan: ' + error.message, true);
   } finally {
     saveProductBtn.disabled = false;
     saveProductBtn.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4"></i> Simpan Produk';
@@ -276,17 +292,20 @@ logoFileInput.addEventListener('change', () => {
 
 saveSettingsBtn.addEventListener('click', async () => {
   saveSettingsBtn.disabled = true;
-  saveSettingsBtn.textContent = 'Menyimpan...';
+  saveSettingsBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menyimpan...';
+  lucide.createIcons();
   
   let finalLogoUrl = logoUrlInput.value;
   const file = logoFileInput.files[0];
   
   if (file) {
-    saveSettingsBtn.textContent = 'Upload logo...';
+    saveSettingsBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Upload logo...';
+    lucide.createIcons();
     finalLogoUrl = await uploadToCloudinary(file);
     if (!finalLogoUrl) {
       saveSettingsBtn.disabled = false;
-      saveSettingsBtn.textContent = 'Simpan Pengaturan Toko';
+      saveSettingsBtn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Simpan Pengaturan Toko';
+      lucide.createIcons();
       return;
     }
   }
@@ -301,10 +320,10 @@ saveSettingsBtn.addEventListener('click', async () => {
   
   try {
     await setDoc(doc(db, "settings", "toko"), settingsData);
-    alert('Pengaturan toko berhasil disimpan!');
+    showToast('Pengaturan toko berhasil disimpan!');
     logoFileInput.value = '';
   } catch (error) {
-    alert('Gagal simpan pengaturan: ' + error.message);
+    showToast('Gagal simpan: ' + error.message, true);
   } finally {
     saveSettingsBtn.disabled = false;
     saveSettingsBtn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Simpan Pengaturan Toko';
@@ -318,15 +337,12 @@ async function uploadToCloudinary(file) {
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
   try {
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-      method: 'POST',
-      body: formData
-    });
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
     const data = await res.json();
     if (data.secure_url) return data.secure_url;
     throw new Error(data.error?.message || 'Upload gagal');
   } catch (error) {
-    alert('Gagal upload foto: ' + error.message);
+    showToast('Gagal upload foto: ' + error.message, true);
     return null;
   }
 }

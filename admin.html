@@ -10,6 +10,15 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="w-full px-4 py-4 text-base">
+    
+    <!-- NOTIFIKASI TOAST PREMIUM (BARU) -->
+    <div id="toast" class="fixed top-4 left-4 right-4 z-[100] mx-auto max-w-sm transition-all duration-300 -translate-y-10 opacity-0 pointer-events-none">
+        <div id="toast-box" class="glass rounded-2xl p-4 text-sm font-bold text-center flex items-center justify-center gap-2">
+            <i data-lucide="check-circle" class="w-5 h-5"></i>
+            <span id="toast-msg">Berhasil!</span>
+        </div>
+    </div>
+
     <div class="max-w-2xl mx-auto">
         <!-- Header Admin -->
         <header class="glass rounded-3xl p-5 mb-6 border-t-4 border-amber-400">
@@ -53,33 +62,34 @@
         <!-- PAGE: PENGATURAN -->
         <main id="page-pengaturan" class="page">
             
-            <!-- PENGATURAN TOKO (LAMA) -->
+            <!-- PENGATURAN TOKO -->
             <div class="glass rounded-3xl p-6 space-y-5 mb-4">
                 <h2 class="text-base font-bold flex items-center gap-2"><i data-lucide="store" class="w-5 h-5 text-white/50"></i> Pengaturan Toko</h2>
                 
                 <div class="flex items-center gap-4">
                     <img id="logo-preview" src="https://picsum.photos/id/64/200/200" class="w-20 h-20 rounded-2xl object-cover border-2 border-dashed border-white/20">
                     <div class="flex-1">
-                        <label class="text-xs text-white/40 mb-1 block">Logo / Foto Profil</label>
+                        <!-- FIX: Label lebih besar -->
+                        <label class="text-sm text-white/50 mb-1 block font-medium">Logo / Foto Profil</label>
                         <input type="file" id="logo-file" accept="image/*" class="bg-white/5 p-2.5 rounded-xl text-xs file:bg-amber-400 file:text-black file:border-0 file:rounded-lg file:px-3 file:py-1.5 file:mr-2 file:font-bold w-full">
                     </div>
                     <input type="hidden" id="logo-url">
                 </div>
 
                 <div>
-                    <label class="text-xs text-white/40 mb-1 block">Username Toko</label>
+                    <label class="text-sm text-white/50 mb-1 block font-medium">Username Toko</label>
                     <input type="text" id="username-input" placeholder="@tokobudi" class="bg-white/5 p-3.5 rounded-xl w-full text-sm border border-white/10">
                 </div>
                 <div>
-                    <label class="text-xs text-white/40 mb-1 block">Bio / Deskripsi</label>
+                    <label class="text-sm text-white/50 mb-1 block font-medium">Bio / Deskripsi</label>
                     <textarea id="bio-input" rows="2" class="bg-white/5 p-3.5 rounded-xl w-full text-sm border border-white/10 resize-none"></textarea>
                 </div>
                 <div>
-                    <label class="text-xs text-white/40 mb-1 block">Link WhatsApp Utama</label>
+                    <label class="text-sm text-white/50 mb-1 block font-medium">Link WhatsApp Utama</label>
                     <input type="text" id="wa-input" placeholder="https://wa.me/62812..." class="bg-white/5 p-3.5 rounded-xl w-full text-sm border border-white/10">
                 </div>
                 <div>
-                    <label class="text-xs text-white/40 mb-1 block">Link Shopee Utama</label>
+                    <label class="text-sm text-white/50 mb-1 block font-medium">Link Shopee Utama</label>
                     <input type="text" id="shopee-input" placeholder="https://shopee.co.id/..." class="bg-white/5 p-3.5 rounded-xl w-full text-sm border border-white/10">
                 </div>
                 
@@ -88,27 +98,27 @@
                 </button>
             </div>
 
-            <!-- KEAMANAN AKUN (BARU) -->
+            <!-- KEAMANAN AKUN -->
             <div class="glass rounded-3xl p-6 space-y-5 border-t-4 border-red-500/50">
                 <h2 class="text-base font-bold flex items-center gap-2"><i data-lucide="shield" class="w-5 h-5 text-red-400"></i> Keamanan Akun</h2>
                 
                 <div>
-                    <label class="text-xs text-white/40 mb-1 block">Email Saat Ini</label>
+                    <label class="text-sm text-white/50 mb-1 block font-medium">Email Saat Ini</label>
                     <input type="email" id="new-email-input" class="bg-white/5 p-3.5 rounded-xl w-full text-sm border border-white/10">
                 </div>
                 
                 <div>
-                    <label class="text-xs text-white/40 mb-1 block">Password Baru</label>
+                    <label class="text-sm text-white/50 mb-1 block font-medium">Password Baru</label>
                     <input type="password" id="new-password-input" placeholder="Kosongkan jika tidak ingin diganti" class="bg-white/5 p-3.5 rounded-xl w-full text-sm border border-white/10">
                 </div>
 
                 <div class="pt-2 border-t border-white/10">
-                    <label class="text-xs text-red-400 font-bold mb-1 block">Konfirmasi Password Lama (Wajib diisi!)</label>
+                    <label class="text-sm text-red-400 font-bold mb-1 block">Konfirmasi Password Lama (Wajib diisi!)</label>
                     <input type="password" id="reauth-password-input" placeholder="Masukkan password lama untuk validasi" class="bg-red-500/5 p-3.5 rounded-xl w-full text-sm border border-red-500/20 focus:border-red-400">
                 </div>
                 
                 <button id="save-account-btn" class="w-full py-4 rounded-2xl mt-2 text-sm font-bold bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors flex items-center justify-center gap-2">
-                    <i data-lucide="key" class="w-4 h-4"></i> Update Password
+                    <i data-lucide="key" class="w-4 h-4"></i> Update Akun
                 </button>
             </div>
 
@@ -125,33 +135,33 @@
             <form id="product-form" class="space-y-4">
                 <input type="hidden" id="product-id">
                 <div>
-                    <label class="text-xs text-white/40 mb-1 block">Nama Produk</label>
+                    <label class="text-sm text-white/50 mb-1 block font-medium">Nama Produk</label>
                     <input type="text" id="product-name" required class="bg-white/5 p-3.5 rounded-xl w-full text-sm border border-white/10">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="text-xs text-white/40 mb-1 block">Harga</label>
+                        <label class="text-sm text-white/50 mb-1 block font-medium">Harga</label>
                         <input type="number" id="product-price" required class="bg-white/5 p-3.5 rounded-xl w-full text-sm border border-white/10">
                     </div>
                     <div>
-                        <label class="text-xs text-white/40 mb-1 block">Stok</label>
+                        <label class="text-sm text-white/50 mb-1 block font-medium">Stok</label>
                         <input type="number" id="product-stock" required class="bg-white/5 p-3.5 rounded-xl w-full text-sm border border-white/10">
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs text-white/40 mb-1 block">Deskripsi</label>
+                    <label class="text-sm text-white/50 mb-1 block font-medium">Deskripsi</label>
                     <textarea id="product-description" rows="2" class="bg-white/5 p-3.5 rounded-xl w-full text-sm border border-white/10 resize-none"></textarea>
                 </div>
                 <div>
-                    <label class="text-xs text-white/40 mb-1 block">Link WA Produk (Opsional)</label>
+                    <label class="text-sm text-white/50 mb-1 block font-medium">Link WA Produk (Opsional)</label>
                     <input type="text" id="product-wa" placeholder="Kosongkan jika pake WA Utama" class="bg-white/5 p-3.5 rounded-xl w-full text-sm border border-white/10">
                 </div>
                 <div>
-                    <label class="text-xs text-white/40 mb-1 block">Link Shopee Produk (Opsional)</label>
+                    <label class="text-sm text-white/50 mb-1 block font-medium">Link Shopee Produk (Opsional)</label>
                     <input type="text" id="product-shopee" placeholder="Kosongkan jika pake Shopee Utama" class="bg-white/5 p-3.5 rounded-xl w-full text-sm border border-white/10">
                 </div>
                 <div>
-                    <label class="text-xs text-white/40 mb-1 block">Gambar Produk</label>
+                    <label class="text-sm text-white/50 mb-1 block font-medium">Gambar Produk</label>
                     <input type="file" id="product-image-file" accept="image/*" class="bg-white/5 p-2.5 rounded-xl w-full text-xs file:bg-amber-400 file:text-black file:border-0 file:rounded-lg file:px-3 file:py-1.5 file:mr-2 file:font-bold">
                     <input type="hidden" id="product-image-url">
                     <img id="image-preview" src="" alt="Preview" style="display:none;" class="w-24 h-24 object-cover rounded-xl mt-3 border-2 border-dashed border-white/20">
