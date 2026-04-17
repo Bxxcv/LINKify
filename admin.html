@@ -18,20 +18,17 @@
                     <button id="logout-btn" class="bg-red-500/20 text-red-400 px-3 py-1 rounded-lg text-xs">Logout</button>
                 </div>
             </div>
-            <!-- NAVIGASI BALIK KE INDEX -->
             <a href="index.html" class="flex items-center gap-2 text-sm text-amber-400">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 Kembali ke Toko
             </a>
         </header>
 
-        <!-- TABS -->
         <div class="flex gap-2 mb-4">
             <button class="tab-btn sidebar-active px-4 py-2 rounded-xl text-sm font-bold" data-page="produk">Produk</button>
             <button class="tab-btn px-4 py-2 rounded-xl text-sm font-bold" data-page="pengaturan">Pengaturan</button>
         </div>
 
-        <!-- PAGE: PRODUK -->
         <main id="page-produk" class="page active">
             <div class="actions mb-4">
                 <button id="add-product-btn" class="bg-amber-400 text-black font-bold w-full py-3 rounded-xl text-sm">+ Tambah Produk Baru</button>
@@ -41,7 +38,6 @@
             </div>
         </main>
 
-        <!-- PAGE: PENGATURAN -->
         <main id="page-pengaturan" class="page">
             <div class="glass rounded-2xl p-4">
                 <h2 class="text-base font-bold mb-4">Pengaturan Toko</h2>
@@ -76,8 +72,7 @@
         </main>
     </div>
 
-    <!-- Modal Tambah/Edit Produk -->
-    <div id="product-modal" class="modal fixed inset-0 bg-black/70 items-center justify-center hidden" style="display:none;">
+    <div id="product-modal" class="modal fixed inset-0 bg-black/70 items-center justify-center" style="display:none;">
         <div class="modal-content glass rounded-2xl p-4 w-full max-w-sm m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h2 id="modal-title" class="text-base font-bold">Tambah Produk</h2>
@@ -103,7 +98,6 @@
                     <label class="text-sm text-white/60">Deskripsi</label>
                     <textarea id="product-description" rows="2" class="bg-white/10 p-3 rounded-lg w-full mt-1 text-sm border border-white/10"></textarea>
                 </div>
-                <!-- TAMBAH LINK WA & SHOPEE PER PRODUK -->
                 <div>
                     <label class="text-sm text-white/60">Link WA Produk (Opsional)</label>
                     <input type="text" id="product-wa" placeholder="Kosongkan jika pake WA Utama" class="bg-white/10 p-3 rounded-lg w-full mt-1 text-sm border border-white/10">
