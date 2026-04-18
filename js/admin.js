@@ -29,15 +29,47 @@ const saveSettingsBtn = document.getElementById('save-settings-btn');
 document.addEventListener('DOMContentLoaded', () => {
   lucide.createIcons();
   setupTabs();
+  startClock(); // Nyalakan Jam
 });
 
-// ==================== FUNGSI TOAST PREMIUM (BUANG ALERT) ====================
+// ==================== LOGIKA JAM REAL-TIME ====================
+function startClock() {
+  const updateClock = () => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    
+    // Update Jam Kecil di Header
+    document.getElementById('live-clock').textContent = timeStr;
+    document.getElementById('live-date').textContent = dateStr;
+    
+    // Update Jam Besar di Dashboard
+    document.getElementById('big-clock').textContent = timeStr;
+    document.getElementById('big-date').textContent = dateStr;
+  };
+  updateClock();
+  setInterval(updateClock, 1000); // Update setiap 1 detik
+}
+
+// ==================== LOGIKA STATISTIK DASHBOARD ====================
+async function loadStats() {
+  const q = query(collection(db, "products"));
+  const querySnapshot = await getDocs(q);
+  let total = 0;
+  let empty = 0;
+  querySnapshot.forEach((docSnap) => {
+    total++;
+    if (docSnap.data().stok == 0) empty++;
+  });
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-empty').textContent = empty;
+}
+
+// ==================== FUNGSI TOAST ====================
 function showToast(message, isError = false) {
   const toast = document.getElementById('toast');
   const box = document.getElementById('toast-box');
-  const msg = document.getElementById('toast-msg');
   
-  msg.innerText = message;
   if (isError) {
     box.className = "glass rounded-2xl p-4 text-sm font-bold text-center flex items-center justify-center gap-2 border border-red-500/30 text-red-400";
     box.innerHTML = `<i data-lucide="alert-circle" class="w-5 h-5"></i><span>${message}</span>`;
@@ -62,6 +94,7 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('new-email-input').value = user.email;
     loadProducts();
     loadSettings();
+    loadStats(); // Load statistik
   } else {
     window.location.href = 'login.html';
   }
@@ -72,10 +105,17 @@ logoutBtn.addEventListener('click', () => signOut(auth));
 function setupTabs() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.onclick = () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('sidebar-active'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('sidebar-active');
+        b.classList.add('text-white/50');
+      });
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       btn.classList.add('sidebar-active');
+      btn.classList.remove('text-white/50');
       document.getElementById(`page-${btn.dataset.page}`).classList.add('active');
+      
+      // Refresh statistik kalau balik ke dashboard
+      if(btn.dataset.page === 'dashboard') loadStats();
     };
   });
 }
@@ -131,7 +171,6 @@ async function loadProducts() {
   const querySnapshot = await getDocs(q);
   productsList.innerHTML = '';
   if (querySnapshot.empty) {
-    // FIX: Empty state yang lebih keren
     productsList.innerHTML = `
       <div class="text-center py-16">
         <i data-lucide="package-open" class="lucide w-20 h-20 mx-auto text-white/10 mb-4"></i>
@@ -259,6 +298,7 @@ productForm.addEventListener('submit', async (e) => {
     }
     closeModal();
     loadProducts();
+    loadStats();
   } catch (error) {
     showToast('Gagal menyimpan: ' + error.message, true);
   } finally {
