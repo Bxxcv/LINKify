@@ -1,33 +1,40 @@
 import { db } from './firebase.js';
 import { collection, getDocs, query, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// LOGO DEFAULT BELIKOPI
+const DEFAULT_LOGO = "https://z-cdn-media.chatglm.cn/files/a23115d8-0689-4e1f-bc14-afc0ce5e5ba7.jpg?auth_key=1876551807-355210f7b76b421689351f421ca298a9-0-b39aa0b90d590f9f38f8318e46e9c790";
+
 function escapeHtml(unsafe) { if (!unsafe) return ''; return String(unsafe).replace(/[&<>"']/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]; }); }
 
-document.addEventListener('DOMContentLoaded', async () => { await loadSettings(); await loadProducts(); lucide.createIcons(); });
+document.addEventListener('DOMContentLoaded', async () => { 
+  document.getElementById('profileImg').src = DEFAULT_LOGO; // SET LOGO LANGSUNG
+  await loadSettings(); 
+  await loadProducts(); 
+});
 
 async function loadSettings() {
   const docSnap = await getDoc(doc(db, "settings", "toko"));
   if (docSnap.exists()) {
     const s = docSnap.data();
-    document.getElementById('username').innerText = s.username || '@tokobudi';
+    document.getElementById('username').innerText = s.username || 'belikopi.';
     document.getElementById('bio').innerText = s.bio || '';
-    document.getElementById('profileImg').src = s.logo || 'https://picsum.photos/id/64/200/200';
+    
+    // Ganti logo kalau admin sudah upload logo lain
+    if (s.logo) {
+      document.getElementById('profileImg').src = s.logo;
+    }
     
     const waUtama = s.wa || 'https://wa.me/';
     document.getElementById('waBtn').href = waUtama;
     document.getElementById('waBtn').dataset.wa = waUtama;
     
-    // HUBUNGKAN KE TOMBOL PLATFORM BARU
-    if (s.wa) {
-      document.getElementById('link-wa-main').href = s.wa;
-    }
+    if (s.wa) document.getElementById('link-wa-main').href = s.wa;
     if (s.shopee) {
       document.getElementById('link-shopee').href = s.shopee;
       document.getElementById('link-shopee').classList.remove('hidden');
     }
-    // Opsional: kalau lu simpan link tokopedia/ig di firebase, bisa ditambah di sini
     
-    document.title = `${s.username || '@tokobudi'} - Link Bio`;
+    document.title = `${s.username || 'belikopi.'} - Link Bio`;
   }
 }
 
@@ -35,7 +42,7 @@ async function loadProducts() {
   const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
   const querySnapshot = await getDocs(q);
   const container = document.getElementById('productList');
-  if (querySnapshot.empty) { container.innerHTML = `<div class="text-center py-16"><i data-lucide="package-open" class="lucide w-16 h-16 mx-auto text-gray-200 mb-4"></i><p class="text-gray-300 text-sm">Belum ada produk</p></div>`; lucide.createIcons(); return; }
+  if (querySnapshot.empty) { container.innerHTML = `<div class="text-center py-16 text-gray-300 text-sm">Belum ada produk</div>`; return; }
   const waUtama = document.getElementById('waBtn').dataset.wa || 'https://wa.me/';
   container.innerHTML = '';
   querySnapshot.forEach((docSnap) => {
@@ -43,7 +50,7 @@ async function loadProducts() {
     const linkWa = p.wa || waUtama;
     const pesanWa = `Halo, saya mau pesan:%0A- Produk: ${escapeHtml(p.nama)}%0A- Harga: Rp ${p.harga.toLocaleString('id-ID')}`;
     let shopeeButton = '';
-    if (p.shopee) { shopeeButton = `<a href="${escapeHtml(p.shopee)}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 text-center flex items-center justify-center gap-1.5 hover:bg-gray-200 transition-colors"><i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i> Shopee</a>`; }
+    if (p.shopee) { shopeeButton = `<a href="${escapeHtml(p.shopee)}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 text-center flex items-center justify-center gap-1.5 hover:bg-gray-200 transition-colors"><div class="w-4 h-4 bg-[#EE4D2D] rounded text-white text-[8px] font-black flex items-center justify-center">S</div> Shopee</a>`; }
     container.innerHTML += `
       <div class="product-card earth-card overflow-hidden">
         <div class="relative">
@@ -55,14 +62,13 @@ async function loadProducts() {
           <p class="text-gray-900 font-bold text-lg mb-3">Rp${p.harga.toLocaleString('id-ID')}</p>
           <div class="flex gap-2">
             <a href="${linkWa}?text=${pesanWa}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#25D366] text-white text-center flex items-center justify-center gap-1.5 hover:bg-[#20BD5A] transition-colors">
-              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Pesan
+              <div class="w-4 h-4 bg-white/30 rounded text-white text-[8px] font-black flex items-center justify-center">W</div> Pesan
             </a>
             ${shopeeButton}
           </div>
         </div>
       </div>`;
   });
-  lucide.createIcons();
 }
 
 window.shareLink = () => { if (navigator.share) { navigator.share({ title: document.getElementById('username').innerText, url: window.location.href }); } else { navigator.clipboard.writeText(window.location.href); alert('Link berhasil disalin!'); } };
