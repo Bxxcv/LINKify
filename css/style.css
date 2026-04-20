@@ -66,3 +66,22 @@ input:focus, textarea:focus {
 }
 button { transition: all 0.2s ease; }
 button:active { transform: scale(0.98); }
+
+/* ANIMASI HALUS FADE IN UP */
+.fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.fade-up.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ANIMASI TOMBOL PLATFORM SAAT HOVER */
+.platform-btn {
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.platform-btn:active {
+  transform: scale(0.97);
+}
