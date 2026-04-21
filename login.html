@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -24,6 +25,10 @@
     <button id="loginBtn" class="w-full mt-6 py-3.5 rounded-xl font-semibold text-sm bg-black text-white hover:bg-gray-800 transition-all">Masuk</button>
     <p id="errorMsg" class="text-red-500 text-xs text-center mt-4 h-4"></p>
   </div>
+  <script>
+    // Render lucide icons
+    document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+  </script>
   <script type="module">
     import { auth } from './js/firebase.js';
     import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
