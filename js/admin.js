@@ -5,7 +5,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   collection, getDocs, addDoc, doc, updateDoc, deleteDoc,
-  serverTimestamp, getDoc, query, orderBy, setDoc
+  serverTimestamp, getDoc, query, orderBy, setDoc, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ─────────────────────────────────────────────
@@ -13,6 +13,11 @@ import {
 // ─────────────────────────────────────────────
 const CLOUD_NAME = CONFIG.cloudinary.cloudName;
 const CLOUD_PRESET = CONFIG.cloudinary.uploadPreset;
+
+// ── BASE PATH AUTO DETECT - UDAH DISESUAIKAN LINKify ────────
+const BASE_PATH = window.location.hostname.includes('github.io')
+ ? '/LINKify' // REPO LU SEKARANG
+  : '';
 
 // ─────────────────────────────────────────────
 // SEMUA LOGIC DI DALAM DOMContentLoaded
@@ -25,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnHamburger= document.getElementById('btn-hamburger');
   const btnLogout = document.getElementById('btn-logout');
   const adminEmail = document.getElementById('admin-email');
-  const btnCopyLink = document.getElementById('btn-copy-link'); // BARU
+  const btnCopyLink = document.getElementById('btn-copy-link');
 
   const productsList= document.getElementById('products-list');
   const btnAddProd = document.getElementById('btn-add-product');
@@ -65,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
   }
-  // Biar bisa dipake global
   window.showToast = toast;
 
   // ── CLOCK ─────────────────────────────────
@@ -96,10 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ── AUTH - UDAH DIBENERIN BIAR GA MENTAL ─────────────────────────────
+  // ── AUTH - UDAH DIBENERIN PAKE users/{uid}/settings/toko ─────────
   onAuthStateChanged(auth, async user => {
     if (user) {
-      // Cek dulu apakah user ini punya data toko
       const tokoRef = doc(db, 'users', user.uid, 'settings', 'toko');
       const tokoSnap = await getDoc(tokoRef);
 
@@ -118,12 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ── COPY LINK TOKO - UDAH DIBENERIN ─────────────────────────────
+  // ── COPY LINK TOKO - UDAH PAKE BASE_PATH ─────────────────────────────
   if (btnCopyLink) {
     btnCopyLink.addEventListener('click', () => {
       const uid = auth.currentUser?.uid;
       if (!uid) return toast('Login dulu!', 'err');
-      const link = `${window.location.origin}/index.html?uid=${uid}`;
+      const link = `${window.location.origin}${BASE_PATH}/index.html?uid=${uid}`;
       navigator.clipboard.writeText(link).then(() => {
         toast('Link toko berhasil dicopy!');
       }).catch(() => {
