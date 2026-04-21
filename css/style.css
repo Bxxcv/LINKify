@@ -171,6 +171,61 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
   .f-row { flex-direction: column; gap: 0; }
 }
 
+/* ===== TAMBAHAN RESPONSIF MODAL ===== */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 999;
+}
+.modal-bg.show {
+  display: flex;
+}
+
+.modal-box {
+  background: var(--bg-panel, #fff);
+  border-radius: 20px;
+  padding: 24px;
+  width: 100%;
+  max-width: 92vw; /* HP: 92% layar */
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Desktop: modal jadi lebar 900px */
+@media (min-width: 768px) {
+  .modal-box {
+    max-width: 900px;
+    padding: 32px;
+  }
+}
+
+/* Form row: 1 kolom di HP, 2 kolom di desktop */
+.f-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .f-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Tombol copy link toko */
+#btn-copy-link {
+  background: var(--accent, #10b981);
+}
+#btn-copy-link:hover {
+  background: var(--accent-hover, #059669);
+}
+
 /* ========== HALAMAN INDEX.HTML ========== */
 body.index-page { background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #16213e 100%); font-family: 'Poppins', sans-serif; color: #ffffff; overflow-x: hidden; }
 .index-page .container { max-width: 480px; margin: 0 auto; padding: 24px 16px 100px; }
