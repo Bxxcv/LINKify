@@ -1,367 +1,380 @@
-import { auth, db } from './firebase.js';
-import { onAuthStateChanged, signOut, updatePassword, updateEmail, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, getDoc, query, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db, CONFIG } from './firebase.js';
+import {
+  onAuthStateChanged, signOut, updatePassword, updateEmail,
+  EmailAuthProvider, reauthenticateWithCredential
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  collection, getDocs, addDoc, doc, updateDoc, deleteDoc,
+  serverTimestamp, getDoc, query, orderBy, setDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const CLOUDINARY_CLOUD_NAME = "dxq06iq2r";
-const CLOUDINARY_UPLOAD_PRESET = "tokobudi";
+// ─────────────────────────────────────────────
+//  CLOUDINARY — pakai preset dari config.js
+// ─────────────────────────────────────────────
+const CLOUD_NAME   = CONFIG.cloudinary.cloudName;
+const CLOUD_PRESET = CONFIG.cloudinary.uploadPreset;
 
-// DOM Elements
-const logoutBtn = document.getElementById('logout-btn');
-const adminEmailSpan = document.getElementById('admin-email');
-const productsList = document.getElementById('products-list');
-const addProductBtn = document.getElementById('add-product-btn');
-const productModal = document.getElementById('product-modal');
-const closeBtn = document.querySelector('.modal-handle'); 
-const productForm = document.getElementById('product-form');
-const modalTitle = document.getElementById('modal-title');
-const saveProductBtn = document.getElementById('save-product-btn');
-const imagePreviewContainer = document.getElementById('image-preview');
-const imagePreview = imagePreviewContainer ? imagePreviewContainer.querySelector('img') : null;
-const fileInput = document.getElementById('product-image-file');
-const logoPreview = document.getElementById('logo-preview');
-const logoFileInput = document.getElementById('logo-file');
-const logoUrlInput = document.getElementById('logo-url');
-const usernameInput = document.getElementById('username-input');
-const bioInput = document.getElementById('bio-input');
-const waInput = document.getElementById('wa-input');
-const shopeeInput = document.getElementById('shopee-input');
-const saveSettingsBtn = document.getElementById('save-settings-btn');
-const saveAccountBtn = document.getElementById('save-account-btn');
-
+// ─────────────────────────────────────────────
+//  SEMUA LOGIC DI DALAM DOMContentLoaded
+//  Ini memastikan SELURUH elemen HTML sudah ada
+//  sebelum kita akses / pasang event listener
+// ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  setupTabs();
-  startClock();
-});
 
-// LOGIKA TOAST
-function showToast(message, type = 'success') {
-  const toast = document.getElementById('toast');
-  toast.textContent = message;
-  toast.style.background = type === 'success' ? '#1A1A2E' : type === 'error' ? '#EE4D2D' : '#854F0B';
-  toast.style.display = 'block';
-  toast.style.animation = 'toastIn 0.3s ease forwards';
-  setTimeout(() => {
-    toast.style.animation = 'toastOut 0.3s ease forwards';
-    setTimeout(() => { toast.style.display = 'none'; }, 300);
-  }, 2500);
-}
+  // ── DOM REFS ──────────────────────────────
+  const sidebar     = document.getElementById('sidebar');
+  const overlay     = document.getElementById('overlay');
+  const btnHamburger= document.getElementById('btn-hamburger');
+  const btnLogout   = document.getElementById('btn-logout');
+  const adminEmail  = document.getElementById('admin-email');
 
-// LOGIKA JAM
-function startClock() {
-  const update = () => {
-    const n = new Date();
-    const t = n.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const d = n.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const lc = document.getElementById('live-clock');
-    const bc = document.getElementById('big-clock');
-    const bd = document.getElementById('big-date');
-    if(lc) lc.textContent = t;
-    if(bc) bc.textContent = t;
-    if(bd) bd.textContent = d;
-  };
-  update();
-  setInterval(update, 1000);
-}
+  const productsList= document.getElementById('products-list');
+  const btnAddProd  = document.getElementById('btn-add-product');
 
-// LOGIKA UPLOAD TRIGGER
-const uploadTrigger = document.getElementById('upload-trigger');
-const realFileInput = document.getElementById('product-image-file');
-if (uploadTrigger && realFileInput) {
-  uploadTrigger.onclick = () => realFileInput.click();
-}
+  const productModal= document.getElementById('product-modal');
+  const modalPull   = document.getElementById('modal-pull');
+  const productForm = document.getElementById('product-form');
+  const modalTitle  = document.getElementById('modal-title');
+  const btnSaveProd = document.getElementById('btn-save-product');
+  const uploadZone  = document.getElementById('upload-zone');
+  const inpProdFile = document.getElementById('inp-prod-file');
+  const imgPrevWrap = document.getElementById('img-preview-wrap');
+  const imgPreview  = document.getElementById('img-preview');
 
-// LOGIKA TABS
-function setupTabs() {
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    b.onclick = () => {
-      document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('sidebar-active'));
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      b.classList.add('sidebar-active');
-      document.getElementById(`page-${b.dataset.page}`).classList.add('active');
-    };
+  const logoPreview = document.getElementById('logo-preview');
+  const btnLogoPick = document.getElementById('btn-logo-pick');
+  const inpLogoFile = document.getElementById('inp-logo-file');
+  const inpLogoUrl  = document.getElementById('inp-logo-url');
+  const inpUsername = document.getElementById('inp-username');
+  const inpBio      = document.getElementById('inp-bio');
+  const inpWa       = document.getElementById('inp-wa');
+  const inpShopee   = document.getElementById('inp-shopee');
+  const btnSaveSett = document.getElementById('btn-save-settings');
+
+  const inpNewEmail = document.getElementById('inp-new-email');
+  const inpNewPass  = document.getElementById('inp-new-pass');
+  const inpOldPass  = document.getElementById('inp-old-pass');
+  const btnSaveAcc  = document.getElementById('btn-save-account');
+
+  // ── TOAST ─────────────────────────────────
+  let toastTimer;
+  function toast(msg, type = 'ok') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.background = type === 'ok' ? '#111' : type === 'err' ? '#EE4D2D' : '#B45309';
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  // ── CLOCK ─────────────────────────────────
+  const clockEl = document.getElementById('clock-time');
+  const dateEl  = document.getElementById('clock-date');
+  function tickClock() {
+    const now = new Date();
+    clockEl.textContent = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    dateEl.textContent  = now.toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  // ── SIDEBAR MOBILE ────────────────────────
+  function openSidebar()  { sidebar.classList.add('open');  overlay.classList.add('show');  document.body.style.overflow='hidden'; }
+  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('show'); document.body.style.overflow=''; }
+  btnHamburger.addEventListener('click', openSidebar);
+  overlay.addEventListener('click', closeSidebar);
+
+  // ── TABS ──────────────────────────────────
+  document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('show'));
+      btn.classList.add('active-tab');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('show');
+      closeSidebar();
+    });
   });
-}
 
-// LOGIKA STATISTIK
-async function loadStats() {
-  const q = query(collection(db, "products"));
-  const s = await getDocs(q);
-  let t = 0, e = 0;
-  s.forEach(d => { t++; if(d.data().stok == 0) e++; });
-  document.getElementById('stat-total').textContent = t;
-  document.getElementById('stat-empty').textContent = e;
-}
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    adminEmailSpan.textContent = user.email;
-    document.getElementById('new-email-input').value = user.email;
-    loadProducts();
-    loadSettings();
-    loadStats();
-  } else {
-    window.location.href = 'login.html';
-  }
-});
-
-logoutBtn.addEventListener('click', () => signOut(auth));
-
-// ==================== PRODUK CRUD ====================
-async function loadProducts() {
-  productsList.innerHTML = '<div class="skeleton h-24 rounded-2xl"></div>';
-  const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
-  const s = await getDocs(q);
-  if (s.empty) {
-    productsList.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="14" height="14" rx="2" ry="2"/><path d="M12 12h.01"/><path d="M12 8v4M12 16v4"/></svg>
-        </div>
-        <p class="empty-title">Belum ada produk</p>
-        <p class="empty-desc">Klik tombol "+ Tambah Produk" untuk menambahkan item baru.</p>
-      </div>`;
-    return;
-  }
-  productsList.innerHTML = '';
-  s.forEach((docSnap) => {
-    const p = docSnap.data();
-    const id = docSnap.id;
-    const card = document.createElement('div');
-    card.className = "product-card";
-    card.style.animationDelay = `${Math.random() * 0.2}s`;
-    card.innerHTML = `
-        <img src="${p.img}" alt="${p.nama}" class="product-img">
-        <div class="product-info">
-            <div class="product-name truncate">${p.nama}</div>
-            <div class="product-price">Rp${p.harga.toLocaleString('id-ID')}</div>
-            <div class="product-stock">Stok: ${p.stok}</div>
-        </div>
-        <div class="product-actions">
-            <button class="btn-edit" data-id="${id}">Edit</button>
-            <button class="btn-hapus" data-id="${id}">Hapus</button>
-        </div>`;
-    productsList.appendChild(card);
-  });
-}
-
-
-addProductBtn.addEventListener('click', () => {
-  productForm.reset();
-  document.getElementById('product-id').value = '';
-  document.getElementById('product-image-url').value = '';
-  imagePreviewContainer.style.display = 'none';
-  fileInput.value = '';
-  modalTitle.textContent = 'Tambah Produk Baru';
-  productModal.style.display = 'flex';
-});
-
-const closeModal = () => productModal.style.display = 'none';
-closeBtn.addEventListener('click', closeModal);
-productModal.addEventListener('click', (e) => { if (e.target === productModal) closeModal(); });
-
-fileInput.addEventListener('change', () => {
-  const file = fileInput.files[0];
-  if (file) {
-    imagePreview.src = URL.createObjectURL(file);
-    imagePreviewContainer.style.display = 'block';
-  }
-});
-
-productsList.addEventListener('click', async (e) => {
-  const id = e.target.dataset.id;
-  if (e.target.classList.contains('btn-edit')) {
-    const ds = await getDoc(doc(db, "products", id));
-    const p = ds.data();
-    document.getElementById('product-id').value = id;
-    document.getElementById('product-name').value = p.nama;
-    document.getElementById('product-price').value = p.harga;
-    // Pastikan ID elemen di HTML bener, misalnya stock/desc
-    // Tapi sesuai kode sebelumnya, gw biarin ini mengambil apa yang ada
-    document.getElementById('product-stock').value = p.stok || 0;
-    document.getElementById('product-description').value = p.deskripsi || '';
-    document.getElementById('product-wa').value = p.wa || '';
-    document.getElementById('product-shopee').value = p.shopee || '';
-    document.getElementById('product-image-url').value = p.img || '';
-    if(p.img) {
-      imagePreview.src = p.img;
-      imagePreviewContainer.style.display = 'block';
+  // ── AUTH ──────────────────────────────────
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      adminEmail.textContent = user.email;
+      inpNewEmail.value = user.email;
+      loadProducts();
+      loadSettings();
+      loadStats();
+    } else {
+      window.location.href = 'login.html';
     }
-    productModal.style.display = 'flex';
-  } else if (e.target.classList.contains('btn-hapus')) {
-    if (confirm('Yakin mau hapus produk ini?')) {
-      await deleteDoc(doc(db, "products", id));
+  });
+
+  btnLogout.addEventListener('click', () => {
+    if (confirm('Yakin mau keluar?')) signOut(auth);
+  });
+
+  // ── STATISTIK ─────────────────────────────
+  async function loadStats() {
+    try {
+      const snap = await getDocs(collection(db, 'products'));
+      let total = 0, empty = 0;
+      snap.forEach(d => { total++; if (d.data().stok == 0) empty++; });
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-empty').textContent = empty;
+    } catch (e) { console.error('loadStats:', e); }
+  }
+
+  // ── PRODUK: LOAD ──────────────────────────
+  async function loadProducts() {
+    productsList.innerHTML = `
+      <div class="skel-card"><div class="skel" style="height:130px;border-radius:14px 14px 0 0"></div><div style="padding:10px 12px"><div class="skel" style="height:12px;width:70%;margin-bottom:7px"></div><div class="skel" style="height:13px;width:45%"></div></div></div>
+      <div class="skel-card"><div class="skel" style="height:130px;border-radius:14px 14px 0 0"></div><div style="padding:10px 12px"><div class="skel" style="height:12px;width:55%;margin-bottom:7px"></div><div class="skel" style="height:13px;width:40%"></div></div></div>
+      <div class="skel-card"><div class="skel" style="height:130px;border-radius:14px 14px 0 0"></div><div style="padding:10px 12px"><div class="skel" style="height:12px;width:80%;margin-bottom:7px"></div><div class="skel" style="height:13px;width:50%"></div></div></div>`;
+    try {
+      const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        productsList.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg><p class="empty-h">Belum ada produk</p><p class="empty-p">Klik "Tambah Produk" untuk mulai.</p></div>`;
+        return;
+      }
+      productsList.innerHTML = '';
+      snap.forEach(ds => {
+        const p = ds.data(), id = ds.id;
+        const card = document.createElement('div');
+        card.className = 'p-card';
+        card.innerHTML = `
+          <img class="p-img" src="${esc(p.img)}" alt="${esc(p.nama)}" onerror="this.src='https://placehold.co/400x300/F4F4F4/AAA?text=Error'">
+          <div class="p-body">
+            <div class="p-name">${esc(p.nama)}</div>
+            <div class="p-price">Rp${Number(p.harga).toLocaleString('id-ID')}</div>
+            <div class="p-stock">Stok: ${p.stok}${p.stok == 0 ? ' · <span style="color:var(--danger)">Habis</span>' : ''}</div>
+            <div class="p-acts">
+              <button class="btn-ed" data-id="${id}">Edit</button>
+              <button class="btn-del" data-id="${id}">Hapus</button>
+            </div>
+          </div>`;
+        productsList.appendChild(card);
+      });
+    } catch (e) {
+      productsList.innerHTML = `<div class="empty"><p class="empty-h">Gagal memuat produk</p><p class="empty-p">${e.message}</p></div>`;
+    }
+  }
+
+  // ── PRODUK: MODAL OPEN/CLOSE ──────────────
+  function openModal()  { productModal.classList.add('open');  document.body.style.overflow = 'hidden'; }
+  function closeModal() { productModal.classList.remove('open'); document.body.style.overflow = ''; }
+
+  btnAddProd.addEventListener('click', () => {
+    productForm.reset();
+    document.getElementById('inp-prod-id').value  = '';
+    document.getElementById('inp-prod-img').value = '';
+    inpProdFile.value = '';
+    imgPrevWrap.style.display = 'none';
+    imgPreview.src = '';
+    modalTitle.textContent = 'Tambah Produk Baru';
+    openModal();
+  });
+
+  modalPull.addEventListener('click', closeModal);
+  productModal.addEventListener('click', e => { if (e.target === productModal) closeModal(); });
+
+  // ── PRODUK: UPLOAD FOTO ───────────────────
+  uploadZone.addEventListener('click', () => inpProdFile.click());
+  inpProdFile.addEventListener('change', () => {
+    const file = inpProdFile.files[0];
+    if (!file) return;
+    imgPreview.src = URL.createObjectURL(file);
+    imgPrevWrap.style.display = 'block';
+  });
+
+  // ── PRODUK: EDIT & HAPUS (delegation) ─────
+  productsList.addEventListener('click', async e => {
+    const id = e.target.dataset.id;
+    if (!id) return;
+
+    if (e.target.classList.contains('btn-ed')) {
+      try {
+        const snap = await getDoc(doc(db, 'products', id));
+        if (!snap.exists()) { toast('Produk tidak ditemukan', 'err'); return; }
+        const p = snap.data();
+        document.getElementById('inp-prod-id').value    = id;
+        document.getElementById('inp-prod-name').value  = p.nama    || '';
+        document.getElementById('inp-prod-price').value = p.harga   || 0;
+        document.getElementById('inp-prod-stock').value = p.stok    || 0;
+        document.getElementById('inp-prod-desc').value  = p.deskripsi || '';
+        document.getElementById('inp-prod-shopee').value= p.shopee  || '';
+        document.getElementById('inp-prod-wa').value    = p.wa      || '';
+        document.getElementById('inp-prod-img').value   = p.img     || '';
+        inpProdFile.value = '';
+        if (p.img) { imgPreview.src = p.img; imgPrevWrap.style.display = 'block'; }
+        else        { imgPrevWrap.style.display = 'none'; }
+        modalTitle.textContent = 'Edit Produk';
+        openModal();
+      } catch (e) { toast('Gagal load data: ' + e.message, 'err'); }
+    }
+
+    if (e.target.classList.contains('btn-del')) {
+      if (!confirm('Yakin hapus produk ini? Tidak bisa dibatalkan.')) return;
+      try {
+        await deleteDoc(doc(db, 'products', id));
+        toast('Produk dihapus.', 'err');
+        loadProducts(); loadStats();
+      } catch (e) { toast('Gagal hapus: ' + e.message, 'err'); }
+    }
+  });
+
+  // ── PRODUK: SIMPAN ────────────────────────
+  productForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const id     = document.getElementById('inp-prod-id').value;
+    const file   = inpProdFile.files[0];
+    let   imgUrl = document.getElementById('inp-prod-img').value;
+
+    if (!file && !imgUrl) { toast('Pilih foto produk terlebih dahulu!', 'warn'); return; }
+
+    btnSaveProd.disabled = true;
+    try {
+      if (file) {
+        btnSaveProd.textContent = 'Upload foto...';
+        imgUrl = await uploadCloudinary(file);
+        if (!imgUrl) throw new Error('Upload foto gagal. Cek Cloudinary preset.');
+      }
+
+      btnSaveProd.textContent = 'Menyimpan...';
+      const data = {
+        nama:      document.getElementById('inp-prod-name').value.trim(),
+        harga:     Number(document.getElementById('inp-prod-price').value),
+        stok:      Number(document.getElementById('inp-prod-stock').value),
+        deskripsi: document.getElementById('inp-prod-desc').value.trim(),
+        shopee:    document.getElementById('inp-prod-shopee').value.trim(),
+        wa:        document.getElementById('inp-prod-wa').value.trim(),
+        img:       imgUrl,
+        updatedAt: serverTimestamp()
+      };
+
+      if (id) {
+        await updateDoc(doc(db, 'products', id), data);
+        toast('Produk berhasil diperbarui!');
+      } else {
+        data.createdAt = serverTimestamp();
+        await addDoc(collection(db, 'products'), data);
+        toast('Produk berhasil ditambahkan!');
+      }
+      closeModal();
       loadProducts();
       loadStats();
-      showToast('Produk dihapus', 'error');
-    }
-  }
-});
-
-productForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const id = document.getElementById('product-id').value;
-  const file = fileInput.files[0];
-  let finalImageUrl = document.getElementById('product-image-url').value;
-  
-  if (file) {
-    saveProductBtn.classList.add('loading');
-    saveProductBtn.textContent = 'Upload foto...';
-    finalImageUrl = await uploadToCloudinary(file);
-    if (!finalImageUrl) {
-      saveProductBtn.classList.remove('loading');
-      saveProductBtn.textContent = 'Simpan Produk';
-      return;
-    }
-  }
-  
-  if (!finalImageUrl) {
-    saveProductBtn.classList.remove('loading');
-    saveProductBtn.textContent = 'Simpan Produk';
-    return;
-  }
-  
-  const productData = {
-    nama: document.getElementById('product-name').value,
-    harga: Number(document.getElementById('product-price').value), // DIBENERIN PAKE NUMBER
-    stok: Number(document.getElementById('product-stock').value), // DIBENERIN PAKE NUMBER
-    deskripsi: document.getElementById('product-description').value,
-    wa: document.getElementById('product-wa').value,
-    shopee: document.getElementById('product-shopee').value,
-    img: finalImageUrl,
-    updatedAt: serverTimestamp()
-  };
-  
-  try {
-    saveProductBtn.classList.add('loading');
-    saveProductBtn.textContent = 'Menyimpan...';
-    if (id) {
-      await updateDoc(doc(db, "products", id), productData);
-      showToast('Produk berhasil diperbarui!');
-    } else {
-      productData.createdAt = serverTimestamp();
-      await addDoc(collection(db, "products"), productData);
-      showToast('Produk berhasil ditambahkan!');
-    }
-    closeModal();
-    loadProducts();
-    loadStats(); // Refresh stat
-  } catch (error) {
-    showToast('Gagal menyimpan: ' + error.message, 'error');
-  } finally {
-    saveProductBtn.classList.remove('loading');
-    saveProductBtn.textContent = 'Simpan Produk';
-  }
-});
-
-// ==================== PENGATURAN TOKO ====================
-async function loadSettings() {
-  // DIBENERIN: Tambahin kurung tutup disini
-  const ds = await getDoc(doc(db, "settings", "toko")); 
-  if (ds.exists()) {
-    const s = ds.data();
-    usernameInput.value = s.username || '';
-    bioInput.value = s.bio || '';
-    waInput.value = s.wa || '';
-    shopeeInput.value = s.shopee || '';
-    logoUrlInput.value = s.logo || '';
-    logoPreview.src = s.logo || 'https://placehold.co/200x200/F3F4F6/AAAAAA?text=Logo';
-  }
-}
-
-const uploadTriggerLogo = document.getElementById('logo-file');
-if(uploadTriggerLogo) {
-  uploadTriggerLogo.onclick = () => document.getElementById('logo-file-hidden').click();
-}
-
-// Listen untuk perubahan pada logo file hidden input
-const logoFileHiddenInput = document.getElementById('logo-file-hidden');
-if(logoFileHiddenInput) {
-  logoFileHiddenInput.addEventListener('change', () => {
-    const file = logoFileHiddenInput.files[0];
-    if (file) {
-      logoPreview.src = URL.createObjectURL(file);
+    } catch (err) {
+      toast('Error: ' + err.message, 'err');
+    } finally {
+      btnSaveProd.disabled = false;
+      btnSaveProd.textContent = 'Simpan Produk';
     }
   });
-}
 
-saveSettingsBtn.addEventListener('click', async () => {
-  saveSettingsBtn.textContent = 'Menyimpan...';
-  saveSettingsBtn.classList.add('loading');
-  
-  let finalLogoUrl = logoUrlInput.value;
-  const file = document.getElementById('logo-file-hidden').files[0];
-  
-  if (file) {
-    finalLogoUrl = await uploadToCloudinary(file);
-    if (!finalLogoUrl) {
-      saveSettingsBtn.textContent = 'Simpan Pengaturan Toko';
-      saveSettingsBtn.classList.remove('loading');
-      return;
+  // ── SETTINGS: LOAD ────────────────────────
+  async function loadSettings() {
+    try {
+      const snap = await getDoc(doc(db, 'settings', 'toko'));
+      if (snap.exists()) {
+        const s = snap.data();
+        inpUsername.value = s.username || '';
+        inpBio.value      = s.bio      || '';
+        inpWa.value       = s.wa       || '';
+        inpShopee.value   = s.shopee   || '';
+        inpLogoUrl.value  = s.logo     || '';
+        if (s.logo) logoPreview.src = s.logo;
+      }
+    } catch (e) { console.error('loadSettings:', e); }
+  }
+
+  // Logo file picker
+  btnLogoPick.addEventListener('click', () => inpLogoFile.click());
+  inpLogoFile.addEventListener('change', () => {
+    const file = inpLogoFile.files[0];
+    if (file) logoPreview.src = URL.createObjectURL(file);
+  });
+
+  // Settings: SIMPAN
+  btnSaveSett.addEventListener('click', async () => {
+    btnSaveSett.disabled = true;
+    btnSaveSett.textContent = 'Menyimpan...';
+    try {
+      let logoUrl = inpLogoUrl.value;
+      const file  = inpLogoFile.files[0];
+      if (file) {
+        logoUrl = await uploadCloudinary(file);
+        if (!logoUrl) throw new Error('Upload logo gagal.');
+        inpLogoUrl.value = logoUrl;
+      }
+      await setDoc(doc(db, 'settings', 'toko'), {
+        username: inpUsername.value.trim(),
+        bio:      inpBio.value.trim(),
+        wa:       inpWa.value.trim(),
+        shopee:   inpShopee.value.trim(),
+        logo:     logoUrl
+      });
+      toast('Pengaturan berhasil disimpan!');
+    } catch (err) {
+      toast('Gagal simpan: ' + err.message, 'err');
+    } finally {
+      btnSaveSett.disabled = false;
+      btnSaveSett.textContent = 'Simpan Pengaturan';
+    }
+  });
+
+  // ── AKUN: UPDATE ──────────────────────────
+  btnSaveAcc.addEventListener('click', async () => {
+    const newEmail = inpNewEmail.value.trim();
+    const newPass  = inpNewPass.value;
+    const oldPass  = inpOldPass.value;
+    const user     = auth.currentUser;
+
+    if (!oldPass)                         { toast('Masukkan password lama!', 'warn'); return; }
+    if (newEmail === user.email && !newPass) { toast('Tidak ada perubahan.', 'warn'); return; }
+
+    btnSaveAcc.disabled = true;
+    btnSaveAcc.textContent = 'Memverifikasi...';
+    try {
+      await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, oldPass));
+      if (newEmail !== user.email) {
+        if (!newEmail.includes('@')) throw new Error('Format email tidak valid!');
+        await updateEmail(user, newEmail);
+      }
+      if (newPass) {
+        if (newPass.length < 6) throw new Error('Password minimal 6 karakter!');
+        await updatePassword(user, newPass);
+      }
+      toast('Akun diperbarui! Keluar otomatis...');
+      setTimeout(() => signOut(auth), 1800);
+    } catch (err) {
+      const msg = err.code === 'auth/wrong-password' ? 'Password lama salah!' : err.message;
+      toast(msg, 'err');
+    } finally {
+      btnSaveAcc.disabled = false;
+      btnSaveAcc.textContent = 'Update Akun';
+    }
+  });
+
+  // ── CLOUDINARY UPLOAD ─────────────────────
+  async function uploadCloudinary(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', CLOUD_PRESET);
+    try {
+      const res  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.secure_url) return data.secure_url;
+      // Tampilkan error spesifik dari Cloudinary
+      throw new Error(data.error?.message || 'Upload gagal — cek cloud name & upload preset');
+    } catch (err) {
+      toast('Upload gagal: ' + err.message, 'err');
+      return null;
     }
   }
-  
-  const settingsData = {
-    username: usernameInput.value,
-    bio: bioInput.value,
-    wa: waInput.value,
-    shopee: shopeeInput.value, // DIBENERIN: HURUF 'K' DIHAPUS
-    logo: finalLogoUrl
-  };
-  
-  try {
-    await setDoc(doc(db, "settings", "toko"), settingsData);
-    showToast('Pengaturan tersimpan!');
-  } catch (error) {
-    showToast('Gagal simpan: ' + error.message, 'error');
-  } finally {
-    saveSettingsBtn.textContent = 'Simpan Pengaturan Toko';
-    saveSettingsBtn.classList.remove('loading');
-  }
-});
 
-// ==================== KEAMANAN AKUN ====================
-saveAccountBtn.addEventListener('click', async () => {
-  const ne = document.getElementById('new-email-input').value;
-  const np = document.getElementById('new-password-input').value;
-  const cp = document.getElementById('reauth-password-input').value;
-  
-  if (!cp) return showToast('Wajib masukkan password lama!', 'warning');
-  if (ne === auth.currentUser.email && !np) return showToast('Tidak ada perubahan.', 'warning');
-  
-  saveAccountBtn.textContent = 'Memverifikasi...';
-  saveAccountBtn.classList.add('loading');
-  saveAccountBtn.style.pointerEvents = 'none';
-  
-  try {
-    const u = auth.currentUser;
-    await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, cp));
-    if (ne !== u.email) { if (!ne.includes('@')) throw new Error('Format email salah!'); await updateEmail(u, ne); }
-    if (np) { if (np.length < 6) throw new Error('Password min 6 karakter!'); await updatePassword(u, np); }
-    showToast('Akun diperbarui! Keluar otomatis...');
-    setTimeout(() => signOut(auth), 1500);
-  } catch (error) {
-    let msg = error.message;
-    if (error.code === 'auth/wrong-password') msg = 'Password lama SALAH!';
-    showToast(msg, 'error');
-  } finally {
-    saveAccountBtn.textContent = 'Update Akun';
-    saveAccountBtn.classList.remove('loading');
-    saveAccountBtn.style.pointerEvents = 'auto';
+  // ── HELPER ────────────────────────────────
+  function esc(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   }
-});
 
-// ==================== HELPER CLOUDINARY ====================
-async function uploadToCloudinary(file) {
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-  try {
-    const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: fd });
-    const d = await r.json();
-    if (d.secure_url) return d.secure_url;
-    throw new Error('Upload gagal');
-  } catch (error) {
-    showToast('Gagal upload foto', 'error');
-    return null;
-  }
-}
+}); // end DOMContentLoaded
