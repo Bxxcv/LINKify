@@ -25,7 +25,7 @@
 
   const app = initializeApp(APP_CONFIG.firebaseConfig);
   const auth = getAuth(app);
-  const EMAIL_ADMIN = 'ganti@dengan.email.admin.lu'; // GANTI INI!
+  const EMAIL_ADMIN = 'unrageunrage@gmail.com'; // GANTI INI!
 
   window.loginAdmin = () => {
     signInWithEmailAndPassword(auth, adminEmail.value, adminPass.value).catch(e => alert(e.message));
