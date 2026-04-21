@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head><title>Daftar User - Khusus Admin</title><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+    <h2 class="font-bold text-xl mb-4">Admin Panel: Daftarkan User Baru</h2>
+    <div id="loginAdmin">
+      <p class="text-sm mb-2">Login sebagai Admin dulu:</p>
+      <input id="adminEmail" placeholder="Email Admin" class="w-full p-2 border rounded mb-2">
+      <input id="adminPass" type="password" placeholder="Password Admin" class="w-full p-2 border rounded mb-4">
+      <button onclick="loginAdmin()" class="w-full bg-black text-white p-2 rounded">Login Admin</button>
+    </div>
+    <div id="formDaftar" style="display:none">
+      <p class="text-sm mb-4">Login sebagai: <b id="adminYgLogin"></b></p>
+      <input id="emailUser" placeholder="Email user baru" class="w-full p-2 border rounded mb-2">
+      <input id="passUser" placeholder="Password user baru" class="w-full p-2 border rounded mb-4">
+      <button onclick="daftarinUser()" class="w-full bg-black text-white p-2 rounded">Daftarkan User</button>
+      <p id="status" class="text-xs mt-4 text-center"></p>
+    </div>
+  </div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { APP_CONFIG } from './js/config.js';
+
+  const app = initializeApp(APP_CONFIG.firebaseConfig);
+  const auth = getAuth(app);
+  const EMAIL_ADMIN = 'ganti@dengan.email.admin.lu'; // GANTI INI!
+
+  window.loginAdmin = () => {
+    signInWithEmailAndPassword(auth, adminEmail.value, adminPass.value).catch(e => alert(e.message));
+  }
+  auth.onAuthStateChanged(user => {
+    if (user && user.email === EMAIL_ADMIN) {
+      loginAdmin.style.display = 'none'; formDaftar.style.display = 'block';
+      adminYgLogin.innerText = user.email;
+    } else {
+      loginAdmin.style.display = 'block'; formDaftar.style.display = 'none';
+      if(user) signOut(auth);
+    }
+  });
+  window.daftarinUser = async () => {
+    const secondaryApp = initializeApp(APP_CONFIG.firebaseConfig, "Secondary");
+    const secondaryAuth = getAuth(secondaryApp);
+    try {
+      await createUserWithEmailAndPassword(secondaryAuth, emailUser.value, passUser.value);
+      status.innerText = `Sukses! User ${emailUser.value} terdaftar.`;
+      await signOut(secondaryAuth);
+    } catch (e) { status.innerText = 'Gagal: ' + e.message; }
+  }
+</script>
+</body>
+</html>
