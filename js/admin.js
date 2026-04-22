@@ -8,20 +8,13 @@ import {
   serverTimestamp, getDoc, query, orderBy, setDoc, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ─────────────────────────────────────────────
-// CLOUDINARY — pakai preset dari config.js
-// ─────────────────────────────────────────────
 const CLOUD_NAME = CONFIG.cloudinary.cloudName;
 const CLOUD_PRESET = CONFIG.cloudinary.uploadPreset;
 
-// ── BASE PATH AUTO DETECT - UDAH DISESUAIKAN LINKify ────────
 const BASE_PATH = window.location.hostname.includes('github.io')
- ? '/LINKify' // REPO LU SEKARANG
+? '/LINKify'
   : '';
 
-// ─────────────────────────────────────────────
-// SEMUA LOGIC DI DALAM DOMContentLoaded
-// ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
 
   // ── DOM REFS ──────────────────────────────
@@ -100,10 +93,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ── AUTH - UDAH DIBENERIN PAKE users/{uid}/settings/toko ─────────
+  // ── AUTH - PAKE toko/{uid} ─────────
   onAuthStateChanged(auth, async user => {
     if (user) {
-      const tokoRef = doc(db, 'users', user.uid, 'settings', 'toko');
+      const tokoRef = doc(db, 'toko', user.uid);
       const tokoSnap = await getDoc(tokoRef);
 
       if (tokoSnap.exists()) {
@@ -121,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ── COPY LINK TOKO - UDAH PAKE BASE_PATH ─────────────────────────────
+  // ── COPY LINK TOKO ─────────────────────────────
   if (btnCopyLink) {
     btnCopyLink.addEventListener('click', () => {
       const uid = auth.currentUser?.uid;
@@ -139,10 +132,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirm('Yakin mau keluar?')) signOut(auth);
   });
 
-  // ── STATISTIK ─────────────────────────────
+  // ── STATISTIK - PAKE collection produk ─────────────────────────────
   async function loadStats() {
     try {
-      const snap = await getDocs(collection(db, 'users', auth.currentUser.uid, 'products'));
+      const q = query(collection(db, 'produk'), where('tokoId', '==', auth.currentUser.uid));
+      const snap = await getDocs(q);
       let total = 0, empty = 0;
       snap.forEach(d => { total++; if (d.data().stok == 0) empty++; });
       document.getElementById('stat-total').textContent = total;
@@ -150,14 +144,14 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) { console.error('loadStats:', e); }
   }
 
-  // ── PRODUK: LOAD ──────────────────────────
+  // ── PRODUK: LOAD - PAKE collection produk ──────────────────────────
   async function loadProducts() {
     productsList.innerHTML = `
       <div class="skel-card"><div class="skel" style="height:130px;border-radius:14px 14px 0 0"></div><div style="padding:10px 12px"><div class="skel" style="height:12px;width:70%;margin-bottom:7px"></div><div class="skel" style="height:13px;width:45%"></div></div></div>
       <div class="skel-card"><div class="skel" style="height:130px;border-radius:14px 14px 0 0"></div><div style="padding:10px 12px"><div class="skel" style="height:12px;width:55%;margin-bottom:7px"></div><div class="skel" style="height:13px;width:40%"></div></div></div>
       <div class="skel-card"><div class="skel" style="height:130px;border-radius:14px 14px 0 0"></div><div style="padding:10px 12px"><div class="skel" style="height:12px;width:80%;margin-bottom:7px"></div><div class="skel" style="height:13px;width:50%"></div></div></div>`;
     try {
-      const q = query(collection(db, 'users', auth.currentUser.uid, 'products'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, 'produk'), where('tokoId', '==', auth.currentUser.uid), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
       if (snap.empty) {
         productsList.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg><p class="empty-h">Belum ada produk</p><p class="empty-p">Klik "Tambah Produk" untuk mulai.</p></div>`;
@@ -213,14 +207,14 @@ document.addEventListener('DOMContentLoaded', () => {
     imgPrevWrap.style.display = 'block';
   });
 
-  // ── PRODUK: EDIT & HAPUS ──────────────────
+  // ── PRODUK: EDIT & HAPUS - PAKE collection produk ──────────────────
   productsList.addEventListener('click', async e => {
     const id = e.target.dataset.id;
     if (!id) return;
 
     if (e.target.classList.contains('btn-ed')) {
       try {
-        const snap = await getDoc(doc(db, 'users', auth.currentUser.uid, 'products', id));
+        const snap = await getDoc(doc(db, 'produk', id));
         if (!snap.exists()) { toast('Produk tidak ditemukan', 'err'); return; }
         const p = snap.data();
         document.getElementById('inp-prod-id').value = id;
@@ -242,14 +236,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.classList.contains('btn-del')) {
       if (!confirm('Yakin hapus produk ini? Tidak bisa dibatalkan.')) return;
       try {
-        await deleteDoc(doc(db, 'users', auth.currentUser.uid, 'products', id));
+        await deleteDoc(doc(db, 'produk', id));
         toast('Produk dihapus.', 'err');
         loadProducts(); loadStats();
       } catch (e) { toast('Gagal hapus: ' + e.message, 'err'); }
     }
   });
 
-  // ── PRODUK: SIMPAN ────────────────────────
+  // ── PRODUK: SIMPAN - PAKE collection produk ────────────────────────
   productForm.addEventListener('submit', async e => {
     e.preventDefault();
     const id = document.getElementById('inp-prod-id').value;
@@ -275,15 +269,16 @@ document.addEventListener('DOMContentLoaded', () => {
         shopee: document.getElementById('inp-prod-shopee').value.trim(),
         wa: document.getElementById('inp-prod-wa').value.trim(),
         img: imgUrl,
+        tokoId: auth.currentUser.uid, // PENTING
         updatedAt: serverTimestamp()
       };
 
       if (id) {
-        await updateDoc(doc(db, 'users', auth.currentUser.uid, 'products', id), data);
+        await updateDoc(doc(db, 'produk', id), data);
         toast('Produk berhasil diperbarui!');
       } else {
         data.createdAt = serverTimestamp();
-        await addDoc(collection(db, 'users', auth.currentUser.uid, 'products'), data);
+        await addDoc(collection(db, 'produk'), data);
         toast('Produk berhasil ditambahkan!');
       }
       closeModal();
@@ -297,13 +292,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ── SETTINGS: LOAD ────────────────────────
+  // ── SETTINGS: LOAD - PAKE toko/{uid} ────────────────────────
   async function loadSettings() {
     try {
-      const snap = await getDoc(doc(db, 'users', auth.currentUser.uid, 'settings', 'toko'));
+      const snap = await getDoc(doc(db, 'toko', auth.currentUser.uid));
       if (snap.exists()) {
         const s = snap.data();
-        inpUsername.value = s.username || '';
+        inpUsername.value = s.namaToko || '';
         inpBio.value = s.bio || '';
         inpWa.value = s.wa || '';
         inpShopee.value = s.shopee || '';
@@ -320,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (file) logoPreview.src = URL.createObjectURL(file);
   });
 
-  // Settings: SIMPAN
+  // Settings: SIMPAN - PAKE toko/{uid}
   btnSaveSett.addEventListener('click', async () => {
     btnSaveSett.disabled = true;
     btnSaveSett.textContent = 'Menyimpan...';
@@ -332,13 +327,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!logoUrl) throw new Error('Upload logo gagal.');
         inpLogoUrl.value = logoUrl;
       }
-      await setDoc(doc(db, 'users', auth.currentUser.uid, 'settings', 'toko'), {
-        username: inpUsername.value.trim(),
+      await setDoc(doc(db, 'toko', auth.currentUser.uid), {
+        namaToko: inpUsername.value.trim(),
         bio: inpBio.value.trim(),
         wa: inpWa.value.trim(),
         shopee: inpShopee.value.trim(),
         logo: logoUrl
-      });
+      }, { merge: true });
       toast('Pengaturan berhasil disimpan!');
     } catch (err) {
       toast('Gagal simpan: ' + err.message, 'err');
