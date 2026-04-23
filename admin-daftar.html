@@ -89,7 +89,7 @@
         <div id="formDaftar" style="display:none;">
           <p class="mb-6 text-sm text-slate-600">Login sebagai: <span id="adminYgLogin" class="font-semibold text-lf-orange"></span></p>
 
-          <!-- CARD STATISTIK - UDAH DIBENERIN -->
+          <!-- CARD STATISTIK - UDAH FIX -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6">
             <div class="bg-white p-5 rounded-xl shadow-card border border-slate-100">
               <div class="flex items-center justify-between">
@@ -99,7 +99,6 @@
                 </div>
                 <div class="bg-blue-100 p-3 rounded-lg"><svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div>
               </div>
-            </div>
             <div class="bg-white p-5 rounded-xl shadow-card border border-slate-100">
               <div class="flex items-center justify-between">
                 <div>
@@ -116,12 +115,12 @@
                   <p class="text-sm text-slate-500">User Aktif</p>
                   <p id="totalAktif" class="text-2xl font-bold text-green-600 mt-1">0</p>
                 </div>
-                <div class="bg-lf-orange/10 p-3 rounded-lg"><svg class="w-6 h-6 text-lf-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                <div class="bg-lf-orange/10 p-3 rounded-lg"><svg class="w-6 h-6 text-lf-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
               </div>
             </div>
           </div>
 
-          <!-- CARD FORM TAMBAH USER - UDAH RESPONSIVE -->
+          <!-- CARD FORM TAMBAH USER - RESPONSIVE -->
           <div class="bg-white p-5 md:p-6 rounded-xl shadow-card mb-6 border border-slate-100">
             <h2 class="text-lg font-semibold mb-4 text-slate-800">Tambah User/Toko Baru</h2>
             <div class="grid grid-cols-1 lg:grid-cols-5 gap-3">
@@ -202,7 +201,11 @@
     }
     window.logoutAdmin = () => signOut(auth);
 
+    // FIX INFINITE LOOP LOGIN
+    let isLoggingOut = false;
     onAuthStateChanged(auth, user => {
+      if (isLoggingOut) return;
+      
       if (user && user.email === EMAIL_ADMIN) {
         loginAdminDiv.style.display = 'none'; 
         formDaftarDiv.style.display = 'block';
@@ -211,7 +214,11 @@
       } else {
         loginAdminDiv.style.display = 'block'; 
         formDaftarDiv.style.display = 'none';
-        if(user) { alert("Akses ditolak. Akun ini bukan admin."); signOut(auth); }
+        if(user) { 
+          alert("Akses ditolak. Akun ini bukan admin.");
+          isLoggingOut = true;
+          signOut(auth).finally(() => isLoggingOut = false);
+        }
       }
     });
 
