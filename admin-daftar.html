@@ -196,7 +196,7 @@
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
       getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-      signOut, onAuthStateChanged
+      signOut, onAuthStateChanged, browserLocalPersistence, setPersistence
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import {
       getFirestore, doc, setDoc, getDocs, collection,
@@ -217,6 +217,9 @@
     const app = getApps().find(a => a.name === '[DEFAULT]') || initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
     const db   = getFirestore(app);
+
+    // FIX: Set persistence LOCAL supaya session tetap ada meski diem lama / tab di-minimize
+    await setPersistence(auth, browserLocalPersistence);
 
     const loginAdminDiv = document.getElementById('loginAdmin');
     const formDaftarDiv = document.getElementById('formDaftar');
