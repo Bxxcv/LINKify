@@ -1,4 +1,4 @@
-import { auth, db, CONFIG } from './firebase.js';
+import { auth, db, CONFIG } from '../firebase.js';
 import {
   onAuthStateChanged, signOut, updatePassword, updateEmail,
   EmailAuthProvider, reauthenticateWithCredential

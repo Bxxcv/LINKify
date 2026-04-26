@@ -1,4 +1,4 @@
-import { APP_CONFIG } from './config.js';
+import { APP_CONFIG } from '../config.js';
 import { initializeApp, getApps, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,

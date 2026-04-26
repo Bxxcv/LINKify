@@ -1,4 +1,4 @@
-import { db, CONFIG } from './firebase.js';
+import { db, CONFIG } from '../firebase.js';
 import { collection, getDocs, query, orderBy, doc, getDoc, setDoc, increment, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { escHtml, rupiah, checkPremium, hexToRgb } from './utils.js';
 
