@@ -126,12 +126,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ── COPY LINK ──
+    // ── COPY LINK ──
   if (btnCopyLink) {
     btnCopyLink.addEventListener('click', () => {
       const uid = auth.currentUser?.uid;
       if (!uid) return toast('Login dulu!', 'err');
-      const link = `${window.location.origin}/?uid=${uid}`;
+      const BASE_PATH = window.location.hostname.includes('github.io') ? '/LINKify' : '';
+      const link = `${window.location.origin}${BASE_PATH}/?uid=${uid}`;
       navigator.clipboard.writeText(link)
         .then(() => toast('Link toko berhasil dicopy!'))
         .catch(() => toast('Gagal copy link', 'err'));

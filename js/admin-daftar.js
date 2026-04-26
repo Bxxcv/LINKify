@@ -154,6 +154,8 @@ async function daftarkanUser() {
 }
 
 async function ambilDataUser() {
+  const BASE_PATH = window.location.hostname.includes('github.io') ? '/LINKify' : '';
+
   tabelUser.innerHTML = '<tr><td colspan="8" class="text-center p-6 text-slate-500">Memuat data...</td></tr>';
   try {
     const q    = query(collection(db, 'toko'), orderBy('dibuatPada', 'desc'));
@@ -180,7 +182,7 @@ async function ambilDataUser() {
         : '<span class="bg-slate-100 text-slate-500 text-xs font-medium px-2.5 py-1 rounded-full">Gratis</span>';
 
       const tombolAksi = '<div class="flex items-center gap-2 flex-wrap">'
-        + '<a href="/?uid=' + uid + '" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium text-xs">Lihat</a>'
+        + '<a href="' + BASE_PATH + '/?uid=' + uid + '" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium text-xs">Lihat</a>'
         + '<button type="button" onclick="resetPassword(\'' + escHtml(data.email) + '\')" class="text-indigo-600 hover:text-indigo-800 font-medium text-xs">Reset Pass</button>'
         + (data.status === 'aktif'
           ? '<button type="button" onclick="blokirUser(\'' + uid + '\', \'blokir\')" class="text-red-600 hover:text-red-800 font-medium text-xs">Blokir</button>'
@@ -255,14 +257,12 @@ async function hapusUser(uid, namaToko) {
   let stepError = '';
 
   try {
-    // Step 1: Ambil data toko
     try {
       const tokoSnap = await getDoc(doc(db, 'toko', uid));
       if (!tokoSnap.exists()) throw new Error('Data toko tidak ditemukan');
       var tokoData = tokoSnap.data();
     } catch (e) { stepError = 'Step 1 (baca toko): ' + e.message; throw e; }
 
-    // Step 2: Hapus produk
     try {
       const prodSnap = await getDocs(collection(db, 'toko', uid, 'produk'));
       if (!prodSnap.empty) {
@@ -272,7 +272,6 @@ async function hapusUser(uid, namaToko) {
       }
     } catch (e) { stepError = 'Step 2 (hapus produk): ' + e.message; throw e; }
 
-    // Step 3: Hapus stats
     try {
       const statSnap = await getDocs(collection(db, 'toko', uid, 'stats'));
       if (!statSnap.empty) {
@@ -282,12 +281,10 @@ async function hapusUser(uid, namaToko) {
       }
     } catch (e) { stepError = 'Step 3 (hapus stats): ' + e.message; throw e; }
 
-    // Step 4: Hapus dokumen toko
     try {
       await deleteDoc(doc(db, 'toko', uid));
     } catch (e) { stepError = 'Step 4 (hapus toko): ' + e.message; throw e; }
 
-    // Step 5: Hapus akun Auth via secondary app
     let authDeleted = false;
     try {
       const secondaryApp = initializeApp(APP_CONFIG.firebaseConfig, 'delete-' + Date.now());
@@ -297,9 +294,7 @@ async function hapusUser(uid, namaToko) {
       authDeleted = true;
       await signOut(secondaryAuth);
       await deleteApp(secondaryApp);
-    } catch (e) {
-      // Auth delete gagal bukan fatal, data firestore sudah dihapus
-    }
+    } catch (e) {}
 
     if (authDeleted) {
       alert('Akun "' + namaToko + '" berhasil dihapus sepenuhnya.');
