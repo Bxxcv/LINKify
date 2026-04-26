@@ -39,7 +39,8 @@
         radial-gradient(ellipse 50% 40% at 50% 50%, rgba(30,30,80,0.5) 0%, transparent 70%),
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
       background-attachment: fixed;
-      min-height: 100dvh;
+      min-height: 100vh;    /* fallback semua browser */
+      min-height: 100dvh;   /* support dynamic viewport (mobile) */
       font-family: 'Poppins', sans-serif;
       color: var(--idx-text);
       overflow-x: hidden;
@@ -64,6 +65,8 @@
         radial-gradient(ellipse 80% 60% at 50% 40%, rgba(200,210,255,0.4) 0%, transparent 65%),
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
       background-attachment: fixed;
+      min-height: 100vh;
+      min-height: 100dvh;
     }
     /* Text override untuk white theme */
     body.index-page[data-theme="white"] .store-name,
@@ -111,7 +114,6 @@
       display: flex; align-items: center; justify-content: center;
       background: rgba(255,255,255,0.08);
       border: 1px solid var(--idx-border);
-      backdrop-filter: blur(10px);
       border-radius: 14px;
       color: var(--idx-text);
       cursor: pointer;
@@ -162,14 +164,16 @@
       animation: rotateBorder 3s ease infinite;
       margin: 0 auto 20px;
       box-shadow: 0 10px 30px rgba(255,107,53,0.2);
+      will-change: background-position;
     }
     .index-page .logo-img {
       width: 100%; height: 100%;
       border-radius: 50%; object-fit: cover;
       border: 4px solid var(--idx-bg2);
-      animation: float 3s ease-in-out infinite;
+      animation: float 4s ease-in-out infinite;
       background-color: var(--idx-bg3);
       transition: border-color 0.4s;
+      will-change: transform;
     }
     .index-page .store-name {
       font-size: 26px; font-weight: 700;
@@ -238,12 +242,13 @@
     .index-page .product-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
     .index-page .product-card {
       background: var(--idx-card);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      /* backdrop-filter dihapus — penyebab lag di HP */
       border: 1px solid var(--idx-border);
       border-radius: 16px; overflow: hidden;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
       text-decoration: none; color: var(--idx-text);
+      /* GPU layer agar animasi hover mulus */
+      will-change: transform;
     }
     .index-page .product-card:hover { transform: scale(1.03); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
     .index-page .product-img { width: 100%; height: 160px; object-fit: cover; background-color: var(--idx-bg2); display: block; }
