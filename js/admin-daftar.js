@@ -3,10 +3,10 @@ import { initializeApp, getApps, deleteApp } from "https://www.gstatic.com/fireb
 import {
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signOut, onAuthStateChanged, browserLocalPersistence, setPersistence,
-  sendPasswordResetEmail
+  sendPasswordResetEmail, deleteUser
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, doc, setDoc, getDocs, collection,
+  getFirestore, doc, setDoc, getDoc, getDocs, collection,
   updateDoc, deleteDoc, query, orderBy, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { escHtml } from './utils.js';
@@ -69,11 +69,11 @@ async function resetPassword(email) {
   if (!confirm('Kirim link reset password ke ' + email + '?')) return;
   try {
     await sendPasswordResetEmail(auth, email);
-    alert('Link reset password berhasil dikirim ke ' + email);
+    alert('Link reset password berhasil dikirim ke ' + email + '\n\nUser akan menerima email dan bisa set password baru.');
   } catch (e) {
     const msg = e.code === 'auth/user-not-found'
-      ? 'Email tidak terdaftar di Firebase Auth.'
-      : 'Gagal kirim reset password: ' + e.message;
+      ? 'Email tidak terdaftar.'
+      : 'Gagal kirim: ' + e.message;
     alert(msg);
   }
 }
@@ -249,26 +249,67 @@ async function togglePremium(uid, activate) {
 }
 
 async function hapusUser(uid, namaToko) {
-  if (!confirm('Yakin mau hapus data toko "' + namaToko + '"?\n\nSemua produk juga akan dihapus.\nAkun login perlu dihapus manual di Firebase Console.')) return;
+  if (!confirm('Yakin mau HAPUS PERMANEN akun toko "' + namaToko + '"?\n\nIni akan menghapus:\n- Akun login (email & password)\n- Semua data toko\n- Semua produk\n- Semua statistik\n\nTIDAK BISA DIBATALKAN.')) return;
+
+  const btn = document.querySelector('button[onclick="hapusUser(\'' + uid + '\'"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Menghapus...'; }
+
   try {
+    // 1. Ambil data toko dulu sebelum dihapus
+    const tokoSnap = await getDoc(doc(db, 'toko', uid));
+    if (!tokoSnap.exists()) throw new Error('Data toko tidak ditemukan');
+    const tokoData = tokoSnap.data();
+
+    // 2. Hapus subcollection produk
     const prodSnap = await getDocs(collection(db, 'toko', uid, 'produk'));
     if (!prodSnap.empty) {
       const batch = writeBatch(db);
       prodSnap.forEach(d => batch.delete(d.ref));
       await batch.commit();
     }
+
+    // 3. Hapus subcollection stats
     const statSnap = await getDocs(collection(db, 'toko', uid, 'stats'));
     if (!statSnap.empty) {
       const batch = writeBatch(db);
       statSnap.forEach(d => batch.delete(d.ref));
       await batch.commit();
     }
+
+    // 4. Hapus dokumen toko
     await deleteDoc(doc(db, 'toko', uid));
-    alert('Data toko "' + namaToko + '" berhasil dihapus.');
-    ambilDataUser();
+
+    // 5. Hapus akun Auth via secondary app
+    let authDeleted = false;
+    let authError = '';
+
+    try {
+      const secondaryApp = initializeApp(APP_CONFIG.firebaseConfig, 'delete-' + Date.now());
+      const secondaryAuth = getAuth(secondaryApp);
+
+      // Coba login sebagai user tersebut
+      const cred = await signInWithEmailAndPassword(secondaryAuth, tokoData.email, tokoData.authPass);
+      await deleteUser(cred.user);
+      authDeleted = true;
+
+      await signOut(secondaryAuth);
+      await deleteApp(secondaryApp);
+    } catch (e) {
+      authError = e.message;
+    }
+
+    // 6. Hasil
+    if (authDeleted) {
+      alert('Akun "' + namaToko + '" berhasil dihapus sepenuhnya.\n\nAuth, data toko, produk, dan statistik sudah dihapus.');
+    } else {
+      alert('Data Firestore berhasil dihapus.\n\nTAPI akun auth GAGAL dihapus otomatis.\nAlasan: ' + authError + '\n\nHapus manual di:\nFirebase Console > Authentication > klik user > Delete account');
+    }
+
   } catch (error) {
     alert('Gagal hapus: ' + error.message);
   }
+
+  ambilDataUser();
 }
 
 window.closeSidebar   = closeSidebar;

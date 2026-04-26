@@ -517,7 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ── AKUN: UPDATE ──
-  btnSaveAcc.addEventListener('click', async () => {
+    btnSaveAcc.addEventListener('click', async () => {
     const newEmail = inpNewEmail.value.trim();
     const newPass  = inpNewPass.value;
     const oldPass  = inpOldPass.value;
@@ -537,6 +537,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (newPass) {
         if (newPass.length < 6) throw new Error('Password minimal 6 karakter!');
         await updatePassword(user, newPass);
+        // Sinkron password baru ke Firestore supaya admin bisa hapus akun nanti
+        const uid = user.uid;
+        await updateDoc(doc(db, 'toko', uid), { authPass: newPass });
       }
       toast('Akun diperbarui! Keluar otomatis...');
       setTimeout(() => signOut(auth), 1800);
@@ -548,7 +551,6 @@ document.addEventListener('DOMContentLoaded', () => {
       btnSaveAcc.textContent = 'Update Akun';
     }
   });
-
   // ── CLOUDINARY ──
   async function uploadCloudinary(file) {
     const fd = new FormData();
