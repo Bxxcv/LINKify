@@ -2,7 +2,8 @@ import { APP_CONFIG } from '../config.js';
 import { initializeApp, getApps, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signOut, onAuthStateChanged, browserLocalPersistence, setPersistence
+  signOut, onAuthStateChanged, browserLocalPersistence, setPersistence,
+  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore, doc, setDoc, getDocs, collection,
@@ -50,7 +51,7 @@ async function loginAdmin() {
   try {
     await signInWithEmailAndPassword(auth, email, pass);
   } catch (e) {
-    const msg = e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found'
+    const msg = e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential'
       ? 'Email atau password salah!'
       : e.code === 'auth/invalid-email'
       ? 'Format email tidak valid!'
@@ -62,6 +63,19 @@ async function loginAdmin() {
 
 function logoutAdmin() {
   signOut(auth);
+}
+
+async function resetPassword(email) {
+  if (!confirm('Kirim link reset password ke ' + email + '?')) return;
+  try {
+    await sendPasswordResetEmail(auth, email);
+    alert('Link reset password berhasil dikirim ke ' + email);
+  } catch (e) {
+    const msg = e.code === 'auth/user-not-found'
+      ? 'Email tidak terdaftar di Firebase Auth.'
+      : 'Gagal kirim reset password: ' + e.message;
+    alert(msg);
+  }
 }
 
 let isLoggingOut = false;
@@ -166,6 +180,7 @@ async function ambilDataUser() {
 
       const tombolAksi = '<div class="flex items-center gap-2 flex-wrap">'
         + '<a href="/?uid=' + uid + '" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium text-xs">Lihat</a>'
+        + '<button type="button" onclick="resetPassword(\'' + escHtml(data.email) + '\')" class="text-indigo-600 hover:text-indigo-800 font-medium text-xs">Reset Pass</button>'
         + (data.status === 'aktif'
           ? '<button type="button" onclick="blokirUser(\'' + uid + '\', \'blokir\')" class="text-red-600 hover:text-red-800 font-medium text-xs">Blokir</button>'
           : '<button type="button" onclick="blokirUser(\'' + uid + '\', \'aktif\')" class="text-green-600 hover:text-green-800 font-medium text-xs">Aktifkan</button>')
@@ -256,10 +271,10 @@ async function hapusUser(uid, namaToko) {
   }
 }
 
-// Expose ke global scope supaya bisa dipanggil dari onclick di HTML
 window.closeSidebar   = closeSidebar;
 window.loginAdmin     = loginAdmin;
 window.logoutAdmin    = logoutAdmin;
+window.resetPassword  = resetPassword;
 window.daftarkanUser  = daftarkanUser;
 window.ambilDataUser  = ambilDataUser;
 window.blokirUser     = blokirUser;

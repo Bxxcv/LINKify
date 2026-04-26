@@ -11,10 +11,10 @@
   <link rel="icon" type="image/png" sizes="32x32" href="logo-linkify.png">
   <link rel="apple-touch-icon" href="logo-linkify.png">
 </head>
-<body class="w-full px-4 py-4 text-base flex items-center justify-center min-h-screen bg-[#F4F4F4]">
-  <div class="earth-card w-full max-w-sm p-8" style="animation: fadeIn 0.6s ease-out;">
-    <div class="flex justify-center mb-6">
-      <div class="w-14 h-14 bg-black rounded-2xl flex items-center justify-center text-white">
+<body class="login-page">
+  <div class="earth-card" style="width:100%;max-width:400px;padding:32px;animation:fadeIn 0.6s ease-out;">
+    <div style="display:flex;justify-content:center;margin-bottom:24px;">
+      <div class="login-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/>
           <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
@@ -24,14 +24,20 @@
         </svg>
       </div>
     </div>
-    <h1 class="font-bold text-2xl text-center mb-1 text-gray-900">Login Toko Kamu</h1>
-    <p class="text-center text-gray-400 text-xs mb-8">Masuk untuk kelola produk & toko</p>
-    <div class="space-y-4">
-      <div><label class="text-xs text-gray-400 mb-1 block">Email</label><input id="email" type="email" autocomplete="email" placeholder="email@tokokamu.com" class="p-3.5 rounded-xl w-full text-sm"></div>
-      <div><label class="text-xs text-gray-400 mb-1 block">Password</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••" class="p-3.5 rounded-xl w-full text-sm"></div>
+    <h1 class="login-title">Login Toko Kamu</h1>
+    <p class="login-sub">Masuk untuk kelola produk & toko</p>
+    <div class="login-fields">
+      <div>
+        <label class="login-label">Email</label>
+        <input id="email" type="email" autocomplete="email" placeholder="email@tokokamu.com" class="login-input">
+      </div>
+      <div>
+        <label class="login-label">Password</label>
+        <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" class="login-input">
+      </div>
     </div>
-    <button type="button" id="loginBtn" class="w-full mt-6 py-3.5 rounded-xl font-semibold text-sm bg-black text-white hover:bg-gray-800 transition-all">Masuk</button>
-    <p id="errorMsg" class="text-red-500 text-xs text-center mt-4 h-4"></p>
+    <button type="button" id="loginBtn" class="login-btn">Masuk</button>
+    <p id="errorMsg" class="login-error"></p>
   </div>
 
   <script type="module" src="js/login-user.js"></script>
