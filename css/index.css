@@ -75,8 +75,8 @@ body.index-page[data-theme="white"] .product-price { color: var(--idx-accent); b
 .theme-pill-label { letter-spacing: 0.2px; }
 
 .hero { text-align: center; margin-bottom: 32px; }
-.logo-wrapper { width: 130px; height: 130px; border-radius: 50%; padding: 4px; background: linear-gradient(270deg, var(--idx-accent), #FFD700, var(--idx-accent)); background-size: 400% 400%; animation: rotateBorder 3s ease infinite; margin: 0 auto 20px; }
-.logo-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--idx-bg2); animation: float 3s ease-in-out infinite; background-color: var(--idx-bg3); }
+.logo-wrapper { width: 130px; height: 130px; border-radius: 50%; padding: 4px; background: var(--idx-accent); margin: 0 auto 20px; }
+.logo-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--idx-bg2); background-color: var(--idx-bg3); }
 .store-name { font-size: 26px; font-weight: 700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); text-transform: lowercase; color: var(--idx-text); }
 .store-desc { color: var(--idx-text-muted); font-size: 14px; line-height: 1.5; max-width: 320px; margin: 0 auto; }
 
@@ -135,7 +135,7 @@ body.index-page[data-theme="white"] .social-icon-btn:hover { color: #fff; border
 .prod-btn { flex: 1; padding: 9px 4px; border-radius: 12px; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; text-decoration: none; transition: filter 0.15s ease; }
 .prod-btn:active { filter: brightness(0.88); }
 .prod-btn-wa { background: #25D366; color: #fff; }
-.prod-btn-shopee { background: #f5f5f5; color: #555; }
+.prod-btn-shopee { background: linear-gradient(135deg, #EE4D2D, #FF6633); color: #fff; }
 
 .footer { text-align: center; padding: 24px 16px 20px; margin-top: auto; border-top: 1px solid var(--idx-section-line); font-size: 12px; color: var(--idx-footer); }
 .footer-brand { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; opacity: 0.6; color: var(--idx-footer); }
