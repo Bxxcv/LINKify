@@ -42,6 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const inpBio       = document.getElementById('inp-bio');
   const inpWa        = document.getElementById('inp-wa');
   const inpShopee    = document.getElementById('inp-shopee');
+  const inpInstagram = document.getElementById('inp-instagram');
+  const inpTiktok    = document.getElementById('inp-tiktok');
+  const inpTwitter   = document.getElementById('inp-twitter');
+  const inpFacebook  = document.getElementById('inp-facebook');
+  const inpYoutube   = document.getElementById('inp-youtube');
   const btnSaveSett  = document.getElementById('btn-save-settings');
 
   const inpNewEmail  = document.getElementById('inp-new-email');
@@ -474,6 +479,11 @@ document.addEventListener('DOMContentLoaded', () => {
         inpBio.value      = s.bio      || '';
         inpWa.value       = s.wa       || '';
         inpShopee.value   = s.shopee   || '';
+        inpInstagram.value = s.instagram || '';
+        inpTiktok.value    = s.tiktok    || '';
+        inpTwitter.value   = s.twitter   || '';
+        inpFacebook.value  = s.facebook  || '';
+        inpYoutube.value   = s.youtube   || '';
         inpLogoUrl.value  = s.logo     || '';
         if (s.logo) logoPreview.src = s.logo;
         updatePremiumUI();
@@ -507,6 +517,11 @@ document.addEventListener('DOMContentLoaded', () => {
         bio:      inpBio.value.trim(),
         wa:       inpWa.value.trim(),
         shopee:   inpShopee.value.trim(),
+        instagram: inpInstagram.value.trim(),
+        tiktok:    inpTiktok.value.trim(),
+        twitter:   inpTwitter.value.trim(),
+        facebook:  inpFacebook.value.trim(),
+        youtube:   inpYoutube.value.trim(),
         logo:     logoUrl
       }, { merge: true });
       toast('Pengaturan disimpan!');

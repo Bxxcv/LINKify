@@ -91,6 +91,33 @@ async function loadSettings() {
       }
     }
 
+    // Social media icons bar
+    const socialMap = [
+      { key: 'instagram', id: 'ico-instagram', label: 'Instagram', color: '#E1306C' },
+      { key: 'tiktok',    id: 'ico-tiktok',    label: 'TikTok',    color: '#000000' },
+      { key: 'twitter',   id: 'ico-twitter',   label: 'X',         color: '#000000' },
+      { key: 'facebook',  id: 'ico-facebook',  label: 'Facebook',  color: '#1877F2' },
+      { key: 'youtube',   id: 'ico-youtube',   label: 'YouTube',   color: '#FF0000' },
+    ];
+    const socialContainer = document.getElementById('social-icons');
+    const socialBar = document.getElementById('social-bar');
+    let hasSocial = false;
+    socialMap.forEach(({ key, id, label, color }) => {
+      if (s[key]) {
+        hasSocial = true;
+        const a = document.createElement('a');
+        a.href = s[key];
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.className = 'social-icon-btn';
+        a.setAttribute('aria-label', label);
+        a.style.setProperty('--social-color', color);
+        a.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><use href="#${id}"/></svg>`;
+        socialContainer.appendChild(a);
+      }
+    });
+    if (hasSocial && socialBar) socialBar.style.display = '';
+
     const elTokped = document.getElementById('link-tokped');
     if (elTokped && CONFIG.links && CONFIG.links.tokopedia)
       elTokped.href = CONFIG.links.tokopedia;
