@@ -19,16 +19,6 @@
   <div class="container">
 
     <div class="top-bar">
-      <div class="theme-switcher" id="themeSwitcher">
-        <button type="button" class="theme-pill active" data-t="dark" onclick="setTheme('dark')" title="Midnight">
-          <span class="theme-pill-icon">🌙</span>
-          <span class="theme-pill-label">Midnight</span>
-        </button>
-        <button type="button" class="theme-pill" data-t="white" onclick="setTheme('white')" title="White">
-          <span class="theme-pill-icon">☀️</span>
-          <span class="theme-pill-label">White</span>
-        </button>
-      </div>
       <button type="button" onclick="shareLink()" class="share-btn" aria-label="Bagikan">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
@@ -153,17 +143,6 @@
 </svg>
 
 <script>
-  function setTheme(t) {
-    document.body.setAttribute('data-theme', t);
-    localStorage.setItem('lf-theme', t);
-    document.querySelectorAll('.theme-pill').forEach(d => {
-      d.classList.toggle('active', d.dataset.t === t);
-    });
-  }
-  const _validThemes = ['dark', 'white'];
-  const _saved = localStorage.getItem('lf-theme');
-  setTheme(_validThemes.includes(_saved) ? _saved : 'dark');
-
   window.shareLink = () => {
     const title = document.getElementById('username')?.innerText || 'Toko';
     if (navigator.share) {
