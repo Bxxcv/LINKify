@@ -172,13 +172,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentTpl = currentTokoData?.premium?.template || 'default';
     wrap.innerHTML = TEMPLATE_LIST.map(t => `
       <div class="tpl-card${t.id === currentTpl ? ' active' : ''}" data-tpl="${t.id}">
-        <div class="tpl-preview tpl-preview-${t.id}">
-          <div class="tpl-bar"></div>
-          <div class="tpl-circle"></div>
-          <div class="tpl-line"></div>
-          <div class="tpl-line tpl-line-short"></div>
-          <div class="tpl-btn-row"><div class="tpl-btn"></div><div class="tpl-btn"></div></div>
+        <div class="tpl-preview" style="background:${t.bg ? `url('${t.bg}') center/cover no-repeat` : t.preview};">
+          <div class="tpl-overlay"></div>
+          <div class="tpl-mock">
+            <div class="tpl-mock-avatar"></div>
+            <div class="tpl-mock-line" style="background:${t.accent};opacity:0.9;width:55%;"></div>
+            <div class="tpl-mock-line" style="width:38%;"></div>
+            <div class="tpl-mock-btn" style="background:${t.accent};"></div>
+          </div>
         </div>
+        <div class="tpl-dot" style="background:${t.accent};"></div>
         <div class="tpl-label">${t.label}</div>
         <div class="tpl-desc">${t.desc}</div>
         ${t.id === currentTpl ? '<div class="tpl-active-badge">✓ Aktif</div>' : ''}
@@ -189,9 +192,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const tpl = card.dataset.tpl;
         const uid = auth.currentUser?.uid;
         if (!uid) return;
+        const tplData = TEMPLATE_LIST.find(t => t.id === tpl);
         try {
-          await updateDoc(doc(db, 'toko', uid), { 'premium.template': tpl });
-          currentTokoData.premium = { ...currentTokoData.premium, template: tpl };
+          await updateDoc(doc(db, 'toko', uid), {
+            'premium.template': tpl,
+            'premium.templateBg': tplData?.bg || '',
+            'premium.templateAccent': tplData?.accent || ''
+          });
+          currentTokoData.premium = {
+            ...currentTokoData.premium,
+            template: tpl,
+            templateBg: tplData?.bg || '',
+            templateAccent: tplData?.accent || ''
+          };
           renderTemplatePicker();
           toast('Template diperbarui!');
         } catch (e) {

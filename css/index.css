@@ -187,20 +187,65 @@ body.index-page[data-theme="white"] .unggulan-label { color:rgba(0,0,0,0.4); }
 .harga-coret { font-size:12px; color:rgba(255,255,255,0.38); text-decoration:line-through; font-weight:400; }
 body.index-page[data-theme="white"] .harga-coret { color:rgba(0,0,0,0.3); }
 
-/* ── TEMPLATE: minimal ── */
-body.index-page[data-template="minimal"] { --idx-bg: #F8F8F6; --idx-bg2: #FFFFFF; --idx-bg3: #F0F0EE; --idx-text: #111111; --idx-text2: #555555; --idx-border: rgba(0,0,0,0.09); }
-body.index-page[data-template="minimal"] .product-card { box-shadow:0 1px 6px rgba(0,0,0,0.07); border:1px solid rgba(0,0,0,0.06); }
-body.index-page[data-template="minimal"] .product-name { color:#111; }
-body.index-page[data-template="minimal"] .kat-btn { color:rgba(0,0,0,0.5); border-color:rgba(0,0,0,0.15); }
-body.index-page[data-template="minimal"] .kat-btn.active { color:#fff; }
-body.index-page[data-template="minimal"] .harga-coret { color:rgba(0,0,0,0.28); }
-body.index-page[data-template="minimal"] .unggulan-label { color:rgba(0,0,0,0.4); }
-body.index-page[data-template="minimal"] .social-icon-btn { background:rgba(0,0,0,0.05); border-color:rgba(0,0,0,0.08); color:rgba(17,24,39,0.55); }
-body.index-page[data-template="minimal"] .social-icon-btn:hover { color:#fff; border-color:transparent; }
+/* ── TEMPLATE: background photo overlay ── */
+/* Layer gelap di atas foto background */
+#tpl-bg-layer::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:var(--tpl-overlay, rgba(0,0,0,0.55));
+  pointer-events:none;
+}
 
-/* ── TEMPLATE: bold ── */
-body.index-page[data-template="bold"] .product-card { border-radius:20px; overflow:hidden; }
-body.index-page[data-template="bold"] .product-img { height:200px; }
-body.index-page[data-template="bold"] .product-name { font-size:15px; font-weight:700; }
-body.index-page[data-template="bold"] .product-price { font-size:18px; }
-body.index-page[data-template="bold"] .kat-btn { font-size:13px; padding:8px 18px; }
+/* Saat ada background foto: card & elemen lebih transparan + blur */
+body.index-page[data-template="forest"],
+body.index-page[data-template="ocean"],
+body.index-page[data-template="aurora"],
+body.index-page[data-template="desert"],
+body.index-page[data-template="sakura"] {
+  background-color: transparent !important;
+  background-image: none !important;
+  --idx-card: rgba(0,0,0,0.45);
+  --idx-border: rgba(255,255,255,0.15);
+  --idx-bg2: rgba(0,0,0,0.35);
+}
+
+body.index-page[data-template="forest"] .product-card,
+body.index-page[data-template="ocean"] .product-card,
+body.index-page[data-template="aurora"] .product-card,
+body.index-page[data-template="desert"] .product-card,
+body.index-page[data-template="sakura"] .product-card {
+  background: rgba(0,0,0,0.50);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+body.index-page[data-template="forest"] .platform-btn,
+body.index-page[data-template="ocean"] .platform-btn,
+body.index-page[data-template="aurora"] .platform-btn,
+body.index-page[data-template="desert"] .platform-btn,
+body.index-page[data-template="sakura"] .platform-btn {
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+body.index-page[data-template="forest"] .social-icon-btn,
+body.index-page[data-template="ocean"] .social-icon-btn,
+body.index-page[data-template="aurora"] .social-icon-btn,
+body.index-page[data-template="desert"] .social-icon-btn,
+body.index-page[data-template="sakura"] .social-icon-btn {
+  background: rgba(0,0,0,0.40);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.80);
+}
+
+/* Desert tema: teks lebih gelap karena bg terang */
+body.index-page[data-template="desert"] {
+  --idx-text: #fff;
+  --idx-text-muted: rgba(255,255,255,0.70);
+}

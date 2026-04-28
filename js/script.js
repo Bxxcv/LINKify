@@ -64,13 +64,16 @@ async function loadSettings() {
 
     isPremium = checkPremium(s);
 
-    // Warna aksen
-    const accentColor = isPremium && s.premium?.accentColor ? s.premium.accentColor : '#FF6B35';
+    // Apply template (premium only) — dilakukan SEBELUM set accent
+    const tpl = isPremium ? (s.premium?.template || 'default') : 'default';
+    const tplBg = isPremium ? (s.premium?.templateBg || '') : '';
+    const tplAccent = isPremium ? (s.premium?.templateAccent || '') : '';
+    applyTemplate(tpl, tplBg);
+
+    // Warna aksen — custom color picker SELALU menang atas template accent
+    const accentColor = isPremium && s.premium?.accentColor ? s.premium.accentColor : (tplAccent || '#FF6B35');
     document.documentElement.style.setProperty('--idx-accent', accentColor);
     document.documentElement.style.setProperty('--idx-accent-rgb', hexToRgb(accentColor));
-
-    // Apply template (premium only)
-    applyTemplate(isPremium ? (s.premium?.template || 'default') : 'default');
 
     // Branding
     const footerBrand = document.querySelector('.footer-brand');
@@ -273,6 +276,30 @@ function buildProductCard(p, waUtama) {
     </div>`;
 }
 
-function applyTemplate(tpl) {
+function applyTemplate(tpl, bgUrl) {
   document.body.dataset.template = tpl;
+
+  let bgEl = document.getElementById('tpl-bg-layer');
+  if (!bgEl) {
+    bgEl = document.createElement('div');
+    bgEl.id = 'tpl-bg-layer';
+    bgEl.style.cssText = 'position:fixed;inset:0;z-index:-1;pointer-events:none;transition:opacity 0.6s ease;';
+    document.body.prepend(bgEl);
+  }
+
+  if (bgUrl) {
+    bgEl.style.backgroundImage = `url('${bgUrl}')`;
+    bgEl.style.backgroundSize = 'cover';
+    bgEl.style.backgroundPosition = 'center';
+    bgEl.style.backgroundAttachment = 'fixed';
+    bgEl.style.opacity = '1';
+    bgEl.style.setProperty('--tpl-overlay', 'rgba(0,0,0,0.55)');
+    document.body.style.backgroundColor = 'transparent';
+    document.body.style.backgroundImage = 'none';
+  } else {
+    bgEl.style.opacity = '0';
+    bgEl.style.backgroundImage = 'none';
+    document.body.style.backgroundColor = '';
+    document.body.style.backgroundImage = '';
+  }
 }

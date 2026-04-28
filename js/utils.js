@@ -38,9 +38,54 @@ export const KATEGORI_LIST = [
 ];
 
 export const TEMPLATE_LIST = [
-  { id: 'default',  label: 'Default',  desc: 'Gelap modern dengan aksen warna' },
-  { id: 'minimal',  label: 'Minimal',  desc: 'Putih bersih, typografi elegan' },
-  { id: 'bold',     label: 'Bold',     desc: 'Warna kuat, kartu besar' },
+  {
+    id: 'default',
+    label: 'Midnight City',
+    desc: 'Gelap modern, aksen neon',
+    bg: '',
+    accent: '#FF6B35',
+    preview: '#0d0d1a'
+  },
+  {
+    id: 'forest',
+    label: 'Dark Forest',
+    desc: 'Hutan gelap misterius',
+    bg: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1200&q=80&fit=crop&auto=format',
+    accent: '#4ADE80',
+    preview: '#0d1a0f'
+  },
+  {
+    id: 'ocean',
+    label: 'Deep Ocean',
+    desc: 'Lautan dalam yang tenang',
+    bg: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1200&q=80&fit=crop&auto=format',
+    accent: '#38BDF8',
+    preview: '#030e1a'
+  },
+  {
+    id: 'aurora',
+    label: 'Aurora Night',
+    desc: 'Langit malam aurora borealis',
+    bg: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1200&q=80&fit=crop&auto=format',
+    accent: '#A78BFA',
+    preview: '#080d1e'
+  },
+  {
+    id: 'desert',
+    label: 'Golden Desert',
+    desc: 'Padang pasir saat golden hour',
+    bg: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=1200&q=80&fit=crop&auto=format',
+    accent: '#FBBF24',
+    preview: '#1a0e00'
+  },
+  {
+    id: 'sakura',
+    label: 'Sakura Bloom',
+    desc: 'Taman bunga sakura Jepang',
+    bg: 'https://images.unsplash.com/photo-1522383225653-ed111181a951?w=1200&q=80&fit=crop&auto=format',
+    accent: '#F472B6',
+    preview: '#1a0a10'
+  },
 ];
 
 export const ACCENT_COLORS = [
