@@ -25,11 +25,36 @@ function applyTheme() {
 }
 
 function setupScrollAnimations() {
-  const observer = new IntersectionObserver(
-    entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); }),
-    { threshold: 0.1 }
+  // Observer untuk .fade-up (elemen statis)
+  const fadeObserver = new IntersectionObserver(
+    entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('show'); fadeObserver.unobserve(e.target); } }),
+    { threshold: 0.12, rootMargin: '0px 0px -30px 0px' }
   );
-  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+  document.querySelectorAll('.fade-up').forEach(el => fadeObserver.observe(el));
+
+  // Observer untuk .reveal (elemen dinamis — produk, section)
+  const revealObserver = new IntersectionObserver(
+    entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObserver.unobserve(e.target); } }),
+    { threshold: 0.10, rootMargin: '0px 0px -24px 0px' }
+  );
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+  return revealObserver;
+}
+
+// Dipanggil ulang setelah produk di-render dinamis
+function observeNewCards() {
+  const revealObserver = new IntersectionObserver(
+    entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObserver.unobserve(e.target); } }),
+    { threshold: 0.08, rootMargin: '0px 0px -16px 0px' }
+  );
+  document.querySelectorAll('.reveal:not(.visible)').forEach((el, i) => {
+    // Stagger ringan tiap kartu, max 4 level
+    const delay = Math.min(i, 3);
+    el.classList.remove('reveal-delay-1','reveal-delay-2','reveal-delay-3','reveal-delay-4');
+    if (delay > 0) el.classList.add(`reveal-delay-${delay}`);
+    revealObserver.observe(el);
+  });
 }
 
 function setupJellyAnimations() {
@@ -177,9 +202,7 @@ async function loadProducts() {
     // Render semua produk
     renderFilteredProducts(waUtama);
 
-    setTimeout(() => {
-      document.querySelectorAll('#productList .fade-up, #unggulanList .fade-up').forEach(el => el.classList.add('show'));
-    }, 100);
+    setTimeout(() => observeNewCards(), 80);
 
   } catch (err) {
     console.error('loadProducts error:', err);
@@ -219,9 +242,7 @@ function renderFilteredProducts(waUtama) {
     return;
   }
   container.innerHTML = filtered.map(p => buildProductCard(p, waUtama)).join('');
-  setTimeout(() => {
-    container.querySelectorAll('.fade-up').forEach(el => el.classList.add('show'));
-  }, 80);
+  setTimeout(() => observeNewCards(), 50);
 }
 
 function buildProductCard(p, waUtama) {
@@ -247,7 +268,7 @@ function buildProductCard(p, waUtama) {
     </a>` : '';
 
   return `
-    <div class="product-card fade-up">
+    <div class="product-card reveal">
       <div style="position:relative;">
         <img src="${p.img}" alt="${p.nama.replace(/"/g, "&quot;")}"
              class="product-img"
@@ -302,4 +323,4 @@ function applyTemplate(tpl, bgUrl) {
     document.body.style.backgroundColor = '';
     document.body.style.backgroundImage = '';
   }
-}
+}}
