@@ -6,13 +6,14 @@
 import { db, CONFIG } from '../firebase.js';
 import {
   collection, getDocs, query, orderBy,
-  doc, getDoc, setDoc, increment
+  where, limit, doc, getDoc, setDoc, increment
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { escHtml, rupiah, checkPremium, hexToRgb } from './utils.js';
 
 // ── STATE ───────────────────────────────────────────────────────────────────
 const urlParams    = new URLSearchParams(window.location.search);
-const USER_ID      = urlParams.get('uid');
+const STORE_KEY    = urlParams.get('uid');
+let USER_ID        = null;
 let allProducts    = [];
 let activeKategori = 'Semua';
 let waUtama        = 'https://wa.me/';
@@ -22,7 +23,7 @@ let revealObserver = null;
 
 // ── INIT ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  if (!USER_ID) {
+  if (!STORE_KEY) {
     document.body.innerHTML =
       '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:80px 20px;font-family:Poppins,sans-serif;font-size:14px;">Toko tidak ditemukan.<br><span style="font-size:12px;opacity:0.5;">Pastikan URL mengandung ?uid=...</span></div>';
     return;
@@ -37,6 +38,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function bootstrap() {
+  if (!STORE_KEY) {
+    document.body.innerHTML =
+      '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:80px 20px;font-family:Poppins,sans-serif;font-size:14px;">Toko tidak ditemukan.<br><span style="font-size:12px;opacity:0.5;">Pastikan URL mengandung ?uid=...</span></div>';
+    return;
+  }
+
   await loadSettings();
   // Observe static fade-up elements AFTER settings applied
   observeFadeUp();
@@ -118,13 +125,19 @@ window.trackClick = type => trackEvent(type === 'wa' ? 'waClicks' : 'shopeeClick
 // ── LOAD SETTINGS ───────────────────────────────────────────────────────────
 async function loadSettings() {
   try {
-    const snap = await getDoc(doc(db, 'toko', USER_ID));
+    let snap = await getDoc(doc(db, 'toko', STORE_KEY));
+    if (!snap.exists()) {
+      const slugQuery = query(collection(db, 'toko'), where('premium.slug', '==', STORE_KEY), limit(1));
+      const slugSnap  = await getDocs(slugQuery);
+      if (!slugSnap.empty) snap = slugSnap.docs[0];
+    }
     if (!snap.exists()) {
       document.getElementById('username').textContent = 'Toko tidak ditemukan';
       return;
     }
 
-    const s       = snap.data();
+    USER_ID = snap.id;
+    const s = snap.data();
     const isPrem  = checkPremium(s);
 
     // 1. Theme template — no backgroundAttachment:fixed (kills mobile perf)
