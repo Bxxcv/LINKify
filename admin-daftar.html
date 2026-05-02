@@ -3,161 +3,354 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LINKify Admin: Manajemen User</title>
+  <title>LINKify Admin — Manajemen User</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
   <link rel="icon" type="image/png" sizes="32x32" href="logo-linkify.png">
-  <link rel="stylesheet" href="css/admin-daftar.css">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'lf-dark': '#1A1D21',
-            'lf-orange': '#EE4D2D',
-            'lf-orange-hover': '#D74121',
-          },
-          boxShadow: {
-            'card': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-          }
-        }
-      }
-    }
-  </script>
 </head>
-<body class="bg-slate-50">
+<body style="background:#0F1117;">
 
-  <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden" onclick="closeSidebar()"></div>
+<!-- OVERLAY mobile -->
+<div id="overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:25;backdrop-filter:blur(2px);" onclick="closeSidebar()"></div>
 
-  <div class="flex h-screen overflow-hidden">
-    <aside id="sidebar" class="bg-lf-dark text-slate-300 w-64 space-y-6 py-6 px-3 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out z-30">
-      <div class="flex items-center space-x-3 px-3">
-        <img src="logo-linkify.png" alt="LF" class="w-8 h-8 rounded">
-        <span class="text-xl font-bold text-white">LINKify</span>
-      </div>
-      <nav class="space-y-1">
-        <a href="admin.html" onclick="closeSidebar()" class="flex items-center py-2.5 px-3 rounded-lg transition duration-200 hover:bg-slate-700 hover:text-white">
-          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-          Dashboard
-        </a>
-        <a href="admin-daftar.html" onclick="closeSidebar()" class="flex items-center py-2.5 px-3 rounded-lg bg-lf-orange text-white">
-          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-          Manajemen User
-        </a>
-      </nav>
-      <div class="absolute bottom-4 w-56">
-        <a href="#" onclick="logoutAdmin()" class="flex items-center py-2.5 px-3 rounded-lg transition duration-200 hover:bg-slate-700 hover:text-white">
-          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-          Logout
-        </a>
-      </div>
-    </aside>
-
-    <div class="flex-1 flex flex-col overflow-hidden">
-      <header class="bg-white shadow-sm border-b border-slate-200">
-        <div class="flex items-center justify-between px-4 py-3">
-          <div class="flex items-center">
-            <button type="button" id="hamburger" class="md:hidden mr-3 text-slate-600">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-            </button>
-            <h1 class="text-lg font-semibold text-slate-800">Manajemen User</h1>
-          </div>
-          <div id="jam" class="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full">--:-- WIB</div>
-        </div>
-      </header>
-
-      <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6">
-
-        <div id="loginAdmin">
-          <div class="bg-white p-6 rounded-xl shadow-card w-full max-w-md mx-auto mt-10">
-            <h2 class="text-2xl font-bold mb-4 text-center text-slate-800">Login Admin</h2>
-            <input id="adminEmail" type="email" autocomplete="email" placeholder="Email Admin" class="w-full p-3 border border-slate-300 rounded-lg mb-3 focus:ring-2 focus:ring-lf-orange focus:border-lf-orange">
-            <input id="adminPass" type="password" autocomplete="current-password" placeholder="Password Admin" class="w-full p-3 border border-slate-300 rounded-lg mb-4 focus:ring-2 focus:ring-lf-orange focus:border-lf-orange">
-            <button type="button" onclick="loginAdmin()" class="w-full bg-lf-orange text-white p-3 rounded-lg font-semibold hover:bg-lf-orange-hover transition">Login Admin</button>
-            <p id="loginError" class="text-red-500 text-sm text-center mt-3 hidden"></p>
-          </div>
-        </div>
-
-        <div id="formDaftar" style="display:none;">
-          <p class="mb-6 text-sm text-slate-600">Login sebagai: <span id="adminYgLogin" class="font-semibold text-lf-orange"></span></p>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6">
-            <div class="bg-white p-5 rounded-xl shadow-card border border-slate-100">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-slate-500">Total User</p>
-                  <p id="totalUser" class="text-2xl font-bold text-slate-800 mt-1">0</p>
-                </div>
-                <div class="bg-blue-100 p-3 rounded-lg">
-                  <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                </div>
-              </div>
-            </div>
-            <div class="bg-white p-5 rounded-xl shadow-card border border-slate-100">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-slate-500">Total Omset</p>
-                  <p id="totalOmset" class="text-2xl font-bold text-slate-800 mt-1">Rp 0</p>
-                </div>
-                <div class="bg-green-100 p-3 rounded-lg">
-                  <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-              </div>
-              <p class="text-xs text-slate-400 mt-2">*Manual, update dari transaksi</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl shadow-card border border-slate-100">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-slate-500">User Aktif</p>
-                  <p id="totalAktif" class="text-2xl font-bold text-green-600 mt-1">0</p>
-                </div>
-                <div class="bg-lf-orange/10 p-3 rounded-lg">
-                  <svg class="w-6 h-6 text-lf-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-white p-5 md:p-6 rounded-xl shadow-card mb-6 border border-slate-100">
-            <h2 class="text-lg font-semibold mb-4 text-slate-800">Tambah User/Toko Baru</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-3">
-              <input id="namaToko" type="text" placeholder="Nama Toko" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-lf-orange focus:border-lf-orange">
-              <input id="namaPemilik" type="text" placeholder="Nama Pemilik" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-lf-orange focus:border-lf-orange">
-              <input id="emailUser" type="email" placeholder="Email User Baru" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-lf-orange focus:border-lf-orange">
-              <input id="passUser" type="password" placeholder="Password (min 6)" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-lf-orange focus:border-lf-orange">
-              <button type="button" onclick="daftarkanUser()" id="btnDaftar" class="bg-lf-orange text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-lf-orange-hover transition disabled:opacity-50">+ Daftarkan</button>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-xl shadow-card border border-slate-100">
-            <div class="p-5 md:p-6 border-b border-slate-100 flex items-center justify-between">
-              <h2 class="text-lg font-semibold text-slate-800">List User Terdaftar</h2>
-              <button type="button" onclick="ambilDataUser()" class="text-sm text-lf-orange hover:underline font-medium">↻ Refresh</button>
-            </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead class="bg-slate-50 text-slate-600">
-                  <tr>
-                    <th class="p-3 text-left font-medium">No</th>
-                    <th class="p-3 text-left font-medium">Nama Toko</th>
-                    <th class="p-3 text-left font-medium">Pemilik</th>
-                    <th class="p-3 text-left font-medium">Email</th>
-                    <th class="p-3 text-left font-medium">Omset</th>
-                    <th class="p-3 text-left font-medium">Status</th>
-                    <th class="p-3 text-left font-medium">Paket</th>
-                    <th class="p-3 text-left font-medium">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody id="tabelUser" class="divide-y divide-slate-100">
-                  <tr><td colspan="8" class="text-center p-6 text-slate-500">Loading data...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </main>
+<!-- CONFIRM MODAL -->
+<div id="confirm-modal" class="dark-modal-bg">
+  <div class="dark-modal-box">
+    <div id="confirm-icon" class="dark-modal-icon"></div>
+    <div id="confirm-title" class="dark-modal-title"></div>
+    <div id="confirm-msg"   class="dark-modal-msg"></div>
+    <div class="dark-modal-btns">
+      <button onclick="closeConfirm()" class="btn btn-modal-cancel">Batal</button>
+      <button id="confirm-ok" class="btn"></button>
     </div>
   </div>
+</div>
 
-  <script type="module" src="js/admin-daftar.js"></script>
+<!-- PREMIUM MODAL -->
+<div id="premium-modal" class="dark-modal-bg">
+  <div class="dark-modal-box wide">
+    <div class="dark-modal-title" style="text-align:left;margin-bottom:16px;">Aktifkan Premium</div>
+
+    <div class="dark-form-group">
+      <label class="dark-form-label">Durasi (hari)</label>
+      <input id="pm-days" type="number" value="30" min="1" max="365" class="dark-form-input">
+    </div>
+
+    <div class="dark-form-group">
+      <label class="dark-form-label">Warna Aksen</label>
+      <div class="pm-colors" id="pm-colors">
+        <button type="button" data-c="#FF6B35" class="pm-col" style="background:#FF6B35" title="Oranye"></button>
+        <button type="button" data-c="#EE4D2D" class="pm-col" style="background:#EE4D2D" title="Merah"></button>
+        <button type="button" data-c="#25D366" class="pm-col" style="background:#25D366" title="Hijau"></button>
+        <button type="button" data-c="#3B82F6" class="pm-col" style="background:#3B82F6" title="Biru"></button>
+        <button type="button" data-c="#8B5CF6" class="pm-col" style="background:#8B5CF6" title="Ungu"></button>
+        <button type="button" data-c="#EC4899" class="pm-col" style="background:#EC4899" title="Pink"></button>
+        <button type="button" data-c="#F59E0B" class="pm-col" style="background:#F59E0B" title="Kuning"></button>
+      </div>
+    </div>
+
+    <div class="dark-form-group">
+      <label class="dark-form-label">Template Tema</label>
+      <select id="pm-template" class="dark-form-select">
+        <option value="default">Midnight City</option>
+        <option value="forest">Dark Forest</option>
+        <option value="ocean">Deep Ocean</option>
+        <option value="aurora">Aurora Night</option>
+        <option value="desert">Golden Desert</option>
+        <option value="sakura">Sakura Bloom</option>
+      </select>
+    </div>
+
+    <div class="dark-form-group">
+      <label class="dark-form-label">Custom Slug (opsional)</label>
+      <div class="slug-input-row" style="background:#22262C;border-color:#2C313A;">
+        <span class="slug-prefix" style="background:#1A1D23;border-right-color:#2C313A;color:#6B7280;">linkify.app/?uid=</span>
+        <input id="pm-slug" type="text" placeholder="otomatis pakai UID" class="slug-input" style="color:#fff;">
+      </div>
+    </div>
+
+    <div class="dark-modal-btns" style="margin-top:20px;">
+      <button onclick="closePremiumModal()" class="btn btn-modal-cancel">Batal</button>
+      <button id="pm-save-btn" onclick="savePremiumModal()" class="btn btn-modal-success">Aktifkan Premium</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrapper">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar dark-sidebar" id="sidebar">
+    <div class="sidebar-inner">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">
+          <img src="logo-linkify.png" alt="LF">
+        </div>
+        <div>
+          <div class="sidebar-brand-text">LINKify</div>
+          <div class="sidebar-brand-sub">Super Admin</div>
+        </div>
+      </div>
+
+      <div class="sidebar-menu">
+        <div class="sidebar-section-label" style="color:#374151;">Menu</div>
+        <a href="admin.html" style="text-decoration:none;">
+          <button type="button" class="tab-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            Dashboard Toko
+          </button>
+        </a>
+        <button type="button" class="tab-btn active-tab" style="background:#FF6B35!important;color:#fff!important;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          Manajemen User
+        </button>
+
+        <div class="sidebar-divider" style="background:#1F2329;"></div>
+        <div class="sidebar-section-label" style="color:#374151;padding:0 8px;">Sistem</div>
+
+        <button type="button" class="tab-btn" onclick="document.getElementById('maint-panel').scrollIntoView({behavior:'smooth'})" style="color:#F87171;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          Maintenance Mode
+          <span id="maint-status-label" style="margin-left:auto;font-size:10px;font-weight:700;letter-spacing:0.5px;">NONAKTIF</span>
+        </button>
+      </div>
+
+      <div class="sidebar-user" style="margin-top:auto;padding-top:16px;border-top:1px solid #1F2329;">
+        <div class="sidebar-user-info" style="background:rgba(255,255,255,0.04);">
+          <div class="sidebar-user-avatar" id="admin-avatar" style="background:#FF6B35;">A</div>
+          <div class="sidebar-user-email" id="adminYgLogin" style="color:#6B7280;font-size:11px;">Memuat...</div>
+        </div>
+        <button type="button" onclick="logoutAdmin()" class="tab-btn" style="color:#F87171;margin-top:6px;width:100%;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main" style="background:#0F1117;">
+
+    <!-- TOPBAR -->
+    <div class="mob-header dark-topbar" style="position:sticky;top:0;z-index:20;">
+      <div class="mob-title" style="color:#fff;">Manajemen User</div>
+      <button class="hamburger" id="btn-hamburger" style="background:#1F2329;border-color:#2C313A;color:#fff;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="page-wrap" style="padding:20px 20px 80px;">
+
+      <!-- LOGIN PANEL -->
+      <div id="loginAdmin" style="display:flex;align-items:center;justify-content:center;min-height:70vh;">
+        <div style="width:100%;max-width:360px;">
+          <div style="text-align:center;margin-bottom:28px;">
+            <div style="width:52px;height:52px;background:#FF6B35;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 4px 16px rgba(255,107,53,0.30);">
+              <img src="logo-linkify.png" alt="LF" style="width:32px;height:32px;border-radius:8px;">
+            </div>
+            <div style="font-size:20px;font-weight:800;color:#fff;">Admin Login</div>
+            <div style="font-size:12px;color:#6B7280;margin-top:4px;">LINKify Control Panel</div>
+          </div>
+          <div style="background:#1A1D23;border:1px solid #1F2329;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <label class="dark-form-label">Email Admin</label>
+              <input id="adminEmail" type="email" autocomplete="email" placeholder="admin@linkify.app" class="dark-form-input">
+            </div>
+            <div>
+              <label class="dark-form-label">Password</label>
+              <input id="adminPass" type="password" autocomplete="current-password" placeholder="••••••••" class="dark-form-input">
+            </div>
+            <button type="button" onclick="loginAdmin()" class="btn btn-accent btn-w" style="padding:13px;font-size:14px;margin-top:4px;">
+              Masuk sebagai Admin
+            </button>
+            <p id="loginError" class="hidden" style="color:#F87171;font-size:12px;text-align:center;"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div id="formDaftar" style="display:none;">
+
+        <!-- ANALYTICS CARDS -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:24px;">
+          <div class="dark-stat-card">
+            <div class="dark-stat-label">Total User</div>
+            <div class="dark-stat-val" id="totalUser">0</div>
+            <div style="height:3px;width:28px;background:#3B82F6;border-radius:2px;margin-top:10px;opacity:0.7;"></div>
+          </div>
+          <div class="dark-stat-card">
+            <div class="dark-stat-label">Aktif</div>
+            <div class="dark-stat-val" id="totalAktif" style="color:#34D399;">0</div>
+            <div style="height:3px;width:28px;background:#10B981;border-radius:2px;margin-top:10px;opacity:0.7;"></div>
+          </div>
+          <div class="dark-stat-card">
+            <div class="dark-stat-label">Premium</div>
+            <div class="dark-stat-val" id="totalPremium" style="color:#FCD34D;">0</div>
+            <div style="height:3px;width:28px;background:#F59E0B;border-radius:2px;margin-top:10px;opacity:0.7;"></div>
+          </div>
+          <div class="dark-stat-card">
+            <div class="dark-stat-label">Diblokir</div>
+            <div class="dark-stat-val" id="totalSuspend" style="color:#F87171;">0</div>
+            <div style="height:3px;width:28px;background:#EF4444;border-radius:2px;margin-top:10px;opacity:0.7;"></div>
+          </div>
+        </div>
+
+        <!-- TAMBAH USER -->
+        <div class="dark-card" style="margin-bottom:20px;">
+          <div class="dark-card-header">
+            <span class="dark-card-title">Daftarkan User Baru</span>
+          </div>
+          <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">
+            <input id="namaToko"    type="text"     placeholder="Nama Toko"        class="dark-form-input">
+            <input id="namaPemilik" type="text"     placeholder="Nama Pemilik"     class="dark-form-input">
+            <input id="emailUser"   type="email"    placeholder="Email"            class="dark-form-input">
+            <input id="passUser"    type="password" placeholder="Password (min 6)" class="dark-form-input">
+            <button type="button" id="btnDaftar" onclick="daftarkanUser()" class="btn btn-accent" style="font-size:13px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Daftarkan
+            </button>
+          </div>
+        </div>
+
+        <!-- TABEL USER -->
+        <div class="dark-card">
+          <div class="dark-card-header">
+            <span class="dark-card-title">Daftar User Terdaftar</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div style="position:relative;">
+                <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);opacity:0.4;pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input id="searchInput" type="text" placeholder="Cari..." oninput="filterTable()" class="dark-input" style="padding-left:30px;width:160px;">
+              </div>
+              <select id="filterStatus" onchange="filterTable()" class="dark-form-select" style="width:auto;font-size:12px;padding:8px 12px;">
+                <option value="">Semua</option>
+                <option value="aktif">Aktif</option>
+                <option value="blokir">Diblokir</option>
+                <option value="premium">Premium</option>
+                <option value="gratis">Gratis</option>
+              </select>
+              <button onclick="ambilDataUser()" class="btn btn-outline" style="font-size:12px;padding:7px 12px;border-color:#2C313A;color:#9CA3AF;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                Refresh
+              </button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="ad-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Toko / Pemilik</th>
+                  <th style="display:none;" class="md-show">Email</th>
+                  <th class="lg-show" style="display:none;">Omset</th>
+                  <th>Status</th>
+                  <th>Paket</th>
+                  <th style="text-align:right;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="tabelUser">
+                <tr><td colspan="7" style="text-align:center;padding:40px;color:#4B5563;font-size:13px;">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="padding:10px 16px;border-top:1px solid #1F2329;">
+            <span id="tableCount" style="font-size:11px;color:#4B5563;"></span>
+          </div>
+        </div>
+
+      </div><!-- end formDaftar -->
+
+        <!-- MAINTENANCE PANEL -->
+        <div id="maint-panel" style="display:none;margin-top:20px;">
+          <div class="dark-card">
+            <div class="dark-card-header">
+              <span class="dark-card-title" style="display:flex;align-items:center;gap:8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2" stroke-linecap="round" width="15" height="15"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                Maintenance Mode
+              </span>
+              <span style="font-size:11px;color:#6B7280;">Super Admin Only</span>
+            </div>
+            <div style="padding:18px;display:flex;flex-direction:column;gap:16px;">
+
+              <!-- Master toggle -->
+              <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.12);border-radius:12px;padding:14px 16px;">
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;">Aktifkan Maintenance</div>
+                  <div style="font-size:11px;color:#6B7280;">Pengunjung publik dan user toko tidak bisa akses</div>
+                </div>
+                <label style="position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0;cursor:pointer;">
+                  <input type="checkbox" id="maint-toggle" style="opacity:0;width:0;height:0;position:absolute;">
+                  <span class="maint-track" style="position:absolute;inset:0;border-radius:13px;background:#2C313A;transition:background 0.2s ease;cursor:pointer;"></span>
+                  <span class="maint-thumb" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.3);transition:transform 0.2s ease;pointer-events:none;"></span>
+                </label>
+              </div>
+
+              <!-- Title -->
+              <div>
+                <label class="dark-form-label">Judul Halaman Maintenance</label>
+                <input id="maint-title-inp" type="text" class="dark-form-input"
+                  placeholder="Sedang Maintenance" value="Sedang Maintenance">
+              </div>
+
+              <!-- Message -->
+              <div>
+                <label class="dark-form-label">Pesan untuk Pengunjung</label>
+                <textarea id="maint-msg-inp" class="dark-form-input" rows="3"
+                  placeholder="Sistem sedang dalam pemeliharaan. Kami akan segera kembali."
+                  style="resize:vertical;line-height:1.5;"></textarea>
+              </div>
+
+              <!-- Estimated done -->
+              <div>
+                <label class="dark-form-label">Estimasi Selesai (opsional)</label>
+                <input id="maint-est-inp" type="datetime-local" class="dark-form-input" style="color-scheme:dark;">
+                <p style="font-size:11px;color:#4B5563;margin-top:5px;">Kosongkan jika tidak ingin menampilkan countdown.</p>
+              </div>
+
+              <button type="button" id="maint-save-btn" onclick="saveMaintenance()"
+                class="btn btn-accent" style="font-size:13px;align-self:flex-start;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+                Simpan Pengaturan
+              </button>
+
+              <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.16);border-radius:10px;padding:12px 14px;">
+                <div style="font-size:11px;color:#D97706;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:5px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Perhatian
+                </div>
+                <div style="font-size:11px;color:#92400E;line-height:1.6;">
+                  Saat maintenance aktif, <strong style="color:#D97706;">halaman toko (index.html)</strong> dan
+                  <strong style="color:#D97706;">login toko (login-user.html)</strong> akan redirect ke halaman maintenance.
+                  Panel super admin ini dan dashboard toko tetap bisa diakses.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div><!-- end page-wrap -->
+  </div><!-- end main -->
+</div><!-- end wrapper -->
+
+<div id="toast"></div>
+
+<style>
+/* Responsive show/hide for table cols */
+@media (min-width: 640px)  { .md-show { display: table-cell !important; } }
+@media (min-width: 900px)  { .lg-show { display: table-cell !important; } }
+.wrapper { background: #0F1117; }
+.main { min-height: 100vh; }
+</style>
+
+<script>
+// Maintenance toggle visual behavior
+document.addEventListener('change', function(e) {
+  if (e.target.id !== 'maint-toggle') return;
+  const track = document.querySelector('.maint-track');
+  const thumb = document.querySelector('.maint-thumb');
+  if (track) track.style.background = e.target.checked ? '#EF4444' : '#2C313A';
+  if (thumb) thumb.style.transform  = e.target.checked ? 'translateX(20px)' : 'translateX(0)';
+});
+</script>
+<script type="module" src="js/admin-daftar.js"></script>
 </body>
 </html>
