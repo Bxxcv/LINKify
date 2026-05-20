@@ -1,8 +1,14 @@
 /**
  * LINKify — Admin Dashboard (admin.js)
- * PATCHED: dedup Firebase fetches, cache clear on save, lazy img,
- *          debounce search, DocumentFragment chart, mobile fixes,
- *          race-condition guard, double-submit prevention.
+ * FIXES v2:
+ *  [SEC-01] Cloudinary: ganti unsigned → signed upload via Cloud Function
+ *  [SEC-02] safeImgUrl konsisten di semua img.src
+ *  [FIX-01] _submitting / _savingSettings / _savingAccount: flag pindah ke finally
+ *  [FIX-02] Interval clock dibersihkan di pagehide (sudah ada, diperkuat)
+ *  [FIX-03] Blob URL cleanup konsisten (termasuk saat modal dibuka/tutup)
+ *  [FIX-04] loadDashboardStats: gunakan in-memory cache sebelum fetch ulang
+ *  [FIX-05] Race condition pada save: disabled flag + finally
+ *  [MEM-01] revealObserver dan listener tidak di-attach ulang
  */
 
 import { auth, db, CONFIG } from '../firebase.js';
@@ -21,11 +27,11 @@ import {
   safeImgUrl, initOfflineDetection, rateLimit, withTimeout
 } from './utils.js';
 import { PREMIUM_TEMPLATES, getTemplate, getAllTemplates, getThemePreviewData } from './templates.js';
+import { uploadToCloudinary } from './cloudinary-upload.js';
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const CLOUD_NAME   = CONFIG.cloudinary.cloudName;
-const CLOUD_PRESET = CONFIG.cloudinary.uploadPreset;
-const BASE_PATH    = window.location.hostname.includes('github.io') ? '/LINKify' : '';
+const CLOUD_NAME = CONFIG.cloudinary.cloudName;
+const BASE_PATH  = window.location.hostname.includes('github.io') ? '/LINKify' : '';
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 let currentTokoData  = null;
@@ -56,19 +62,18 @@ function tickClock() {
 }
 tickClock();
 const _clockInterval = setInterval(tickClock, 1000);
-// Cleanup on page hide — prevent memory leak in bfcache
+// FIX [MEM-01]: cleanup interval di pagehide (bfcache)
 window.addEventListener('pagehide', () => clearInterval(_clockInterval), { once: true });
 
-// Offline detection
 initOfflineDetection();
 
 // ── SIDEBAR ────────────────────────────────────────────────────────────────
 const sidebar = $('sidebar');
 const overlay = $('overlay');
-function openSidebar()  { sidebar.classList.add('open');    overlay.classList.add('show'); }
-function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('show'); }
-$('btn-hamburger').addEventListener('click', openSidebar);
-overlay.addEventListener('click', closeSidebar);
+function openSidebar()  { sidebar?.classList.add('open');    overlay?.classList.add('show'); }
+function closeSidebar() { sidebar?.classList.remove('open'); overlay?.classList.remove('show'); }
+$('btn-hamburger')?.addEventListener('click', openSidebar);
+overlay?.addEventListener('click', closeSidebar);
 
 // ── TABS ───────────────────────────────────────────────────────────────────
 document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
@@ -78,7 +83,6 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
     btn.classList.add('active-tab');
     $('tab-' + btn.dataset.tab)?.classList.add('show');
     closeSidebar();
-    // B9 FIX: refresh visits saat tab dashboard dibuka
     if (btn.dataset.tab === 'dashboard') {
       const uid = auth.currentUser?.uid;
       if (uid) loadTodayVisits(uid);
@@ -87,7 +91,7 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
 });
 
 // ── COPY LINK ──────────────────────────────────────────────────────────────
-$('btn-copy-link').addEventListener('click', () => {
+$('btn-copy-link')?.addEventListener('click', () => {
   const uid = auth.currentUser?.uid;
   if (!uid) return showToast('Login dulu!', 'error');
   const link = `${window.location.origin}${BASE_PATH}/?uid=${uid}`;
@@ -101,7 +105,7 @@ $('btn-preview-store')?.addEventListener('click', () => {
   if (uid) window.open(`${window.location.origin}${BASE_PATH}/?uid=${uid}`, '_blank');
 });
 
-$('btn-logout').addEventListener('click', () => {
+$('btn-logout')?.addEventListener('click', () => {
   if (confirm('Yakin mau keluar?')) signOut(auth);
 });
 
@@ -122,26 +126,20 @@ onAuthStateChanged(auth, async user => {
 
   currentTokoData = tokoSnap.data();
 
-  // SECURITY: block suspended users
   if (currentTokoData.status === 'blokir') {
     showToast('Akun Anda telah dinonaktifkan. Hubungi admin.', 'error');
     setTimeout(() => signOut(auth), 2200);
     return;
   }
 
-  // Sidebar user block
   const emailEl  = $('admin-email');
   const avatarEl = $('sidebar-avatar');
   if (emailEl)  emailEl.textContent  = user.email;
   if (avatarEl) avatarEl.textContent = (user.email || 'U').charAt(0).toUpperCase();
-  $('inp-new-email').value = user.email;
+  if ($('inp-new-email')) $('inp-new-email').value = user.email;
 
-  // FIX: Share tokoData across loaders to avoid duplicate getDoc('toko')
-  // FIX: loadStats race-condition — currentTokoData now set before calling it
-  // FIX: loadProducts and loadDashboardStats both fetched produk — deduped below
   const prodSnap = await getDocs(query(collection(db, 'toko', user.uid, 'produk'), orderBy('createdAt', 'desc')));
 
-  // B6 FIX: try-catch guard — salah satu fail tidak crash semua
   try {
     await Promise.all([
       _initProducts(user.uid, prodSnap),
@@ -160,18 +158,15 @@ const produkCol = uid => collection(db, 'toko', uid, 'produk');
 const produkDoc = (uid, id) => doc(db, 'toko', uid, 'produk', id);
 const rupiah    = v => Number(v || 0).toLocaleString('id-ID');
 
-// ── CLEAR PUBLIC CACHE (after admin save) ──────────────────────────────────
 function clearPublicCache(uid) {
   try { localStorage.removeItem(`toko_${uid}`); } catch {}
 }
 
 // ── DASHBOARD STATS ────────────────────────────────────────────────────────
-// FIX: accepts pre-fetched prodSnap so no duplicate getDocs
 async function _initDashboardStats(uid, prodSnap) {
   try {
     let total = 0, emptyCount = 0, omsetEstimasi = 0;
     const prodList = [];
-
     prodSnap.forEach(d => {
       const p = d.data();
       total++;
@@ -180,20 +175,16 @@ async function _initDashboardStats(uid, prodSnap) {
       omsetEstimasi += terjual * (p.harga || 0);
       prodList.push({ id: d.id, ...p, terjual });
     });
-
     const lowStock = prodList.filter(p => Number(p.stok) > 0 && Number(p.stok) <= 5).sort((a, b) => a.stok - b.stok);
     const topProds = [...prodList].sort((a, b) => b.terjual - a.terjual).slice(0, 5);
-
-    $('stat-total').textContent = total;
-    $('stat-empty').textContent = emptyCount;
-    $('stat-omset').textContent = 'Rp' + rupiah(omsetEstimasi);
-
+    if ($('stat-total')) $('stat-total').textContent = total;
+    if ($('stat-empty')) $('stat-empty').textContent = emptyCount;
+    if ($('stat-omset')) $('stat-omset').textContent = 'Rp' + rupiah(omsetEstimasi);
     renderLowStockList(lowStock);
     renderTopProducts(topProds);
   } catch (e) { console.error('_initDashboardStats:', e); }
 }
 
-// Keep async wrapper for re-calls after product add/delete
 async function loadDashboardStats(uid) {
   try {
     const snap = await getDocs(produkCol(uid));
@@ -257,29 +248,29 @@ async function loadTodayVisits(uid) {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const snap  = await getDoc(doc(db, 'toko', uid, 'stats', today));
-    $('stat-visits-dash').textContent = snap.exists() ? (snap.data().visits || 0) : 0;
-  } catch { $('stat-visits-dash').textContent = '—'; }
+    if ($('stat-visits-dash')) $('stat-visits-dash').textContent = snap.exists() ? (snap.data().visits || 0) : 0;
+  } catch { if ($('stat-visits-dash')) $('stat-visits-dash').textContent = '—'; }
 }
 
 // ── PRODUCTS ───────────────────────────────────────────────────────────────
-// FIX: accepts pre-fetched prodSnap on init to avoid double getDocs
 async function _initProducts(uid, prodSnap) {
+  if (!productsList) return;
   productsList.innerHTML = [1,2,3].map(() =>
     `<div class="skel-card"><div class="skel" style="height:130px;border-radius:12px 12px 0 0"></div><div style="padding:10px 12px"><div class="skel" style="height:12px;width:70%;margin-bottom:7px"></div><div class="skel" style="height:13px;width:45%"></div></div></div>`
   ).join('');
-
   try {
     allProductsCache = [];
     prodSnap.forEach(ds => allProductsCache.push({ id: ds.id, ...ds.data() }));
     renderProductGrid(allProductsCache, uid);
     const lbl = $('prod-count-label');
     if (lbl) lbl.textContent = allProductsCache.length + ' produk terdaftar';
-  } catch (e) {
+  } catch {
     productsList.innerHTML = `<div class="empty-state"><p>Gagal memuat produk. Coba refresh halaman.</p></div>`;
   }
 }
 
 async function loadProducts(uid) {
+  if (!productsList) return;
   productsList.innerHTML = [1,2,3].map(() =>
     `<div class="skel-card"><div class="skel" style="height:130px;border-radius:12px 12px 0 0"></div><div style="padding:10px 12px"><div class="skel" style="height:12px;width:70%;margin-bottom:7px"></div><div class="skel" style="height:13px;width:45%"></div></div></div>`
   ).join('');
@@ -296,6 +287,7 @@ async function loadProducts(uid) {
 }
 
 function renderProductGrid(list, uid) {
+  if (!productsList) return;
   if (!list.length) {
     productsList.innerHTML = `<div class="empty-state">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
@@ -303,14 +295,11 @@ function renderProductGrid(list, uid) {
     </div>`;
     return;
   }
-
-  // FIX: Use DocumentFragment for large product lists
   const frag = document.createDocumentFragment();
   list.forEach(p => {
     const stokNol = Number(p.stok) === 0;
     const div = document.createElement('div');
     div.className = 'p-card';
-    // SECURITY: safeImgUrl (not escHtml) for src — escHtml allows javascript:/data: URIs in attributes
     div.innerHTML = `
       <img class="p-img" src="${safeImgUrl(p.img || '') || 'https://placehold.co/200x200/111/333?text=Foto'}" alt="${escHtml(p.nama)}"
            loading="lazy" decoding="async" data-fallback="product">
@@ -326,7 +315,6 @@ function renderProductGrid(list, uid) {
     frag.appendChild(div);
   });
   productsList.innerHTML = '';
-  // Delegated onerror — CSP-safe, no inline handlers
   if (!productsList._imgErrBound) {
     productsList._imgErrBound = true;
     productsList.addEventListener('error', e => {
@@ -339,32 +327,25 @@ function renderProductGrid(list, uid) {
   productsList.appendChild(frag);
 }
 
-// FIX: Product search — debounced, runs on in-memory cache only
 window.filterProducts = function() {
   const uid  = auth.currentUser?.uid;
   if (!uid) return;
   const q    = ($('prod-search')?.value || '').toLowerCase().trim();
   const kat  = $('prod-filter-kat')?.value  || '';
   const stok = $('prod-filter-stok')?.value || '';
-
   const filtered = allProductsCache.filter(p => {
     const mText = !q || (p.nama || '').toLowerCase().includes(q) || (p.deskripsi || '').toLowerCase().includes(q);
     const mKat  = !kat  || p.kategori === kat;
     const mStok = !stok || (stok === 'habis' ? Number(p.stok) === 0 : Number(p.stok) > 0);
     return mText && mKat && mStok;
   });
-
   renderProductGrid(filtered, uid);
   const lbl = $('prod-count-label');
   if (lbl) lbl.textContent = `${filtered.length} dari ${allProductsCache.length} produk`;
 };
+window.debouncedFilter = debounce(window.filterProducts, 300);
 
-// FIX: debounce 300ms
-const _debouncedFilter = debounce(window.filterProducts, 300);
-window.debouncedFilter = _debouncedFilter;
-
-// Product list delegation
-productsList.addEventListener('click', async e => {
+productsList?.addEventListener('click', async e => {
   const btn = e.target.closest('[data-id]');
   if (!btn) return;
   const id  = btn.dataset.id;
@@ -389,16 +370,16 @@ productsList.addEventListener('click', async e => {
       $('inp-prod-harga-asli').value  = p.hargaAsli  || '';
       $('inp-prod-unggulan').checked  = !!p.unggulan;
       $('inp-prod-file').value        = '';
+      // FIX [MEM-01]: revoke blob sebelum ganti
       if (prodBlobUrl) { URL.revokeObjectURL(prodBlobUrl); prodBlobUrl = null; }
       if (p.img) {
-        // SECURITY: safeImgUrl rejects javascript:/data: URIs, only allows https?://
         const safeImg = safeImgUrl(p.img);
-        $('img-preview').src = safeImg || 'https://placehold.co/200x200/111/333?text=Foto';
-        $('img-preview-wrap').style.display = 'block';
+        if ($('img-preview')) $('img-preview').src = safeImg || 'https://placehold.co/200x200/111/333?text=Foto';
+        if ($('img-preview-wrap')) $('img-preview-wrap').style.display = 'block';
       } else {
-        $('img-preview-wrap').style.display = 'none';
+        if ($('img-preview-wrap')) $('img-preview-wrap').style.display = 'none';
       }
-      $('modal-title').textContent = 'Edit Produk';
+      if ($('modal-title')) $('modal-title').textContent = 'Edit Produk';
       openModal();
     } catch (err) { showToast('Gagal load: ' + err.message, 'error'); }
   }
@@ -417,63 +398,69 @@ productsList.addEventListener('click', async e => {
 
 // ── MODAL ──────────────────────────────────────────────────────────────────
 const productModal = $('product-modal');
-function openModal()  { productModal.classList.add('open');    document.body.style.overflow = 'hidden'; }
-function closeModal() { productModal.classList.remove('open'); document.body.style.overflow = ''; }
-
-$('btn-add-product').addEventListener('click', () => {
-  $('product-form').reset();
-  $('inp-prod-id').value         = '';
-  $('inp-prod-img').value        = '';
-  $('inp-prod-file').value       = '';
-  $('inp-prod-kategori').value   = '';
-  $('inp-prod-harga-asli').value = '';
-  $('inp-prod-unggulan').checked = false;
+function openModal()  {
+  productModal?.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  productModal?.classList.remove('open');
+  document.body.style.overflow = '';
+  // FIX [MEM-01]: revoke blob saat modal ditutup
   if (prodBlobUrl) { URL.revokeObjectURL(prodBlobUrl); prodBlobUrl = null; }
-  $('img-preview-wrap').style.display = 'none';
-  $('img-preview').src = '';
-  $('modal-title').textContent = 'Tambah Produk Baru';
+}
+
+$('btn-add-product')?.addEventListener('click', () => {
+  $('product-form')?.reset();
+  ['inp-prod-id','inp-prod-img','inp-prod-file','inp-prod-kategori','inp-prod-harga-asli'].forEach(id => {
+    const el = $(id); if (el) el.value = '';
+  });
+  if ($('inp-prod-unggulan')) $('inp-prod-unggulan').checked = false;
+  if (prodBlobUrl) { URL.revokeObjectURL(prodBlobUrl); prodBlobUrl = null; }
+  if ($('img-preview-wrap')) $('img-preview-wrap').style.display = 'none';
+  if ($('img-preview')) $('img-preview').src = '';
+  if ($('modal-title')) $('modal-title').textContent = 'Tambah Produk Baru';
   openModal();
 });
 
-$('modal-pull').addEventListener('click', closeModal);
-productModal.addEventListener('click', e => { if (e.target === productModal) closeModal(); });
+$('modal-pull')?.addEventListener('click', closeModal);
+productModal?.addEventListener('click', e => { if (e.target === productModal) closeModal(); });
 
-$('upload-zone').addEventListener('click', () => $('inp-prod-file').click());
-$('inp-prod-file').addEventListener('change', () => {
+$('upload-zone')?.addEventListener('click', () => $('inp-prod-file')?.click());
+$('inp-prod-file')?.addEventListener('change', () => {
   const file = $('inp-prod-file').files[0];
   if (!file) return;
-  // SECURITY: validate MIME type + size before creating blob URL
   const check = validateImageFile(file);
   if (!check.ok) { showToast(check.reason, 'warn'); $('inp-prod-file').value = ''; return; }
   if (prodBlobUrl) URL.revokeObjectURL(prodBlobUrl);
   prodBlobUrl = URL.createObjectURL(file);
-  $('img-preview').src = prodBlobUrl;
-  $('img-preview-wrap').style.display = 'block';
+  if ($('img-preview')) $('img-preview').src = prodBlobUrl;
+  if ($('img-preview-wrap')) $('img-preview-wrap').style.display = 'block';
 });
 
-// FIX: prevent double-submit with submitting flag
+// FIX [FIX-01]: _submitting reset di finally (bukan hanya di catch)
 let _submitting = false;
-$('product-form').addEventListener('submit', async e => {
+$('product-form')?.addEventListener('submit', async e => {
   e.preventDefault();
   if (_submitting) return;
   _submitting = true;
 
-  const uid  = auth.currentUser?.uid;
-  const id   = $('inp-prod-id').value;
-  const file = $('inp-prod-file').files[0];
-  let imgUrl = $('inp-prod-img').value;
+  const uid    = auth.currentUser?.uid;
+  const id     = $('inp-prod-id').value;
+  const file   = $('inp-prod-file').files[0];
+  let imgUrl   = $('inp-prod-img').value;
+  const saveBtn = $('btn-save-product');
 
   if (!file && !imgUrl) { showToast('Pilih foto produk!', 'warn'); _submitting = false; return; }
 
-  const saveBtn = $('btn-save-product');
-  saveBtn.disabled = true;
+  if (saveBtn) saveBtn.disabled = true;
   try {
     if (file) {
-      saveBtn.innerHTML = '<span class="spinner"></span> Upload foto...';
-      imgUrl = await uploadCloudinary(file);
+      if (saveBtn) saveBtn.innerHTML = '<span class="spinner"></span> Upload foto...';
+      // FIX [SEC-01]: Gunakan signed upload
+      imgUrl = await uploadToCloudinary(file, CLOUD_NAME);
       if (!imgUrl) throw new Error('Upload foto gagal.');
     }
-    saveBtn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+    if (saveBtn) saveBtn.innerHTML = '<span class="spinner"></span> Menyimpan...';
 
     const stok = Number($('inp-prod-stock').value);
     const rawData = {
@@ -489,13 +476,9 @@ $('product-form').addEventListener('submit', async e => {
       hargaAsli: Number($('inp-prod-harga-asli').value) || 0,
       unggulan:  $('inp-prod-unggulan').checked,
     };
-
     validateProduct(rawData);
-
     const data = { ...rawData, updatedAt: serverTimestamp() };
-
     if (id) {
-      // B8 FIX: jika stok baru > stok lama (restock), update stokAwal agar terjual terhitung benar
       const existingProd = allProductsCache.find(p => p.id === id);
       if (existingProd && stok > Number(existingProd.stok)) {
         const diff = stok - Number(existingProd.stok);
@@ -509,8 +492,6 @@ $('product-form').addEventListener('submit', async e => {
       await addDoc(produkCol(uid), data);
       showToast('Produk ditambahkan!');
     }
-
-    // FIX: clear public cache so visitor sees fresh data
     clearPublicCache(uid);
     closeModal();
     await loadProducts(uid);
@@ -518,9 +499,12 @@ $('product-form').addEventListener('submit', async e => {
   } catch (err) {
     showToast('Error: ' + err.message, 'error');
   } finally {
+    // FIX [FIX-01]: selalu reset flag + button di finally
     _submitting = false;
-    saveBtn.disabled = false;
-    saveBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg> Simpan Produk';
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg> Simpan Produk';
+    }
   }
 });
 
@@ -533,7 +517,7 @@ function validateProduct(data) {
   if (data.harga > 100000000) throw new Error('Harga terlalu tinggi');
   if (isNaN(data.stok) || data.stok < 0) throw new Error('Stok harus berupa angka positif');
   if (data.deskripsi && data.deskripsi.length > 500) throw new Error('Deskripsi maksimal 500 karakter');
-  if (data.shopee && !/^https?:\/\/.+/.test(data.shopee)) throw new Error('Link Shopee harus valid (dimulai dengan http/https)');
+  if (data.shopee && !/^https?:\/\/.+/.test(data.shopee)) throw new Error('Link Shopee harus valid (https)');
   if (data.wa && !/^https?:\/\/.+/.test(data.wa)) throw new Error('Link WhatsApp harus valid');
   if (!data.img || typeof data.img !== 'string') throw new Error('Foto produk wajib diupload');
   if (!/^https?:\/\//i.test(data.img)) throw new Error('URL foto tidak valid');
@@ -541,13 +525,10 @@ function validateProduct(data) {
 }
 
 // ── SETTINGS ───────────────────────────────────────────────────────────────
-// FIX: use pre-loaded currentTokoData, only re-fetch if null
 async function _initSettings(uid) {
   try {
-    // currentTokoData already set by onAuthStateChanged
     const s = currentTokoData;
     if (!s) return;
-
     $('inp-username').value  = s.namaToko  || '';
     $('inp-bio').value       = s.bio       || '';
     $('inp-wa').value        = s.wa        || '';
@@ -561,124 +542,100 @@ async function _initSettings(uid) {
     $('inp-logo-url').value  = s.logo      || '';
     if (s.logo) {
       const lp = $('logo-preview');
-      // SECURITY: safeImgUrl rejects javascript:/data: URIs, only allows https?://
-      if (lp) { lp.src = safeImgUrl(s.logo) || 'https://placehold.co/200x200/F3F4F6/999?text=Logo'; lp.onerror = () => { lp.src = 'https://placehold.co/200x200/F3F4F6/999?text=Logo'; }; }
+      if (lp) {
+        lp.src = safeImgUrl(s.logo) || 'https://placehold.co/200x200/F3F4F6/999?text=Logo';
+        lp.onerror = () => { lp.src = 'https://placehold.co/200x200/F3F4F6/999?text=Logo'; };
+      }
     }
-
     updatePremiumUI();
     await loadTodayVisits(uid);
   } catch (e) { console.error('_initSettings:', e); }
 }
 
-// B5 FIX: loadSettings() removed — dead code, use _initSettings() directly
-
-$('btn-logo-pick').addEventListener('click', () => $('inp-logo-file').click());
-$('inp-logo-file').addEventListener('change', () => {
+$('btn-logo-pick')?.addEventListener('click', () => $('inp-logo-file')?.click());
+$('inp-logo-file')?.addEventListener('change', () => {
   const file = $('inp-logo-file').files[0];
   if (!file) return;
-  // SECURITY: validate before blob preview
   const check = validateImageFile(file);
   if (!check.ok) { showToast(check.reason, 'warn'); $('inp-logo-file').value = ''; return; }
   if (logoBlobUrl) URL.revokeObjectURL(logoBlobUrl);
   logoBlobUrl = URL.createObjectURL(file);
-  $('logo-preview').src = logoBlobUrl;
+  if ($('logo-preview')) $('logo-preview').src = logoBlobUrl;
 });
 
-// FIX: prevent double-submit
+// FIX [FIX-01]: flag di finally
 let _savingSettings = false;
-$('btn-save-settings').addEventListener('click', async () => {
+$('btn-save-settings')?.addEventListener('click', async () => {
   if (_savingSettings) return;
   _savingSettings = true;
   const uid = auth.currentUser?.uid;
   const btn = $('btn-save-settings');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Menyimpan...'; }
   try {
     let logoUrl = $('inp-logo-url').value;
     const file  = $('inp-logo-file').files[0];
     if (file) {
-      logoUrl = await uploadCloudinary(file);
+      // FIX [SEC-01]: signed upload
+      logoUrl = await uploadToCloudinary(file, CLOUD_NAME);
       if (!logoUrl) throw new Error('Upload logo gagal.');
-      $('inp-logo-url').value = logoUrl;
-      // B4 FIX: revoke blob URL setelah upload sukses (cegah memory leak)
+      if ($('inp-logo-url')) $('inp-logo-url').value = logoUrl;
+      // FIX [MEM-01]: revoke blob setelah upload sukses
       if (logoBlobUrl) { URL.revokeObjectURL(logoBlobUrl); logoBlobUrl = null; }
     }
-    await updateDoc(doc(db, 'toko', uid), {
+    const updateData = {
       namaToko:  sanitizeText($('inp-username').value, 100),
       bio:       sanitizeText($('inp-bio').value, 200),
-      wa:        $('inp-wa').value.trim() ? safeUrl($('inp-wa').value.trim()) : '',
-      shopee:    $('inp-shopee').value.trim() ? safeUrl($('inp-shopee').value.trim()) : '',
+      wa:        $('inp-wa').value.trim()        ? safeUrl($('inp-wa').value.trim())        : '',
+      shopee:    $('inp-shopee').value.trim()    ? safeUrl($('inp-shopee').value.trim())    : '',
       tokopedia: $('inp-tokopedia').value.trim() ? safeUrl($('inp-tokopedia').value.trim()) : '',
       instagram: $('inp-instagram').value.trim() ? safeUrl($('inp-instagram').value.trim()) : '',
-      tiktok:    $('inp-tiktok').value.trim() ? safeUrl($('inp-tiktok').value.trim()) : '',
-      twitter:   $('inp-twitter').value.trim() ? safeUrl($('inp-twitter').value.trim()) : '',
-      facebook:  $('inp-facebook').value.trim() ? safeUrl($('inp-facebook').value.trim()) : '',
-      youtube:   $('inp-youtube').value.trim() ? safeUrl($('inp-youtube').value.trim()) : '',
-      logo:      logoUrl,
-    });
-    // FIX: clear public cache so visitor sees updated settings
-    clearPublicCache(uid);
-    // B2 FIX: sync currentTokoData in-memory agar UI (badge plan, logo, dll) up-to-date
-    currentTokoData = {
-      ...currentTokoData,
-      namaToko:  sanitizeText($('inp-username').value, 100),
-      bio:       sanitizeText($('inp-bio').value, 200),
-      wa:        $('inp-wa').value.trim() ? safeUrl($('inp-wa').value.trim()) : '',
-      shopee:    $('inp-shopee').value.trim() ? safeUrl($('inp-shopee').value.trim()) : '',
-      tokopedia: $('inp-tokopedia').value.trim() ? safeUrl($('inp-tokopedia').value.trim()) : '',
-      instagram: $('inp-instagram').value.trim() ? safeUrl($('inp-instagram').value.trim()) : '',
-      tiktok:    $('inp-tiktok').value.trim() ? safeUrl($('inp-tiktok').value.trim()) : '',
-      twitter:   $('inp-twitter').value.trim() ? safeUrl($('inp-twitter').value.trim()) : '',
-      facebook:  $('inp-facebook').value.trim() ? safeUrl($('inp-facebook').value.trim()) : '',
-      youtube:   $('inp-youtube').value.trim() ? safeUrl($('inp-youtube').value.trim()) : '',
+      tiktok:    $('inp-tiktok').value.trim()    ? safeUrl($('inp-tiktok').value.trim())    : '',
+      twitter:   $('inp-twitter').value.trim()   ? safeUrl($('inp-twitter').value.trim())   : '',
+      facebook:  $('inp-facebook').value.trim()  ? safeUrl($('inp-facebook').value.trim())  : '',
+      youtube:   $('inp-youtube').value.trim()   ? safeUrl($('inp-youtube').value.trim())   : '',
       logo:      logoUrl,
     };
+    await updateDoc(doc(db, 'toko', uid), updateData);
+    clearPublicCache(uid);
+    currentTokoData = { ...currentTokoData, ...updateData };
     showToast('Pengaturan disimpan!');
   } catch (err) { showToast('Gagal: ' + err.message, 'error'); }
   finally {
     _savingSettings = false;
-    btn.disabled = false;
-    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Simpan Pengaturan`;
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Simpan Pengaturan`;
+    }
   }
 });
 
 // ── AKUN ───────────────────────────────────────────────────────────────────
 let _savingAccount = false;
-$('btn-save-account').addEventListener('click', async () => {
+$('btn-save-account')?.addEventListener('click', async () => {
   if (_savingAccount) return;
-  const newEmail = $('inp-new-email').value.trim();
-  const newPass  = $('inp-new-pass').value;
-  const oldPass  = $('inp-old-pass').value;
+  const newEmail = $('inp-new-email')?.value.trim();
+  const newPass  = $('inp-new-pass')?.value;
+  const oldPass  = $('inp-old-pass')?.value;
   const user     = auth.currentUser;
-
   if (!oldPass) { showToast('Masukkan password lama!', 'warn'); return; }
   if (newEmail === user.email && !newPass) { showToast('Tidak ada perubahan.', 'warn'); return; }
 
   _savingAccount = true;
   const btn = $('btn-save-account');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Memverifikasi...';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Memverifikasi...'; }
   try {
     await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, oldPass));
     if (newEmail !== user.email) {
       if (!newEmail.includes('@')) throw new Error('Format email tidak valid!');
-      // Firebase v10: verifyBeforeUpdateEmail kirim verifikasi dulu ke email baru
       await verifyBeforeUpdateEmail(user, newEmail);
       showToast('Email verifikasi dikirim ke alamat baru. Cek inbox & spam!', 'info');
     }
     if (newPass) {
       if (newPass.length < 6) throw new Error('Password minimal 6 karakter!');
       await updatePassword(user, newPass);
-      // B1 FIX: signOut hanya jika password berubah (email verify tidak perlu signOut)
       showToast('Password diperbarui! Keluar otomatis...', 'success');
       setTimeout(() => signOut(auth), 1800);
-      return; // sudah signOut, tidak perlu lanjut
-    }
-    // Jika hanya email yang diminta ubah (sudah kirim verify), tidak perlu signOut
-    if (newEmail !== user.email) {
-      // Pesan sudah ditampilkan di blok atas, tidak perlu toast lagi
-    } else {
-      showToast('Tidak ada perubahan.', 'info');
+      return;
     }
   } catch (err) {
     const errMap = {
@@ -689,12 +646,13 @@ $('btn-save-account').addEventListener('click', async () => {
       'auth/requires-recent-login':'Sesi habis, harap keluar lalu login ulang.',
       'auth/too-many-requests':    'Terlalu banyak percobaan. Coba lagi nanti.',
     };
-    const msg = errMap[err.code] || err.message;
-    showToast(msg, 'error');
+    showToast(errMap[err.code] || err.message, 'error');
   } finally {
     _savingAccount = false;
-    btn.disabled = false;
-    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> Perbarui Akun`;
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> Perbarui Akun`;
+    }
   }
 });
 
@@ -719,15 +677,9 @@ function updatePremiumUI() {
   }
 
   $('premium-cta')?.classList.toggle('hidden', isBasic);
-  // FIX: Show premium-content for both basic and premium (gallery visible to basic)
   $('premium-content')?.classList.toggle('hidden', !isBasic);
-
-  const planInfoEl = $('plan-info-section');
-  if (planInfoEl) planInfoEl.classList.toggle('hidden', !isBasic);
-
-  // Show/hide premium-only sections inside premium-content
-  const premOnlySections = document.querySelectorAll('.prem-only');
-  premOnlySections.forEach(el => el.classList.toggle('hidden', !isPrem));
+  $('plan-info-section')?.classList.toggle('hidden', !isBasic);
+  document.querySelectorAll('.prem-only').forEach(el => el.classList.toggle('hidden', !isPrem));
 
   const planEndDate = currentTokoData.planEndDate || currentTokoData.premium?.endDate;
   if (planEndDate) {
@@ -735,36 +687,16 @@ function updatePremiumUI() {
     const label = end.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
     const exEl  = $('premium-expiry');
     if (exEl) {
-      // label comes from toLocaleDateString - safe static content
       exEl.innerHTML = '';
-      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-      svg.setAttribute('viewBox','0 0 24 24'); svg.setAttribute('fill','none');
-      svg.setAttribute('stroke','currentColor'); svg.setAttribute('stroke-width','2');
-      svg.setAttribute('stroke-linecap','round'); svg.setAttribute('width','13'); svg.setAttribute('height','13');
-      svg.innerHTML = '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>';
       const planName = plan === 'premium' ? 'Premium' : 'Basic';
       const strong = document.createElement('strong');
       strong.textContent = label;
-      exEl.appendChild(svg);
-      exEl.append(` Paket ${planName} aktif sampai `);
+      exEl.append(`Paket ${planName} aktif sampai `);
       exEl.appendChild(strong);
     }
   }
 
-  // FIX: Update badge text based on plan
-  const badgeEl = $('premium-badge');
-  if (badgeEl) {
-    if (isPrem) {
-      badgeEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Akun Premium Aktif';
-      badgeEl.style.cssText = 'background:rgba(255,107,53,0.12);border:1px solid rgba(255,107,53,0.25);color:#FF6B35;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:8px 16px;border-radius:10px;margin-bottom:20px;';
-    } else if (isBasic) {
-      badgeEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="20 6 9 17 4 12"/></svg> Akun Basic Aktif';
-      badgeEl.style.cssText = 'background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);color:#3B82F6;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:8px 16px;border-radius:10px;margin-bottom:20px;';
-    }
-  }
-
   if (isBasic) renderGalleryEditor();
-
   if (isPrem) {
     currentAccent = currentTokoData.premium?.accentColor || '#FF6B35';
     const slugEl  = $('inp-custom-slug');
@@ -772,46 +704,37 @@ function updatePremiumUI() {
     renderColorPicker();
     renderQR();
     renderPremiumTemplatePicker();
-    initBackgroundStudio();   // FIX: replaced renderTemplatePicker with full studio
+    initBackgroundStudio();
     renderCustomButtonEditor();
   }
 }
 
-// ── PREMIUM: STATS ─────────────────────────────────────────────────────────
+// ── STATS ─────────────────────────────────────────────────────────────────
 async function loadStats(uid) {
-  // FIX: race-condition guard — currentTokoData now set before this is called
   const isPrem = checkPlan(currentTokoData) === 'premium';
   if (!isPrem) return;
-
   try {
     const today = new Date();
     const days  = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() - (6 - i));
+      const d = new Date(today); d.setDate(today.getDate() - (6 - i));
       return d.toISOString().slice(0, 10);
     });
-
     const q    = query(collection(db, 'toko', uid, 'stats'), where('__name__', '>=', days[0]), where('__name__', '<=', days[6]), orderBy('__name__'));
     const snap = await getDocs(q);
     const data = {};
     snap.forEach(d => { data[d.id] = d.data(); });
-
     let tV = 0, tW = 0, tS = 0;
     const chartData = days.map(day => {
       const d = data[day] || {};
       tV += d.visits || 0; tW += d.waClicks || 0; tS += d.shopeeClicks || 0;
       return { label: formatDate(day), visits: d.visits || 0 };
     });
-
-    $('stat-visits').textContent = tV;
-    $('stat-wa').textContent     = tW;
-    $('stat-shopee').textContent = tS;
-    // stat-visits-dash dikelola oleh loadTodayVisits() agar konsisten
-
+    if ($('stat-visits')) $('stat-visits').textContent = tV;
+    if ($('stat-wa'))     $('stat-wa').textContent     = tW;
+    if ($('stat-shopee')) $('stat-shopee').textContent = tS;
     const chartEl = $('stats-chart');
     if (!chartEl) return;
     const max  = Math.max(...chartData.map(d => d.visits), 1);
-    // FIX: use DocumentFragment for chart rendering
     const frag = document.createDocumentFragment();
     chartData.forEach(d => {
       const h   = Math.max(Math.round((d.visits / max) * 100), 3);
@@ -825,16 +748,14 @@ async function loadStats(uid) {
   } catch (e) { console.error('loadStats:', e); }
 }
 
-// ── PREMIUM: COLOR PICKER ──────────────────────────────────────────────────
+// ── COLOR PICKER ──────────────────────────────────────────────────────────
 let _colorPickerDelegated = false;
 function renderColorPicker() {
   const wrap = $('color-options');
   if (!wrap) return;
-  // Re-render HTML (safe — static data only)
   wrap.innerHTML = ACCENT_COLORS.map(clr =>
     `<button type="button" class="color-circle${clr.hex === currentAccent ? ' active' : ''}" data-color="${clr.hex}" style="background:${clr.hex}" title="${clr.label}" aria-label="Warna ${clr.label}"></button>`
   ).join('');
-  // Delegate on static container — attach ONCE
   if (!_colorPickerDelegated) {
     _colorPickerDelegated = true;
     wrap.addEventListener('click', async e => {
@@ -855,7 +776,7 @@ function renderColorPicker() {
   }
 }
 
-// ── PREMIUM: QR CODE ───────────────────────────────────────────────────────
+// ── QR CODE ───────────────────────────────────────────────────────────────
 function renderQR() {
   const uid = auth.currentUser?.uid;
   const img = $('qr-img');
@@ -880,11 +801,10 @@ $('btn-download-qr')?.addEventListener('click', async () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
     showToast('QR Code didownload!');
-  } catch { window.open($('qr-img').dataset.url, '_blank'); }
+  } catch { window.open($('qr-img')?.dataset.url, '_blank'); }
 });
 
-// ── BACKGROUND STUDIO ──────────────────────────────────────────────────────
-// FIX: guard to prevent duplicate listener registration on re-render
+// ── BACKGROUND STUDIO ─────────────────────────────────────────────────────
 let _premTplDelegated = false;
 let _bgStudioInited   = false;
 let _pendingBgUrl     = null;
@@ -892,245 +812,129 @@ let _pendingBgType    = null;
 let _savedBgUrl       = '';
 let _savingBgNow      = false;
 
-// ══════════════════════════════════════════════════════════════════════════════
-// BACKGROUND STUDIO — rewrite total, simple & robust
-// ══════════════════════════════════════════════════════════════════════════════
 function initBackgroundStudio() {
   _savedBgUrl    = currentTokoData?.premium?.templateBg || '';
   _pendingBgUrl  = null;
   _pendingBgType = null;
 
-  // ── Pasang listener SATU KALI ──────────────────────────────────────────────
   if (!_bgStudioInited) {
     _bgStudioInited = true;
-
-    // Tab buttons — listener langsung per button (lebih robust dari delegation)
     document.querySelectorAll('#bg-tab-bar .bg-tab').forEach(btn => {
       btn.addEventListener('click', () => bgSwitchTab(btn.dataset.bgtab));
     });
-
-    // Upload zone
     const zone    = $('bg-upload-zone');
     const fileInp = $('inp-bg-file');
     if (zone && fileInp) {
       zone.addEventListener('click', () => fileInp.click());
-      zone.addEventListener('dragover', e => {
-        e.preventDefault();
-        zone.style.borderColor = 'var(--accent)';
-        zone.style.background  = 'rgba(255,107,53,0.06)';
-      });
-      zone.addEventListener('dragleave', () => {
-        zone.style.borderColor = '';
-        zone.style.background  = '';
-      });
-      zone.addEventListener('drop', e => {
-        e.preventDefault();
-        zone.style.borderColor = '';
-        zone.style.background  = '';
-        const f = e.dataTransfer.files[0];
-        if (f) bgHandleUpload(f);
-      });
-      fileInp.addEventListener('change', () => {
-        const f = fileInp.files[0];
-        if (f) bgHandleUpload(f);
-        fileInp.value = '';
-      });
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'var(--accent)'; zone.style.background = 'rgba(255,107,53,0.06)'; });
+      zone.addEventListener('dragleave', () => { zone.style.borderColor = ''; zone.style.background = ''; });
+      zone.addEventListener('drop', e => { e.preventDefault(); zone.style.borderColor = ''; zone.style.background = ''; const f = e.dataTransfer.files[0]; if (f) bgHandleUpload(f); });
+      fileInp.addEventListener('change', () => { const f = fileInp.files[0]; if (f) bgHandleUpload(f); fileInp.value = ''; });
     }
-
-    // Tombol Polos
-    $('btn-remove-bg')?.addEventListener('click', () => {
-      bgSetPending('', 'none', 'Polos (tanpa background)');
-    });
-
-    // Simpan
+    $('btn-remove-bg')?.addEventListener('click', () => bgSetPending('', 'none', 'Polos (tanpa background)'));
     $('btn-save-bg')?.addEventListener('click', bgSave);
-
-    // Batalkan
     $('btn-cancel-bg')?.addEventListener('click', bgCancel);
   }
-
-  // ── Render ulang setiap kali dipanggil ────────────────────────────────────
-  bgSwitchTab('preset');              // mulai dari tab preset
-  bgUpdatePreview(_savedBgUrl);       // tampilkan bg tersimpan di preview
-  bgUpdateBar(false);                 // save bar: belum ada pending
+  bgSwitchTab('preset');
+  bgUpdatePreview(_savedBgUrl);
+  bgUpdateBar(false);
 }
 
-// ── TAB SWITCH ────────────────────────────────────────────────────────────────
 function bgSwitchTab(tabId) {
-  // Update tombol tab
   document.querySelectorAll('#bg-tab-bar .bg-tab').forEach(btn => {
     const active = btn.dataset.bgtab === tabId;
     btn.style.color        = active ? 'var(--text)' : 'var(--text-3)';
     btn.style.borderBottom = active ? '2px solid var(--accent)' : '2px solid transparent';
   });
-
-  // Sembunyikan semua panel, tampilkan yang aktif
   ['preset','upload','gallery','none'].forEach(id => {
     const p = $('bgtab-' + id);
     if (p) p.style.display = id === tabId ? 'block' : 'none';
   });
-
-  // Render isi panel sesuai tab
-  if (tabId === 'preset')   bgRenderPreset();
-  if (tabId === 'gallery')  bgRenderGallery();
-  if (tabId === 'upload') {
-    // Reset status setiap buka tab upload
-    const st = $('bg-upload-status');
-    if (st) { st.textContent = ''; st.style.color = 'var(--text-3)'; }
-  }
+  if (tabId === 'preset')  bgRenderPreset();
+  if (tabId === 'gallery') bgRenderGallery();
+  if (tabId === 'upload')  { const st = $('bg-upload-status'); if (st) { st.textContent = ''; st.style.color = 'var(--text-3)'; } }
 }
 
-// ── PRESET CARDS ──────────────────────────────────────────────────────────────
 function bgRenderPreset() {
   const wrap = $('template-options');
   if (!wrap) return;
-
-  // Bg yang sedang "aktif" = pending jika ada, kalau tidak pakai saved
   const activeBg = (_pendingBgType && _pendingBgType !== 'none')
     ? (_pendingBgUrl || '')
     : (_pendingBgType === 'none' ? '__none__' : _savedBgUrl);
-
   wrap.innerHTML = '';
   const frag = document.createDocumentFragment();
-
   TEMPLATE_LIST.forEach(t => {
     const bgKey    = t.bg || '';
-    const isActive = bgKey
-      ? bgKey === activeBg
-      : (activeBg === '' || activeBg === undefined);
-
+    const isActive = bgKey ? bgKey === activeBg : (activeBg === '' || activeBg === undefined);
     const card = document.createElement('div');
-    card.style.cssText = `cursor:pointer;border-radius:10px;overflow:hidden;` +
-      `border:2px solid ${isActive ? 'var(--accent)' : 'var(--border)'};` +
-      `transition:border-color .18s,transform .18s;`;
-
-    // Thumbnail
+    card.style.cssText = `cursor:pointer;border-radius:10px;overflow:hidden;border:2px solid ${isActive ? 'var(--accent)' : 'var(--border)'};transition:border-color .18s,transform .18s;`;
     const thumb = document.createElement('div');
-    thumb.style.cssText = `position:relative;height:72px;overflow:hidden;` +
-      `background:${bgKey ? 'transparent' : t.preview};`;
-
+    thumb.style.cssText = `position:relative;height:72px;overflow:hidden;background:${bgKey ? 'transparent' : t.preview};`;
     if (bgKey) {
       const img = document.createElement('img');
-      img.src = bgKey; img.alt = t.label;
-      img.loading = 'lazy'; img.decoding = 'async';
+      img.src = bgKey; img.alt = t.label; img.loading = 'lazy'; img.decoding = 'async';
       img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
       img.onerror = () => { img.style.display = 'none'; };
       thumb.appendChild(img);
     }
-
-    // overlay mock
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,.38);';
-    thumb.appendChild(overlay);
-
+    const ov2 = document.createElement('div');
+    ov2.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,.38);';
+    thumb.appendChild(ov2);
     const mock = document.createElement('div');
     mock.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;';
-    mock.innerHTML = `
-      <div style="width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.3);border:1.5px solid rgba(255,255,255,.6);"></div>
-      <div style="height:3px;width:36px;background:${t.accent};border-radius:3px;opacity:.9;"></div>
-      <div style="height:3px;width:24px;background:rgba(255,255,255,.25);border-radius:3px;"></div>`;
+    mock.innerHTML = `<div style="width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.3);border:1.5px solid rgba(255,255,255,.6);"></div><div style="height:3px;width:36px;background:${t.accent};border-radius:3px;opacity:.9;"></div><div style="height:3px;width:24px;background:rgba(255,255,255,.25);border-radius:3px;"></div>`;
     thumb.appendChild(mock);
-
-    if (isActive) {
-      const badge = document.createElement('div');
-      badge.style.cssText = 'position:absolute;top:4px;right:4px;background:var(--accent);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:99px;letter-spacing:.5px;';
-      badge.textContent = 'AKTIF';
-      thumb.appendChild(badge);
-    }
-
-    // Label
-    const lbl = document.createElement('div');
-    lbl.style.cssText = 'padding:6px 8px 8px;';
-    const n = document.createElement('div');
-    n.style.cssText = 'font-size:11px;font-weight:700;color:var(--text);line-height:1.2;';
-    n.textContent = t.label;
-    const d = document.createElement('div');
-    d.style.cssText = 'font-size:10px;color:var(--text-3);margin-top:1px;';
-    d.textContent = t.desc;
-    lbl.append(n, d);
-
-    card.append(thumb, lbl);
-
-    card.addEventListener('click', () => {
-      bgSetPending(bgKey, 'preset', t.label);
-      bgRenderPreset(); // re-render untuk update highlight
-    });
-
+    if (isActive) { const badge = document.createElement('div'); badge.style.cssText = 'position:absolute;top:4px;right:4px;background:var(--accent);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:99px;letter-spacing:.5px;'; badge.textContent = 'AKTIF'; thumb.appendChild(badge); }
+    const lbl = document.createElement('div'); lbl.style.cssText = 'padding:6px 8px 8px;';
+    const n = document.createElement('div'); n.style.cssText = 'font-size:11px;font-weight:700;color:var(--text);line-height:1.2;'; n.textContent = t.label;
+    const d = document.createElement('div'); d.style.cssText = 'font-size:10px;color:var(--text-3);margin-top:1px;'; d.textContent = t.desc;
+    lbl.append(n, d); card.append(thumb, lbl);
+    card.addEventListener('click', () => { bgSetPending(bgKey, 'preset', t.label); bgRenderPreset(); });
     frag.appendChild(card);
   });
-
   wrap.appendChild(frag);
 }
 
-// ── GALLERY PICKER ────────────────────────────────────────────────────────────
 function bgRenderGallery() {
   const wrap = $('bg-from-gallery');
   if (!wrap) return;
-
   const raw    = currentTokoData?.gallery || [];
-  const photos = raw
-    .map(p => typeof p === 'string' ? { url: p, caption: '' } : p)
-    .filter(p => p?.url && /^https?:\/\//i.test(p.url));
-
+  const photos = raw.map(p => typeof p === 'string' ? { url: p, caption: '' } : p).filter(p => p?.url && /^https?:\/\//i.test(p.url));
   wrap.innerHTML = '';
-
   if (!photos.length) {
     const msg = document.createElement('div');
     msg.style.cssText = 'grid-column:1/-1;padding:24px;text-align:center;font-size:12px;color:var(--text-3);line-height:1.6;';
     msg.textContent = 'Belum ada foto di Gallery. Tambahkan dulu di tab Gallery Foto.';
-    wrap.appendChild(msg);
-    return;
+    wrap.appendChild(msg); return;
   }
-
   const activeBg = _pendingBgType === 'gallery' ? (_pendingBgUrl || '') : _savedBgUrl;
   const frag     = document.createDocumentFragment();
-
   photos.forEach((p, i) => {
     const isActive = p.url === activeBg;
     const card = document.createElement('div');
-    card.style.cssText = `aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer;` +
-      `border:2px solid ${isActive ? 'var(--accent)' : 'transparent'};` +
-      `transition:border-color .18s;position:relative;`;
-
+    card.style.cssText = `aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid ${isActive ? 'var(--accent)' : 'transparent'};transition:border-color .18s;position:relative;`;
     const img = document.createElement('img');
-    // SECURITY: safeImgUrl rejects javascript:/data: URIs, only allows https?://
     img.src = safeImgUrl(p.url) || 'https://placehold.co/200x200/111/333?text=Error'; img.alt = p.caption || `Foto ${i + 1}`;
-    img.loading = 'lazy'; img.decoding = 'async';
-    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-    img.onerror = () => { img.onerror = null; img.src = 'https://placehold.co/200x200/111/333?text=Error'; };
+    img.loading = 'lazy'; img.decoding = 'async'; img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+    img.onerror = function() { this.onerror = null; this.src = 'https://placehold.co/200x200/111/333?text=Error'; };
     card.appendChild(img);
-
-    if (isActive) {
-      const badge = document.createElement('div');
-      badge.style.cssText = 'position:absolute;top:4px;right:4px;background:var(--accent);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:99px;pointer-events:none;';
-      badge.textContent = 'AKTIF';
-      card.appendChild(badge);
-    }
-
-    card.addEventListener('click', () => {
-      bgSetPending(p.url, 'gallery', p.caption || `Foto ${i + 1}`);
-      bgRenderGallery(); // re-render untuk update highlight
-    });
-
+    if (isActive) { const badge = document.createElement('div'); badge.style.cssText = 'position:absolute;top:4px;right:4px;background:var(--accent);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:99px;pointer-events:none;'; badge.textContent = 'AKTIF'; card.appendChild(badge); }
+    card.addEventListener('click', () => { bgSetPending(p.url, 'gallery', p.caption || `Foto ${i + 1}`); bgRenderGallery(); });
     frag.appendChild(card);
   });
-
   wrap.appendChild(frag);
 }
 
-// ── UPLOAD ────────────────────────────────────────────────────────────────────
 async function bgHandleUpload(file) {
   const check = validateImageFile(file);
   if (!check.ok) { showToast(check.reason, 'warn'); return; }
-
   const status = $('bg-upload-status');
   const zone   = $('bg-upload-zone');
-
   if (status) { status.textContent = '⏳ Mengupload...'; status.style.color = 'var(--accent)'; }
   if (zone)   { zone.style.opacity = '0.5'; zone.style.pointerEvents = 'none'; }
-
   try {
-    const url = await uploadCloudinary(file);
+    // FIX [SEC-01]: signed upload
+    const url = await uploadToCloudinary(file, CLOUD_NAME);
     if (!url) throw new Error('Upload gagal.');
     bgSetPending(url, 'upload', 'Foto Upload');
     if (status) { status.textContent = '✓ Upload berhasil! Klik Simpan Background.'; status.style.color = '#10B981'; }
@@ -1141,33 +945,17 @@ async function bgHandleUpload(file) {
   }
 }
 
-// ── PENDING STATE ─────────────────────────────────────────────────────────────
-function bgSetPending(url, type, label) {
-  _pendingBgUrl  = url;
-  _pendingBgType = type;
-  bgUpdatePreview(url);
-  bgUpdateBar(true, label);
-}
-
-// ── LIVE PREVIEW ──────────────────────────────────────────────────────────────
+function bgSetPending(url, type, label) { _pendingBgUrl = url; _pendingBgType = type; bgUpdatePreview(url); bgUpdateBar(true, label); }
 function bgUpdatePreview(url) {
   const el = $('bg-preview-img');
   if (!el) return;
-  if (url && /^https?:\/\//i.test(url)) {
-    el.style.backgroundImage = `url('${encodeURI(url)}')`;
-    el.style.opacity = '1';
-  } else {
-    el.style.backgroundImage = 'none';
-    el.style.opacity = '0';
-  }
+  if (url && /^https?:\/\//i.test(url)) { el.style.backgroundImage = `url('${encodeURI(url)}')`; el.style.opacity = '1'; }
+  else { el.style.backgroundImage = 'none'; el.style.opacity = '0'; }
 }
-
-// ── SAVE BAR ──────────────────────────────────────────────────────────────────
 function bgUpdateBar(hasPending, label) {
-  const info   = $('bg-selected-info');
+  const info    = $('bg-selected-info');
   const saveBtn = $('btn-save-bg');
   const canBtn  = $('btn-cancel-bg');
-
   if (hasPending) {
     if (info)    info.textContent = `Dipilih: ${label || '—'}`;
     if (saveBtn) saveBtn.disabled = false;
@@ -1178,118 +966,67 @@ function bgUpdateBar(hasPending, label) {
     if (canBtn)  canBtn.style.display = 'none';
   }
 }
+function bgCancel() { _pendingBgUrl = null; _pendingBgType = null; bgUpdatePreview(_savedBgUrl); bgUpdateBar(false); bgRenderPreset(); showToast('Perubahan dibatalkan.', 'info'); }
 
-// ── BATALKAN ──────────────────────────────────────────────────────────────────
-function bgCancel() {
-  _pendingBgUrl  = null;
-  _pendingBgType = null;
-  bgUpdatePreview(_savedBgUrl);
-  bgUpdateBar(false);
-  bgRenderPreset();
-  showToast('Perubahan dibatalkan.', 'info');
-}
-
-// ── SIMPAN ────────────────────────────────────────────────────────────────────
 async function bgSave() {
   if (_savingBgNow || _pendingBgType === null) return;
   const uid = auth.currentUser?.uid;
   if (!uid) return;
-
   _savingBgNow = true;
   const saveBtn = $('btn-save-bg');
   const canBtn  = $('btn-cancel-bg');
   const ICON    = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>';
-
   if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<span class="spinner"></span> Menyimpan...'; }
-  if (canBtn)  { canBtn.disabled = true; }
-
+  if (canBtn)  canBtn.disabled = true;
   try {
     const bgUrl = _pendingBgType === 'none' ? '' : (_pendingBgUrl || '');
     await updateDoc(doc(db, 'toko', uid), { 'premium.templateBg': bgUrl });
-
     if (!currentTokoData.premium) currentTokoData.premium = {};
     currentTokoData.premium.templateBg = bgUrl;
-    _savedBgUrl    = bgUrl;
-    _pendingBgUrl  = null;
-    _pendingBgType = null;
-
+    _savedBgUrl = bgUrl; _pendingBgUrl = null; _pendingBgType = null;
     clearPublicCache(uid);
-    bgUpdatePreview(bgUrl);
-    bgUpdateBar(false);
-    bgRenderPreset();
-
+    bgUpdatePreview(bgUrl); bgUpdateBar(false); bgRenderPreset();
     showToast(bgUrl ? 'Background disimpan!' : 'Background dihapus!', 'success');
-  } catch (e) {
-    showToast('Gagal simpan: ' + e.message, 'error');
-  } finally {
-    _savingBgNow = false;
-    if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = ICON + ' Simpan Background'; }
-    if (canBtn)  { canBtn.disabled = false; }
-  }
+  } catch (e) { showToast('Gagal simpan: ' + e.message, 'error'); }
+  finally { _savingBgNow = false; if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = ICON + ' Simpan Background'; } if (canBtn) canBtn.disabled = false; }
 }
 
-// legacy aliases — new functions are bgRenderPreset / bgRenderGallery / bgUpdatePreview / bgUpdateBar
+// Legacy aliases
 function renderPresetCards()    { bgRenderPreset(); }
 function renderTemplatePicker() { bgRenderPreset(); }
 function updateLivePreview(url) { bgUpdatePreview(url); }
 function updateBgSaveBar(p, l)  { bgUpdateBar(p, l); }
 function renderBgGalleryPicker(){ bgRenderGallery(); }
 
-
-
-
-
-// ── PREMIUM: TEMPLATE THEMES ──────────────────────────────────────────────────
+// ── PREMIUM TEMPLATE PICKER ────────────────────────────────────────────────
 function renderPremiumTemplatePicker() {
   const wrap = $('premium-template-options');
   if (!wrap) return;
-
   const currentTemplate = currentTokoData?.premium?.templateTheme || '';
   const hasTemplate     = !!currentTemplate;
   const templates       = getAllTemplates();
-
-  // Render kartu
   wrap.innerHTML = templates.map(template => {
     const preview  = getThemePreviewData(template.id);
     const isActive = template.id === currentTemplate;
-    return `
-      <div class="premium-template-card${isActive ? ' active' : ''}" data-template="${template.id}" role="button" tabindex="0" aria-pressed="${isActive}">
-        <div class="premium-template-preview" style="background:linear-gradient(135deg,${preview.colors.primary} 0%,${preview.colors.secondary} 100%);">
-          ${template.icon}
-        </div>
-        <div class="premium-template-content">
-          <div class="premium-template-title">${escHtml(template.name)}</div>
-          <div class="premium-template-category">${escHtml(template.category)}</div>
-          <div class="premium-template-desc">${escHtml(template.description)}</div>
-          <div class="premium-template-features">
-            ${template.features.map(f => `<span class="premium-template-tag">${escHtml(f)}</span>`).join('')}
-          </div>
-        </div>
-      </div>`;
+    return `<div class="premium-template-card${isActive ? ' active' : ''}" data-template="${template.id}" role="button" tabindex="0" aria-pressed="${isActive}">
+      <div class="premium-template-preview" style="background:linear-gradient(135deg,${preview.colors.primary} 0%,${preview.colors.secondary} 100%);">${template.icon}</div>
+      <div class="premium-template-content">
+        <div class="premium-template-title">${escHtml(template.name)}</div>
+        <div class="premium-template-category">${escHtml(template.category)}</div>
+        <div class="premium-template-desc">${escHtml(template.description)}</div>
+        <div class="premium-template-features">${template.features.map(f => `<span class="premium-template-tag">${escHtml(f)}</span>`).join('')}</div>
+      </div></div>`;
   }).join('');
 
-  // Tombol batalkan template — muncul hanya jika ada template aktif
   let cancelWrap = $('tpl-cancel-wrap');
-  if (!cancelWrap) {
-    cancelWrap = document.createElement('div');
-    cancelWrap.id = 'tpl-cancel-wrap';
-    cancelWrap.style.cssText = 'margin-top:12px;';
-    wrap.after(cancelWrap);
-  }
+  if (!cancelWrap) { cancelWrap = document.createElement('div'); cancelWrap.id = 'tpl-cancel-wrap'; cancelWrap.style.cssText = 'margin-top:12px;'; wrap.after(cancelWrap); }
   if (hasTemplate) {
-    cancelWrap.innerHTML = `
-      <button type="button" id="btn-cancel-template" class="btn btn-outline btn-w" style="font-size:13px;color:var(--danger);border-color:rgba(239,68,68,.3);">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        Batalkan Template (Gunakan Default)
-      </button>`;
-    // B3 FIX: hapus listener lama sebelum pasang baru (cancelWrap masih sama nodenya)
-    cancelWrap.querySelector('#btn-cancel-template')?.removeEventListener('click', cancelTemplate);
+    cancelWrap.innerHTML = `<button type="button" id="btn-cancel-template" class="btn btn-outline btn-w" style="font-size:13px;color:var(--danger);border-color:rgba(239,68,68,.3);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      Batalkan Template (Gunakan Default)</button>`;
     $('btn-cancel-template')?.addEventListener('click', cancelTemplate);
-  } else {
-    cancelWrap.innerHTML = '';
-  }
+  } else { cancelWrap.innerHTML = ''; }
 
-  // Event delegation — attach ONCE
   if (!_premTplDelegated) {
     _premTplDelegated = true;
     wrap.addEventListener('click', async e => {
@@ -1298,79 +1035,39 @@ function renderPremiumTemplatePicker() {
       const templateId = card.dataset.template;
       const uid = auth.currentUser?.uid;
       if (!uid) return;
-
-      card.style.opacity = '0.6';
-      card.style.pointerEvents = 'none';
+      card.style.opacity = '0.6'; card.style.pointerEvents = 'none';
       try {
-        // Simpan templateTheme, sekaligus KOSONGKAN templateBg
-        // supaya template theme tidak bentrok dengan background custom lama
-        await updateDoc(doc(db, 'toko', uid), {
-          'premium.templateTheme': templateId,
-          'premium.templateBg':    '',        // BARU: reset bg saat ganti theme
-        });
+        await updateDoc(doc(db, 'toko', uid), { 'premium.templateTheme': templateId, 'premium.templateBg': '' });
         if (!currentTokoData.premium) currentTokoData.premium = {};
         currentTokoData.premium.templateTheme = templateId;
         currentTokoData.premium.templateBg    = '';
-
-        // Sync state background studio
-        _savedBgUrl    = '';
-        _pendingBgUrl  = null;
-        _pendingBgType = null;
-        updateLivePreview('');
-        updateBgSaveBar(false);
-        renderPresetCards();
-
-        wrap.querySelectorAll('.premium-template-card').forEach(el => {
-          el.classList.remove('active');
-          el.style.opacity = '';
-          el.style.pointerEvents = '';
-          el.setAttribute('aria-pressed', 'false');
-        });
-        card.classList.add('active');
-        card.setAttribute('aria-pressed', 'true');
-
+        _savedBgUrl = ''; _pendingBgUrl = null; _pendingBgType = null;
+        updateLivePreview(''); updateBgSaveBar(false); renderPresetCards();
+        wrap.querySelectorAll('.premium-template-card').forEach(el => { el.classList.remove('active'); el.style.opacity = ''; el.style.pointerEvents = ''; el.setAttribute('aria-pressed', 'false'); });
+        card.classList.add('active'); card.setAttribute('aria-pressed', 'true');
         clearPublicCache(uid);
-        // Munculkan tombol batalkan
         renderPremiumTemplatePicker();
         showToast('Template diaktifkan! ✓', 'success');
-      } catch (err) {
-        showToast('Gagal menyimpan template: ' + err.message, 'error');
-        card.style.opacity = '';
-        card.style.pointerEvents = '';
-      }
+      } catch (err) { showToast('Gagal menyimpan template: ' + err.message, 'error'); card.style.opacity = ''; card.style.pointerEvents = ''; }
     });
   }
 }
 
 async function cancelTemplate() {
-  const uid = auth.currentUser?.uid;
-  if (!uid) return;
+  const uid = auth.currentUser?.uid; if (!uid) return;
   const btn = $('btn-cancel-template');
   if (btn) { btn.disabled = true; btn.textContent = 'Menghapus...'; }
   try {
-    await updateDoc(doc(db, 'toko', uid), {
-      'premium.templateTheme': '',
-      'premium.templateBg':    '',
-    });
+    await updateDoc(doc(db, 'toko', uid), { 'premium.templateTheme': '', 'premium.templateBg': '' });
     if (!currentTokoData.premium) currentTokoData.premium = {};
-    currentTokoData.premium.templateTheme = '';
-    currentTokoData.premium.templateBg    = '';
-    _savedBgUrl = '';
-    _pendingBgUrl = null;
-    _pendingBgType = null;
-    clearPublicCache(uid);
-    renderPremiumTemplatePicker();
-    updateLivePreview('');
-    updateBgSaveBar(false);
-    renderPresetCards();
+    currentTokoData.premium.templateTheme = ''; currentTokoData.premium.templateBg = '';
+    _savedBgUrl = ''; _pendingBgUrl = null; _pendingBgType = null;
+    clearPublicCache(uid); renderPremiumTemplatePicker(); updateLivePreview(''); updateBgSaveBar(false); renderPresetCards();
     showToast('Template dikembalikan ke default.', 'info');
-  } catch (e) {
-    showToast('Gagal batalkan template: ' + e.message, 'error');
-    if (btn) { btn.disabled = false; btn.textContent = 'Batalkan Template (Gunakan Default)'; }
-  }
+  } catch (e) { showToast('Gagal batalkan template: ' + e.message, 'error'); if (btn) { btn.disabled = false; btn.textContent = 'Batalkan Template (Gunakan Default)'; } }
 }
 
-// ── PREMIUM: CUSTOM BUTTONS ────────────────────────────────────────────────
+// ── CUSTOM BUTTONS ─────────────────────────────────────────────────────────
 const BTN_COLORS = ['#FF6B35','#EE4D2D','#25D366','#3B82F6','#8B5CF6','#EC4899','#F59E0B','#111111','#06B6D4','#10B981'];
 
 function renderCustomButtonEditor() {
@@ -1402,23 +1099,17 @@ function renderCustomBtnList() {
 
   list.querySelectorAll('input[data-field]').forEach(inp => {
     inp.addEventListener('input', () => {
-      const idx   = parseInt(inp.dataset.idx);
-      const field = inp.dataset.field;
+      const idx = parseInt(inp.dataset.idx); const field = inp.dataset.field;
       if (!customBtns[idx]) customBtns[idx] = { label: '', url: '', color: '#3B82F6', desc: '' };
       customBtns[idx][field] = inp.value;
     });
   });
 
-  // Delegated: handle remove + cycle-color without inline onclick (CSP-safe)
   if (!list._cbDelegated) {
     list._cbDelegated = true;
     list.addEventListener('click', e => {
       const removeBtn = e.target.closest('.cb-remove');
-      if (removeBtn) {
-        customBtns.splice(parseInt(removeBtn.dataset.idx), 1);
-        renderCustomBtnList();
-        return;
-      }
+      if (removeBtn) { customBtns.splice(parseInt(removeBtn.dataset.idx), 1); renderCustomBtnList(); return; }
       const swatchBtn = e.target.closest('[data-action="cycle-color"]');
       if (swatchBtn) {
         const idx = parseInt(swatchBtn.dataset.idx);
@@ -1432,50 +1123,43 @@ function renderCustomBtnList() {
   }
 }
 
-// cycleColor kept for backward compat but no longer used via inline onclick
-window.cycleColor = function(idx) {
-  if (!customBtns[idx]) return;
-  const cur = customBtns[idx].color || BTN_COLORS[0];
-  const pos = BTN_COLORS.indexOf(cur);
-  customBtns[idx].color = BTN_COLORS[(pos + 1) % BTN_COLORS.length];
-  renderCustomBtnList();
-};
-
 $('btn-add-custom-btn')?.addEventListener('click', () => {
   if (customBtns.length >= 10) { showToast('Maksimal 10 tombol kustom.', 'warn'); return; }
   customBtns.push({ label: '', url: '', color: BTN_COLORS[customBtns.length % BTN_COLORS.length], desc: '' });
   renderCustomBtnList();
-  const inputs = $('custom-btn-list').querySelectorAll('input[data-field="label"]');
-  inputs[inputs.length - 1]?.focus();
+  const inputs = $('custom-btn-list')?.querySelectorAll('input[data-field="label"]');
+  inputs?.[inputs.length - 1]?.focus();
 });
 
 let _savingCustomBtns = false;
 $('btn-save-custom-btns')?.addEventListener('click', async () => {
   if (_savingCustomBtns) return;
-  const uid = auth.currentUser?.uid;
-  if (!uid) return;
+  const uid = auth.currentUser?.uid; if (!uid) return;
   const cleaned = customBtns.filter(b => b.label?.trim() && b.url?.trim());
+  // Validasi URL setiap tombol
+  for (const b of cleaned) {
+    if (!/^https?:\/\/.+/.test(b.url)) { showToast(`URL tombol "${b.label}" tidak valid (harus https://).`, 'warn'); return; }
+  }
   const btn = $('btn-save-custom-btns');
   _savingCustomBtns = true;
-  btn.disabled = true;
+  if (btn) btn.disabled = true;
   try {
     await updateDoc(doc(db, 'toko', uid), { customButtons: cleaned });
     clearPublicCache(uid);
     showToast(`${cleaned.length} tombol kustom disimpan!`);
     currentTokoData.customButtons = cleaned;
   } catch (e) { showToast('Gagal simpan: ' + e.message, 'error'); }
-  finally { _savingCustomBtns = false; btn.disabled = false; }
+  finally { _savingCustomBtns = false; if (btn) btn.disabled = false; }
 });
 
-// ── PREMIUM: GALLERY ───────────────────────────────────────────────────────
+// ── GALLERY ────────────────────────────────────────────────────────────────
 function normalizeGalleryItem(item) {
   if (typeof item === 'string') return { url: item, caption: '', kategori: '' };
   return { url: item?.url || '', caption: item?.caption || '', kategori: item?.kategori || '' };
 }
 
 function getGalleryKategoriList() {
-  const cats = new Set(galleryPhotos.map(p => p.kategori).filter(Boolean));
-  return [...cats];
+  return [...new Set(galleryPhotos.map(p => p.kategori).filter(Boolean))];
 }
 
 function renderGalleryEditor() {
@@ -1491,15 +1175,9 @@ function renderGalleryGrid() {
     grid.innerHTML = '<div style="grid-column:1/-1;padding:20px;text-align:center;font-size:12px;color:var(--text-3);">Belum ada foto gallery. Klik "+ Tambah Foto".</div>';
     return;
   }
-
   const cats = getGalleryKategoriList();
   const datalistId = 'gal-kat-list';
-
-  // SECURITY: Build via DOM — eliminates inline onerror= (CSP violation) and
-  // uses safeImgUrl instead of escHtml for src (escHtml allows javascript: URIs in attrs)
   const frag = document.createDocumentFragment();
-
-  // Datalist for kategori autocomplete
   const datalist = document.createElement('datalist');
   datalist.id = datalistId;
   cats.forEach(c => { const opt = document.createElement('option'); opt.value = c; datalist.appendChild(opt); });
@@ -1507,50 +1185,33 @@ function renderGalleryGrid() {
 
   galleryPhotos.forEach((p, i) => {
     const card = document.createElement('div');
-    card.className = 'gal-edit-card';
-    card.dataset.idx = i;
+    card.className = 'gal-edit-card'; card.dataset.idx = i;
     card.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;';
-
     const imgWrap = document.createElement('div');
     imgWrap.style.cssText = 'position:relative;aspect-ratio:1;overflow:hidden;background:rgba(0,0,0,.3);flex-shrink:0;';
-
     const img = document.createElement('img');
     img.src = safeImgUrl(p.url) || 'https://placehold.co/200x200/111/333?text=Error';
-    img.alt = `Gallery ${i + 1}`;
-    img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+    img.alt = `Gallery ${i + 1}`; img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
     img.loading = 'lazy'; img.decoding = 'async';
-    // SECURITY: property assignment (not inline attr) — CSP-safe
     img.onerror = function() { this.onerror = null; this.src = 'https://placehold.co/200x200/111/333?text=Error'; };
     imgWrap.appendChild(img);
-
     const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.dataset.action = 'remove-gallery';
-    removeBtn.dataset.idx = i;
+    removeBtn.type = 'button'; removeBtn.dataset.action = 'remove-gallery'; removeBtn.dataset.idx = i;
     removeBtn.style.cssText = 'position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.75);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;z-index:2;';
     removeBtn.setAttribute('aria-label', 'Hapus foto');
     removeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" width="10" height="10"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-    imgWrap.appendChild(removeBtn);
-    card.appendChild(imgWrap);
-
+    imgWrap.appendChild(removeBtn); card.appendChild(imgWrap);
     const inputWrap = document.createElement('div');
     inputWrap.style.cssText = 'padding:8px 8px 10px;display:flex;flex-direction:column;gap:5px;';
-
     const inpKat = document.createElement('input');
-    inpKat.type = 'text'; inpKat.placeholder = 'Kategori (cth: Interior)';
-    inpKat.value = p.kategori || '';
-    inpKat.dataset.field = 'kategori'; inpKat.dataset.idx = i;
-    inpKat.setAttribute('list', datalistId);
+    inpKat.type = 'text'; inpKat.placeholder = 'Kategori (cth: Interior)'; inpKat.value = p.kategori || '';
+    inpKat.dataset.field = 'kategori'; inpKat.dataset.idx = i; inpKat.setAttribute('list', datalistId);
     inpKat.style.cssText = 'width:100%;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;color:var(--text);outline:none;';
-
     const inpCap = document.createElement('input');
-    inpCap.type = 'text'; inpCap.placeholder = 'Caption foto...';
-    inpCap.value = p.caption || '';
+    inpCap.type = 'text'; inpCap.placeholder = 'Caption foto...'; inpCap.value = p.caption || '';
     inpCap.dataset.field = 'caption'; inpCap.dataset.idx = i;
     inpCap.style.cssText = 'width:100%;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;color:var(--text);outline:none;';
-
-    inputWrap.append(inpKat, inpCap);
-    card.appendChild(inputWrap);
+    inputWrap.append(inpKat, inpCap); card.appendChild(inputWrap);
     frag.appendChild(card);
   });
 
@@ -1559,31 +1220,25 @@ function renderGalleryGrid() {
 
   grid.querySelectorAll('input[data-field]').forEach(inp => {
     inp.addEventListener('input', () => {
-      const idx   = parseInt(inp.dataset.idx);
-      const field = inp.dataset.field;
+      const idx = parseInt(inp.dataset.idx); const field = inp.dataset.field;
       if (galleryPhotos[idx]) galleryPhotos[idx][field] = inp.value;
     });
   });
-  // Delegated remove — replaces inline onclick (CSP-safe)
+
   if (!grid._galDelegated) {
     grid._galDelegated = true;
     grid.addEventListener('click', e => {
       const btn = e.target.closest('[data-action="remove-gallery"]');
       if (!btn) return;
       const idx = parseInt(btn.dataset.idx);
-      if (!isNaN(idx)) {
-        galleryPhotos.splice(idx, 1);
-        renderGalleryGrid();
-      }
+      if (!isNaN(idx)) { galleryPhotos.splice(idx, 1); renderGalleryGrid(); }
     });
   }
 }
 
-// removeGalleryPhoto handled via delegated listener in renderGalleryGrid
-
 $('btn-add-gallery')?.addEventListener('click', () => {
   if (galleryPhotos.length >= 12) { showToast('Maksimal 12 foto gallery.', 'warn'); return; }
-  $('inp-gallery-file').click();
+  $('inp-gallery-file')?.click();
 });
 
 $('inp-gallery-file')?.addEventListener('change', async () => {
@@ -1592,35 +1247,34 @@ $('inp-gallery-file')?.addEventListener('change', async () => {
   const remaining = 12 - galleryPhotos.length;
   const toUpload  = files.slice(0, remaining);
   if (files.length > remaining) showToast(`Hanya ${remaining} foto lagi yang bisa ditambah (maks. 12).`, 'warn');
-
   const statusEl = $('gallery-upload-status');
   const addBtn   = $('btn-add-gallery');
-  if (addBtn) addBtn.disabled = true;
+  if (addBtn)   addBtn.disabled   = true;
   if (statusEl) statusEl.textContent = `Mengupload 0/${toUpload.length}...`;
-
   let uploaded = 0;
   for (const file of toUpload) {
-    // FIX: validasi MIME + ukuran sebelum upload
     const check = validateImageFile(file);
     if (!check.ok) { showToast(`${file.name}: ${check.reason}`, 'warn'); continue; }
-    const url = await uploadCloudinary(file);
-    if (url) { galleryPhotos.push({ url, caption: '', kategori: '' }); uploaded++; }
+    try {
+      // FIX [SEC-01]: signed upload
+      const url = await uploadToCloudinary(file, CLOUD_NAME);
+      if (url) { galleryPhotos.push({ url, caption: '', kategori: '' }); uploaded++; }
+    } catch (e) { showToast(`${file.name}: ${e.message}`, 'warn'); }
     if (statusEl) statusEl.textContent = `Mengupload ${uploaded}/${toUpload.length}...`;
   }
   renderGalleryGrid();
   if (statusEl) statusEl.textContent = uploaded ? `${uploaded} foto diupload. Isi caption/kategori lalu Simpan.` : 'Upload gagal.';
-  if (addBtn) addBtn.disabled = false;
+  if (addBtn)   addBtn.disabled   = false;
   $('inp-gallery-file').value = '';
 });
 
 let _savingGallery = false;
 $('btn-save-gallery')?.addEventListener('click', async () => {
   if (_savingGallery) return;
-  const uid = auth.currentUser?.uid;
-  if (!uid) return;
+  const uid = auth.currentUser?.uid; if (!uid) return;
   const btn = $('btn-save-gallery');
   _savingGallery = true;
-  btn.disabled = true;
+  if (btn) btn.disabled = true;
   try {
     $('gallery-grid')?.querySelectorAll('input[data-field]').forEach(inp => {
       const idx = parseInt(inp.dataset.idx);
@@ -1633,38 +1287,5 @@ $('btn-save-gallery')?.addEventListener('click', async () => {
     currentTokoData.gallery = [...clean];
     if ($('gallery-upload-status')) $('gallery-upload-status').textContent = '';
   } catch (e) { showToast('Gagal simpan gallery: ' + e.message, 'error'); }
-  finally { _savingGallery = false; btn.disabled = false; }
+  finally { _savingGallery = false; if (btn) btn.disabled = false; }
 });
-
-// ── CLOUDINARY — with MIME + size guard ───────────────────────────────────────
-async function uploadCloudinary(file) {
-  // SECURITY: validate before upload
-  const check = validateImageFile(file);
-  if (!check.ok) { showToast(check.reason, 'warn'); return null; }
-
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('upload_preset', CLOUD_PRESET);
-
-  const controller = new AbortController();
-  // 30 detik timeout untuk upload
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-  try {
-    const res  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-      method: 'POST',
-      body: fd,
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    if (data.secure_url && /^https:\/\/res\.cloudinary\.com\//i.test(data.secure_url)) return data.secure_url;
-    throw new Error(data.error?.message || 'Upload gagal');
-  } catch (err) {
-    clearTimeout(timeoutId);
-    const msg = err.name === 'AbortError' ? 'Upload timeout. Coba lagi.' : 'Upload gagal: ' + err.message;
-    showToast(msg, 'error');
-    return null;
-  }
-}

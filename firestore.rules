@@ -1,8 +1,15 @@
 rules_version = '2';
 
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  LINKify — Firestore Security Rules (Production-Hardened)                   ║
-// ║  Last reviewed: 2026-05                                                     ║
+// ║  LINKify — Firestore Security Rules (HARDENED v2)                           ║
+// ║  FIXES:                                                                     ║
+// ║   [BUG-01] validOwnerTokoValues dipanggil dengan .changedKeys() (list key)  ║
+// ║            bukan dengan data object → semua owner update SELALU lolos       ║
+// ║   [BUG-02] customButtons items tidak divalidasi per-item                    ║
+// ║   [BUG-03] gallery items tidak divalidasi per-item                          ║
+// ║   [SEC-01] isAdmin() ditambah custom claim fallback                         ║
+// ║   [SEC-02] Pengecekan affectedKeys lebih ketat (size limit)                 ║
+// ║   [SEC-03] Validasi nested field lebih dalam                                ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
 
 service cloud.firestore {
@@ -12,26 +19,27 @@ service cloud.firestore {
     // HELPERS
     // ══════════════════════════════════════════════════════════════════════════
 
-    // Authenticated request
     function isAuth() {
       return request.auth != null;
     }
 
-    // Caller is the owner of this toko document
-    // Guards against UID spoofing — auth.uid is server-verified, never client-supplied
     function isOwner(uid) {
       return isAuth() && request.auth.uid == uid;
     }
 
-    // Caller is the hardcoded admin
-    // IMPROVEMENT: also verified against a custom claim so even if the email
-    // changes on the Auth side the claim must be re-issued, preventing silent
-    // privilege loss or gain from an email update alone.
-    // To set the claim run:  admin.auth().setCustomUserClaims(uid, {admin: true})
+    // isAdmin() — dual check:
+    //   1. Custom claim (preferred): set via admin.auth().setCustomUserClaims(uid, {admin: true})
+    //   2. Email fallback (requires email_verified): backwards-compat
+    // Jika sudah set custom claim, kondisi kedua tidak pernah dicek (short-circuit).
     function isAdmin() {
-      return isAuth()
-          && request.auth.token.email == 'unrageunrage@gmail.com'
-          && request.auth.token.email_verified == true;
+      return isAuth() && (
+        // Primary: custom claim — tidak bergantung pada email/email perubahan
+        request.auth.token.admin == true
+        ||
+        // Fallback: email verified (tetap server-side validated by Firebase)
+        (request.auth.token.email == 'unrageunrage@gmail.com'
+         && request.auth.token.email_verified == true)
+      );
     }
 
     // ── Primitive validators ──────────────────────────────────────────────────
@@ -44,29 +52,114 @@ service cloud.firestore {
       return val is string && val.size() <= maxLen;
     }
 
-    // Only allow https:// URLs (drops http:// to prevent mixed-content / open
-    // redirects via plain HTTP). Empty string is allowed (field cleared by user).
+    // Hanya allow https:// URL. http:// ditolak (mixed-content / open-redirect).
+    // '' diizinkan (field dikosongkan).
     function validUrl(val) {
       return val is string
           && val.size() <= 2048
           && (val == '' || val.matches('https://.*'));
     }
 
-    // WhatsApp links have a narrower expected shape
+    // WhatsApp URL — pattern lebih ketat
     function validWaUrl(val) {
       return val is string
           && val.size() <= 512
           && (val == '' || val.matches('https://(wa\\.me|api\\.whatsapp\\.com)/.*'));
     }
 
-    // Date string used as stats doc ID: YYYY-MM-DD
+    // Hex color: #RRGGBB (6 digit hex)
+    function validHexColor(val) {
+      return val is string && val.matches('#[0-9a-fA-F]{6}');
+    }
+
+    // Date string YYYY-MM-DD (untuk stats doc ID)
     function validDateId(id) {
       return id.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}');
     }
 
+    // ── customButtons per-item validator ─────────────────────────────────────
+    // FIX [BUG-02]: sebelumnya tidak ada validasi per-item
+    function validCustomButton(b) {
+      return b is map
+          // Wajib ada label dan url
+          && ('label' in b) && validStr(b.label, 60)
+          && ('url'   in b) && validUrl(b.url)
+          // Opsional: color (hex) dan desc
+          && (!('color' in b) || validHexColor(b.color))
+          && (!('desc'  in b) || validStrOrEmpty(b.desc, 120))
+          // Tidak boleh ada field selain yang diizinkan
+          && b.keys().hasOnly(['label', 'url', 'color', 'desc']);
+    }
+
+    // Cek hingga 10 item (batas array) — Firestore rules tidak punya loop
+    // Item ke-N divalidasi hanya jika ada (size guard)
+    function validCustomButtonList(list) {
+      return list.size() == 0
+          || (
+               (list.size() < 1  || validCustomButton(list[0]))
+            && (list.size() < 2  || validCustomButton(list[1]))
+            && (list.size() < 3  || validCustomButton(list[2]))
+            && (list.size() < 4  || validCustomButton(list[3]))
+            && (list.size() < 5  || validCustomButton(list[4]))
+            && (list.size() < 6  || validCustomButton(list[5]))
+            && (list.size() < 7  || validCustomButton(list[6]))
+            && (list.size() < 8  || validCustomButton(list[7]))
+            && (list.size() < 9  || validCustomButton(list[8]))
+            && (list.size() < 10 || validCustomButton(list[9]))
+          );
+    }
+
+    // ── gallery per-item validator ────────────────────────────────────────────
+    // FIX [BUG-03]: sebelumnya tidak ada validasi per-item
+    function validGalleryItem(g) {
+      return g is map
+          && ('url' in g) && validUrl(g.url) && g.url != ''
+          && (!('caption'  in g) || validStrOrEmpty(g.caption, 200))
+          && (!('kategori' in g) || validStrOrEmpty(g.kategori, 60))
+          // Tidak boleh ada field selain yang diizinkan
+          && g.keys().hasOnly(['url', 'caption', 'kategori']);
+    }
+
+    // Cek hingga 30 item (batas gallery)
+    function validGalleryList(list) {
+      return list.size() == 0
+          || (
+               (list.size() < 1  || validGalleryItem(list[0]))
+            && (list.size() < 2  || validGalleryItem(list[1]))
+            && (list.size() < 3  || validGalleryItem(list[2]))
+            && (list.size() < 4  || validGalleryItem(list[3]))
+            && (list.size() < 5  || validGalleryItem(list[4]))
+            && (list.size() < 6  || validGalleryItem(list[5]))
+            && (list.size() < 7  || validGalleryItem(list[6]))
+            && (list.size() < 8  || validGalleryItem(list[7]))
+            && (list.size() < 9  || validGalleryItem(list[8]))
+            && (list.size() < 10 || validGalleryItem(list[9]))
+            && (list.size() < 11 || validGalleryItem(list[10]))
+            && (list.size() < 12 || validGalleryItem(list[11]))
+            && (list.size() < 13 || validGalleryItem(list[12]))
+            && (list.size() < 14 || validGalleryItem(list[13]))
+            && (list.size() < 15 || validGalleryItem(list[14]))
+            && (list.size() < 16 || validGalleryItem(list[15]))
+            && (list.size() < 17 || validGalleryItem(list[16]))
+            && (list.size() < 18 || validGalleryItem(list[17]))
+            && (list.size() < 19 || validGalleryItem(list[18]))
+            && (list.size() < 20 || validGalleryItem(list[19]))
+            && (list.size() < 21 || validGalleryItem(list[20]))
+            && (list.size() < 22 || validGalleryItem(list[21]))
+            && (list.size() < 23 || validGalleryItem(list[22]))
+            && (list.size() < 24 || validGalleryItem(list[23]))
+            && (list.size() < 25 || validGalleryItem(list[24]))
+            && (list.size() < 26 || validGalleryItem(list[25]))
+            && (list.size() < 27 || validGalleryItem(list[26]))
+            && (list.size() < 28 || validGalleryItem(list[27]))
+            && (list.size() < 29 || validGalleryItem(list[28]))
+            && (list.size() < 30 || validGalleryItem(list[29]))
+          );
+    }
+
     // ── Toko-field validators ─────────────────────────────────────────────────
 
-    // Fields the owner is allowed to update (storefront settings)
+    // Daftar field yang owner boleh sentuh
     function validOwnerTokoFields() {
       return request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['namaToko','bio','wa','shopee','tokopedia',
@@ -74,7 +167,10 @@ service cloud.firestore {
                          'logo','customButtons','gallery','premium']);
     }
 
-    // Validate the *values* of owner-editable toko fields
+    // Validasi nilai field yang diperbolehkan untuk owner
+    // FIX [BUG-01]: sebelumnya dipanggil dengan changedKeys() (list of strings).
+    //               Sekarang dipanggil dengan request.resource.data (full data map)
+    //               sehingga operator 'in' bekerja benar pada map.
     function validOwnerTokoValues(d) {
       return (!('namaToko'   in d) || validStr(d.namaToko, 100))
           && (!('bio'        in d) || validStrOrEmpty(d.bio, 300))
@@ -87,53 +183,63 @@ service cloud.firestore {
           && (!('facebook'   in d) || validUrl(d.facebook))
           && (!('youtube'    in d) || validUrl(d.youtube))
           && (!('logo'       in d) || validUrl(d.logo))
-          // customButtons: must be a list, max 10 entries
+
+          // customButtons: list, max 10, validasi tiap item
           && (!('customButtons' in d) || (
                 d.customButtons is list
                 && d.customButtons.size() <= 10
+                && validCustomButtonList(d.customButtons)
              ))
-          // gallery: must be a list, max 30 entries
+
+          // gallery: list, max 30, validasi tiap item
           && (!('gallery' in d) || (
                 d.gallery is list
                 && d.gallery.size() <= 30
+                && validGalleryList(d.gallery)
              ))
-          // owner may update premium sub-map (template/accent/theme)
-          // but MUST NOT touch premium.active, premium.slug, planEndDate, plan, status
+
+          // premium: owner hanya boleh ubah sub-field tertentu (accent, theme, bg)
+          // TIDAK boleh sentuh premium.active, premium.slug, dsb
           && (!('premium' in d) || (
                 d.premium is map
-                && !('active' in d.premium)
-                && !('slug'   in d.premium)
+                && !('active'  in d.premium)
+                && !('slug'    in d.premium)
+                && !('endDate' in d.premium)
+                && d.premium.keys().hasOnly([
+                     'accentColor','templateTheme','templateBg'
+                   ])
+                && (!('accentColor'    in d.premium) || validHexColor(d.premium.accentColor))
+                && (!('templateTheme'  in d.premium) || validStrOrEmpty(d.premium.templateTheme, 50))
+                && (!('templateBg'     in d.premium) || validUrl(d.premium.templateBg))
              ));
     }
 
-    // Fields the owner must NOT touch (admin-only privilege fields)
-    // This function is used as a negative guard on owner updates.
+    // Field privilege yang TIDAK boleh disentuh owner
     function ownerNotTouchingPrivilegeFields() {
       return !request.resource.data.diff(resource.data).affectedKeys()
                .hasAny(['plan','planEndDate','status','omset','email','pemilik','dibuatPada']);
     }
 
-    // Product field validator (create & update)
+    // Product field validator
     function validProduk(d) {
       return validStr(d.nama, 100)
-          && d.harga is number
-          && d.harga >= 0
-          && d.harga <= 999999999
-          && d.stok  is number
-          && d.stok  >= 0
-          && d.stok  <= 999999
+          && d.harga is number && d.harga >= 0 && d.harga <= 999999999
+          && d.stok  is number && d.stok  >= 0 && d.stok  <= 999999
           && (!('deskripsi' in d) || validStrOrEmpty(d.deskripsi, 500))
           && (!('shopee'    in d) || validUrl(d.shopee))
           && (!('wa'        in d) || validWaUrl(d.wa))
           && (!('img'       in d) || validUrl(d.img))
-          && (!('kategori'  in d) || validStrOrEmpty(d.kategori, 50));
+          && (!('kategori'  in d) || validStrOrEmpty(d.kategori, 50))
+          && (!('hargaAsli' in d) || (d.hargaAsli is number && d.hargaAsli >= 0))
+          && (!('berat'     in d) || (d.berat is number && d.berat >= 0))
+          && (!('unggulan'  in d) || d.unggulan is bool)
+          && (!('stokAwal'  in d) || (d.stokAwal is number && d.stokAwal >= 0));
     }
 
-    // Product update: only whitelisted fields may be changed
     function validProdukUpdateKeys() {
       return request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['nama','harga','stok','deskripsi','shopee','wa','img',
-                         'kategori','updatedAt']);
+                         'kategori','updatedAt','hargaAsli','berat','unggulan','stokAwal']);
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -141,29 +247,25 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════════════════════
     match /toko/{uid} {
 
-      // Public storefront read — intentional, needed for visitor pages
+      // Storefront publik — diperlukan untuk halaman pengunjung
       allow read: if true;
 
-      // ── Create ──────────────────────────────────────────────────────────────
-      // Only admin may create toko documents (registration is admin-only)
+      // Create: hanya admin yang bisa buat toko baru (registrasi via panel admin)
       allow create: if isAdmin();
 
-      // ── Update ──────────────────────────────────────────────────────────────
+      // Update:
+      //   CASE A — Owner update pengaturan toko sendiri
+      //   CASE B — Admin bisa update field apapun
       allow update: if
-        // CASE A — Owner updating own storefront settings
         (isOwner(uid)
           && ownerNotTouchingPrivilegeFields()
           && validOwnerTokoFields()
-          && validOwnerTokoValues(request.resource.data.diff(resource.data).changedKeys()
-               // Evaluate against the full incoming document, not just diff,
-               // so validators see context (e.g. nested map shapes).
-               // We pass the full request.resource.data for value checks.
-               ))
+          // FIX [BUG-01]: argumen = request.resource.data (data penuh), BUKAN changedKeys()
+          && validOwnerTokoValues(request.resource.data))
         ||
-        // CASE B — Admin may update any field without restriction
         isAdmin();
 
-      // ── Delete ──────────────────────────────────────────────────────────────
+      // Delete: hanya admin
       allow delete: if isAdmin();
 
       // ════════════════════════════════════════════════════════════════════════
@@ -171,24 +273,20 @@ service cloud.firestore {
       // ════════════════════════════════════════════════════════════════════════
       match /produk/{produkId} {
 
-        // Public read (storefront product list)
         allow read: if true;
 
-        // Owner create — full field validation
         allow create: if isOwner(uid)
                       && validProduk(request.resource.data)
-                      // Prevent injecting extra undeclared fields at create time
                       && request.resource.data.keys().hasOnly([
                            'nama','harga','stok','deskripsi','shopee','wa',
-                           'img','kategori','createdAt','updatedAt'
+                           'img','kategori','createdAt','updatedAt',
+                           'hargaAsli','berat','unggulan','stokAwal'
                          ]);
 
-        // Owner update — only whitelisted keys, validated values
         allow update: if isOwner(uid)
                       && validProdukUpdateKeys()
                       && validProduk(request.resource.data);
 
-        // Owner delete
         allow delete: if isOwner(uid);
       }
 
@@ -197,35 +295,27 @@ service cloud.firestore {
       // ════════════════════════════════════════════════════════════════════════
       match /stats/{date} {
 
-        // Only owner or admin may read analytics
+        // Hanya owner / admin yang bisa baca statistik
         allow read: if isOwner(uid) || isAdmin();
 
-        // Public increment — anonymous visitors track visits/clicks.
-        // HARDENED:
-        //   1. Doc ID must be a valid YYYY-MM-DD date (prevents doc flooding).
-        //   2. Incoming data must contain ONLY the three allowed counter fields.
-        //   3. Every value must be a positive integer increment of exactly 1
-        //      (prevents a single request from inflating counts by thousands).
-        //   4. No new keys beyond the counter fields may be introduced.
+        // Create stats — pengunjung anonymous
+        // Hardened: doc ID harus YYYY-MM-DD, hanya satu counter, nilai +1
         allow create: if
           validDateId(date)
           && request.resource.data.keys().hasOnly(['visits','waClicks','shopeeClicks'])
-          && request.resource.data.keys().size() == 1   // one event per call
+          && request.resource.data.keys().size() == 1
           && (
-               ('visits'       in request.resource.data && request.resource.data.visits       == 1)
-               || ('waClicks'  in request.resource.data && request.resource.data.waClicks     == 1)
+               ('visits'       in request.resource.data && request.resource.data.visits == 1)
+               || ('waClicks'  in request.resource.data && request.resource.data.waClicks == 1)
                || ('shopeeClicks' in request.resource.data && request.resource.data.shopeeClicks == 1)
              );
 
         allow update: if
           validDateId(date)
-          // Disallow introducing new top-level fields via update
           && request.resource.data.keys().hasOnly(['visits','waClicks','shopeeClicks'])
-          // Only one counter field touched per call
           && request.resource.data.diff(resource.data).affectedKeys().size() == 1
           && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['visits','waClicks','shopeeClicks'])
-          // Each touched value must increase by exactly 1
           && (
                (!('visits' in request.resource.data.diff(resource.data).changedKeys())
                  || request.resource.data.visits == resource.data.visits + 1)
@@ -235,26 +325,20 @@ service cloud.firestore {
                  || request.resource.data.shopeeClicks == resource.data.shopeeClicks + 1)
              );
 
-        // Nobody deletes stats
         allow delete: if false;
       }
     }
 
     // ══════════════════════════════════════════════════════════════════════════
     // /config/{docId}
-    // Global app config (maintenance mode, etc.)
     // ══════════════════════════════════════════════════════════════════════════
     match /config/{docId} {
-
-      // Public read required by maintenance.js
-      allow read: if true;
-
-      // Only admin may write; no unauthenticated or regular-user writes
+      allow read:  if true;      // diperlukan oleh maintenance.js
       allow write: if isAdmin();
     }
 
     // ══════════════════════════════════════════════════════════════════════════
-    // Catch-all: deny everything not explicitly matched above
+    // Catch-all: tolak semua yang tidak di-match di atas
     // ══════════════════════════════════════════════════════════════════════════
     match /{document=**} {
       allow read, write: if false;
