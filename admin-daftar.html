@@ -7,23 +7,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20260521">
+  <link rel="stylesheet" href="css/style.css?v=20260512">
   <link rel="icon" type="image/png" sizes="32x32" href="logo-linkify.png">
 </head>
 <body style="background:#0F1117;">
 
 <!-- OVERLAY mobile -->
-<div id="overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:25;backdrop-filter:blur(2px);"></div>
+<div id="overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:25;backdrop-filter:blur(2px);" id="overlay-close"></div>
 
 <!-- CONFIRM MODAL -->
 <div id="confirm-modal" class="dark-modal-bg">
   <div class="dark-modal-box">
     <div id="confirm-icon" class="dark-modal-icon"></div>
     <div id="confirm-title" class="dark-modal-title"></div>
-    <div id="confirm-msg" class="dark-modal-msg"></div>
+    <div id="confirm-msg"   class="dark-modal-msg"></div>
     <div class="dark-modal-btns">
-      <button id="confirm-cancel-btn" class="btn btn-modal-cancel">Batal</button>
-      <button id="confirm-ok-btn" class="btn"></button>
+      <button onclick="closeConfirm()" class="btn btn-modal-cancel">Batal</button>
+      <button id="confirm-ok" class="btn"></button>
     </div>
   </div>
 </div>
@@ -33,11 +33,11 @@
   <div class="dark-modal-box wide" style="max-width:500px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
       <div class="dark-modal-title" style="margin-bottom:0;">Atur Paket User</div>
-      <button id="plan-close-btn" style="background:none;border:none;cursor:pointer;color:#6B7280;padding:4px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button onclick="closePlanModal()" style="background:none;border:none;cursor:pointer;color:#6B7280;padding:4px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:18px;background:rgba(255,255,255,0.04);padding:4px;border-radius:10px;">
-      <button id="tab-basic-btn" data-plan="basic" style="flex:1;padding:8px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:Inter,sans-serif;background:transparent;color:#6B7280;transition:all .15s;">● Basic</button>
-      <button id="tab-premium-btn" data-plan="premium" style="flex:1;padding:8px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:Inter,sans-serif;background:#FF6B35;color:#fff;transition:all .15s;">⚡ Premium</button>
+      <button id="tab-basic-btn" onclick="switchPlanTab('basic')" style="flex:1;padding:8px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:Inter,sans-serif;background:transparent;color:#6B7280;transition:all .15s;">● Basic</button>
+      <button id="tab-premium-btn" onclick="switchPlanTab('premium')" style="flex:1;padding:8px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:Inter,sans-serif;background:#FF6B35;color:#fff;transition:all .15s;">⚡ Premium</button>
     </div>
     <div class="dark-form-group">
       <label class="dark-form-label">Durasi Aktif (hari)</label>
@@ -91,8 +91,8 @@
       </div>
     </div>
     <div class="dark-modal-btns" style="margin-top:20px;">
-      <button id="plan-cancel-btn" class="btn btn-modal-cancel">Batal</button>
-      <button id="plan-save-btn" class="btn btn-modal-success">Aktifkan Premium</button>
+      <button onclick="closePlanModal()" class="btn btn-modal-cancel">Batal</button>
+      <button id="pm-save-btn" onclick="savePlanModal()" class="btn btn-modal-success">Aktifkan Premium</button>
     </div>
   </div>
 </div>
@@ -126,120 +126,134 @@
         </button>
 
         <div class="sidebar-divider" style="background:#1F2329;"></div>
+        <div class="sidebar-section-label" style="color:#374151;padding:0 8px;">Sistem</div>
 
-        <button type="button" class="tab-btn logout-btn" id="btnLogout">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          Logout
+        <button type="button" class="tab-btn" onclick="document.getElementById('maint-panel').scrollIntoView({behavior:'smooth'})" style="color:#F87171;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          Maintenance Mode
+          <span id="maint-status-label" style="margin-left:auto;font-size:10px;font-weight:700;letter-spacing:0.5px;">NONAKTIF</span>
         </button>
       </div>
 
-      <div class="sidebar-user">
-        <div class="sidebar-user-info">
-          <div class="sidebar-user-avatar" id="admin-avatar">?</div>
-          <div class="sidebar-user-email" id="adminYgLogin">Loading...</div>
+      <div class="sidebar-user" style="margin-top:auto;padding-top:16px;border-top:1px solid #1F2329;">
+        <div class="sidebar-user-info" style="background:rgba(255,255,255,0.04);">
+          <div class="sidebar-user-avatar" id="admin-avatar" style="background:#FF6B35;">A</div>
+          <div class="sidebar-user-email" id="adminYgLogin" style="color:#6B7280;font-size:11px;">Memuat...</div>
         </div>
+        <button type="button" onclick="logoutAdmin()" class="tab-btn" style="color:#F87171;margin-top:6px;width:100%;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
       </div>
     </div>
   </nav>
 
   <!-- MAIN -->
-  <div class="main">
-    <div class="mob-header">
-      <div class="mob-title">LINKify<span style="color:var(--accent)">.</span> Admin</div>
-      <button type="button" class="hamburger" id="btn-hamburger">
+  <div class="main" style="background:#0F1117;">
+
+    <!-- TOPBAR -->
+    <div class="mob-header dark-topbar" style="position:sticky;top:0;z-index:20;">
+      <div class="mob-title" style="color:#fff;">Manajemen User</div>
+      <button class="hamburger" id="btn-hamburger" style="background:#1F2329;border-color:#2C313A;color:#fff;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
     </div>
 
-    <div class="page-wrap">
+    <div class="page-wrap" style="padding:20px 20px 80px;">
 
-      <!-- LOGIN FORM -->
-      <div id="loginAdmin" style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;">
-        <div class="dark-card" style="max-width:420px;width:100%;">
-          <div class="dark-card-header" style="border-bottom:1px solid #1F2329;padding-bottom:20px;margin-bottom:24px;">
-            <div class="dark-card-title" style="font-size:22px;display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" width="24" height="24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-              Login Super Admin
+      <!-- LOGIN PANEL -->
+      <div id="loginAdmin" style="display:flex;align-items:center;justify-content:center;min-height:70vh;">
+        <div style="width:100%;max-width:360px;">
+          <div style="text-align:center;margin-bottom:28px;">
+            <div style="width:52px;height:52px;background:#FF6B35;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 4px 16px rgba(255,107,53,0.30);">
+              <img src="logo-linkify.png" alt="LF" style="width:32px;height:32px;border-radius:8px;">
             </div>
-            <div style="font-size:12px;color:#6B7280;font-weight:400;">Manajemen User & Maintenance Mode</div>
+            <div style="font-size:20px;font-weight:800;color:#fff;">Admin Login</div>
+            <div style="font-size:12px;color:#6B7280;margin-top:4px;">LINKify Control Panel</div>
           </div>
-          <form id="loginForm" style="display:flex;flex-direction:column;gap:18px;">
+          <div style="background:#1A1D23;border:1px solid #1F2329;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:14px;">
             <div>
               <label class="dark-form-label">Email Admin</label>
-              <input id="adminEmail" type="email" placeholder="admin@example.com" class="dark-form-input" autocomplete="email">
+              <input id="adminEmail" type="email" autocomplete="email" placeholder="admin@linkify.app" class="dark-form-input">
             </div>
             <div>
               <label class="dark-form-label">Password</label>
-              <input id="adminPass" type="password" placeholder="••••••••" class="dark-form-input" autocomplete="current-password">
+              <input id="adminPass" type="password" autocomplete="current-password" placeholder="••••••••" class="dark-form-input">
             </div>
-            <div id="loginError" class="hidden" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#FCA5A5;padding:12px 14px;border-radius:10px;font-size:12px;font-weight:500;"></div>
-            <button type="button" id="btnLoginAdmin" class="btn btn-accent" style="width:100%;justify-content:center;font-size:14px;padding:12px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-              Masuk ke Panel Admin
+            <button type="button" onclick="loginAdmin()" class="btn btn-accent btn-w" style="padding:13px;font-size:14px;margin-top:4px;">
+              Masuk sebagai Admin
             </button>
-          </form>
+            <p id="loginError" class="hidden" style="color:#F87171;font-size:12px;text-align:center;"></p>
+          </div>
         </div>
       </div>
 
-      <!-- ADMIN PANEL -->
+      <!-- DASHBOARD -->
       <div id="formDaftar" style="display:none;">
-        <div class="dark-card">
-          <div class="dark-card-header">
-            <span class="dark-card-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-              Daftarkan User Baru
-            </span>
+
+        <!-- ANALYTICS CARDS -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:24px;">
+          <div class="dark-stat-card">
+            <div class="dark-stat-label">Total User</div>
+            <div class="dark-stat-val" id="totalUser">0</div>
+            <div style="height:3px;width:28px;background:#3B82F6;border-radius:2px;margin-top:10px;opacity:0.7;"></div>
           </div>
-          <form id="regForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;padding:18px;">
-            <div class="dark-form-group">
-              <label class="dark-form-label">Nama Toko</label>
-              <input id="namaToko" type="text" placeholder="Toko Budi" class="dark-form-input">
-            </div>
-            <div class="dark-form-group">
-              <label class="dark-form-label">Nama Pemilik</label>
-              <input id="namaPemilik" type="text" placeholder="Budi Santoso" class="dark-form-input">
-            </div>
-            <div class="dark-form-group">
-              <label class="dark-form-label">Email User</label>
-              <input id="emailUser" type="email" placeholder="user@example.com" class="dark-form-input">
-            </div>
-            <div class="dark-form-group">
-              <label class="dark-form-label">Password User</label>
-              <input id="passUser" type="password" placeholder="min. 6 karakter" class="dark-form-input">
-            </div>
-            <div style="grid-column:1/-1;display:flex;justify-content:flex-end;">
-              <button type="button" id="btnDaftar" class="btn btn-accent">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                Daftarkan User
-              </button>
-            </div>
-          </form>
+          <div class="dark-stat-card">
+            <div class="dark-stat-label">Aktif</div>
+            <div class="dark-stat-val" id="totalAktif" style="color:#34D399;">0</div>
+            <div style="height:3px;width:28px;background:#10B981;border-radius:2px;margin-top:10px;opacity:0.7;"></div>
+          </div>
+          <div class="dark-stat-card">
+            <div class="dark-stat-label">Premium</div>
+            <div class="dark-stat-val" id="totalPremium" style="color:#FCD34D;">0</div>
+            <div style="height:3px;width:28px;background:#F59E0B;border-radius:2px;margin-top:10px;opacity:0.7;"></div>
+          </div>
+          <div class="dark-stat-card">
+            <div class="dark-stat-label">Diblokir</div>
+            <div class="dark-stat-val" id="totalSuspend" style="color:#F87171;">0</div>
+            <div style="height:3px;width:28px;background:#EF4444;border-radius:2px;margin-top:10px;opacity:0.7;"></div>
+          </div>
         </div>
 
-        <div class="dark-card" style="margin-top:20px;">
-          <div class="dark-card-header" style="flex-wrap:wrap;gap:12px;">
-            <span class="dark-card-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-              Daftar User Terdaftar
-            </span>
-            <span id="tableCount" style="font-size:11px;color:#6B7280;margin-left:auto;">Loading...</span>
+        <!-- TAMBAH USER -->
+        <div class="dark-card" style="margin-bottom:20px;">
+          <div class="dark-card-header">
+            <span class="dark-card-title">Daftarkan User Baru</span>
           </div>
-          <div style="padding:12px 16px;border-bottom:1px solid #1F2329;display:flex;flex-wrap:wrap;gap:10px;">
-            <input id="searchUser" type="text" placeholder="🔍 Cari toko atau email..." class="dark-form-input" style="flex:1;min-width:200px;">
-            <select id="filterPlan" class="dark-form-select" style="flex:0 0 auto;width:auto;min-width:140px;">
-              <option value="">Semua Paket</option>
-              <option value="free">Gratis</option>
-              <option value="basic">Basic</option>
-              <option value="premium">Premium</option>
-            </select>
-            <select id="filterStatus" class="dark-form-select" style="flex:0 0 auto;width:auto;min-width:130px;">
-              <option value="">Semua Status</option>
-              <option value="aktif">Aktif</option>
-              <option value="blokir">Terblokir</option>
-            </select>
-            <button type="button" id="btn-refresh" class="btn" style="padding:8px 14px;background:#1F2329;border:1px solid #2C313A;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2"/></svg>
+          <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">
+            <input id="namaToko"    type="text"     placeholder="Nama Toko"        class="dark-form-input">
+            <input id="namaPemilik" type="text"     placeholder="Nama Pemilik"     class="dark-form-input">
+            <input id="emailUser"   type="email"    placeholder="Email"            class="dark-form-input">
+            <input id="passUser"    type="password" placeholder="Password (min 6)" class="dark-form-input">
+            <button type="button" id="btnDaftar" onclick="daftarkanUser()" class="btn btn-accent" style="font-size:13px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Daftarkan
             </button>
+          </div>
+        </div>
+
+        <!-- TABEL USER -->
+        <div class="dark-card">
+          <div class="dark-card-header">
+            <span class="dark-card-title">Daftar User Terdaftar</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div style="position:relative;">
+                <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);opacity:0.4;pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input id="searchInput" type="text" placeholder="Cari..." oninput="filterTable()" class="dark-input" style="padding-left:30px;width:160px;">
+              </div>
+              <select id="filterStatus" onchange="filterTable()" class="dark-form-select" style="width:auto;font-size:12px;padding:8px 12px;">
+                <option value="">Semua</option>
+                <option value="aktif">Aktif</option>
+                <option value="blokir">Diblokir</option>
+                <option value="premium">Premium</option>
+                <option value="basic">Basic</option>
+                <option value="gratis">Gratis</option>
+              </select>
+              <button onclick="ambilDataUser()" class="btn btn-outline" style="font-size:12px;padding:7px 12px;border-color:#2C313A;color:#9CA3AF;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                Refresh
+              </button>
+            </div>
           </div>
           <div style="overflow-x:auto;">
             <table class="ad-table">
@@ -260,7 +274,7 @@
             </table>
           </div>
           <div style="padding:10px 16px;border-top:1px solid #1F2329;">
-            <span id="tableCount2" style="font-size:11px;color:#4B5563;"></span>
+            <span id="tableCount" style="font-size:11px;color:#4B5563;"></span>
           </div>
         </div>
 
@@ -313,7 +327,7 @@
                 <p style="font-size:11px;color:#4B5563;margin-top:5px;">Kosongkan jika tidak ingin menampilkan countdown.</p>
               </div>
 
-              <button type="button" id="maint-save-btn"
+              <button type="button" id="maint-save-btn" onclick="saveMaintenance()"
                 class="btn btn-accent" style="font-size:13px;align-self:flex-start;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
                 Simpan Pengaturan
@@ -351,7 +365,18 @@
 #tab-premium-btn.active { background: #FF6B35 !important; color: #fff !important; }
 </style>
 
-<!-- ✅ MODERN: No inline onclick, all events in JS -->
-<script type="module" src="js/admin-daftar.js?v=20260521"></script>
+<script>
+// Maintenance toggle visual behavior
+document.addEventListener('change', function(e) {
+  if (e.target.id !== 'maint-toggle') return;
+  const track = document.querySelector('.maint-track');
+  const thumb = document.querySelector('.maint-thumb');
+  if (track) track.style.background = e.target.checked ? '#EF4444' : '#2C313A';
+  if (thumb) thumb.style.transform  = e.target.checked ? 'translateX(20px)' : 'translateX(0)';
+  // FIX: save ke Firestore saat toggle berubah
+  if (typeof window.toggleMaintenance === 'function') window.toggleMaintenance();
+});
+</script>
+<script type="module" src="js/admin-daftar.js"></script>
 </body>
 </html>
