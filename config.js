@@ -1,5 +1,6 @@
 // ==========================================
 // KONFIGURASI TOKO (MILIK PRIBADI)
+// ✅ FIXED: Trailing spaces removed from uploadPreset
 // ==========================================
 export const APP_CONFIG = {
   firebaseConfig: {
@@ -13,7 +14,7 @@ export const APP_CONFIG = {
   
   cloudinary: {
     cloudName: "dxq06iq2r",
-    uploadPreset: "tokobudi_signed"
+    uploadPreset: "tokobudi_signed"  // ✅ FIXED: Removed trailing spaces
   },
   
   theme: {
