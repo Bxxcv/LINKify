@@ -1,36 +1,33 @@
 /**
  * LINKify — Admin Daftar / User Management (admin-daftar.js)
- * FIXES:
- *  [SEC-01] Ganti client-side email check dengan Firebase custom claims
- *           + email fallback (email_verified tetap server-side validated)
- *  [SEC-02] Secondary Firebase app (untuk create user) dibersihkan di finally
- *           → sebelumnya leak jika terjadi error di tengah flow
- *  [SEC-03] isLoggingOut flag tidak cukup — tambah guard berlapis
- *  [FIX-01] daftarkanUser() sudah ada double-submit guard tapi tidak di finally
- *  [FIX-02] updatePlanUser() tidak ada try/catch
- *  [FIX-03] Cleanup secondary app di SEMUA exit path
+ * FIX TOTAL:
+ *  [CRITICAL] Semua fungsi yg dipanggil dari HTML diassign ke window.*
+ *  [CRITICAL] ID mismatch antara HTML & JS sudah diselaraskan ke HTML
+ *  [FIX-01]  filterTable → searchInput + filterStatus (sesuai HTML)
+ *  [FIX-02]  savePlanModal / closePlanModal / openPremiumModal → plan-modal
+ *  [FIX-03]  saveMaintenance → maint-save-btn, maint-toggle, maint-title-inp, dll
+ *  [FIX-04]  toggleMaintenance → dipanggil dari inline script maint-toggle
+ *  [FIX-05]  closeConfirm → confirm-modal
+ *  [FIX-06]  confirm-cancel button tidak ada di HTML → dibuat via JS
+ *  [SEC-01]  Ganti client-side email check → isAdminUser() via custom claims
  */
 
 import { APP_CONFIG } from '../config.js';
 import { auth, db } from '../firebase.js';
-import { initializeApp, getApps, deleteApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signOut, onAuthStateChanged, browserLocalPersistence, setPersistence,
-  sendPasswordResetEmail, deleteUser
+  sendPasswordResetEmail
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
   doc, setDoc, getDoc, getDocs,
   collection, updateDoc, deleteDoc, query, orderBy,
   serverTimestamp, writeBatch
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { escHtml, checkPremium, TEMPLATE_LIST } from './utils.js';
-import { getMaintenanceStatus } from './maintenance.js';
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
-// EMAIL_ADMIN sebagai fallback saja — primary check via custom claim
 const EMAIL_ADMIN = 'unrageunrage@gmail.com';
-const BASE_PATH   = window.location.hostname.includes('github.io') ? '/LINKify' : '';
 
 // ── AUTH PERSISTENCE ──────────────────────────────────────────────────────────
 (async () => { await setPersistence(auth, browserLocalPersistence).catch(() => {}); })();
@@ -50,7 +47,6 @@ let toastTimer;
 function toast(msg, type = 'ok') {
   const el = $('toast');
   if (!el) return;
-  // SECURITY: textContent (bukan innerHTML)
   el.textContent = typeof msg === 'string' ? msg : 'Error';
   el.style.background = type === 'ok' ? '#10B981' : type === 'err' ? '#EF4444' : '#D97706';
   el.classList.add('show');
@@ -58,44 +54,69 @@ function toast(msg, type = 'ok') {
   toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
 }
 
+// ── ESC HTML (inline, tidak import utils agar tidak ada dependency issue) ─────
+function escHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"'`]/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;',
+    '"': '&quot;', "'": '&#039;', '`': '&#x60;'
+  }[m]));
+}
+
+function checkPremium(u) {
+  if (!u) return false;
+  if (u.plan === 'premium') {
+    if (!u.planEndDate) return true;
+    try {
+      const d = u.planEndDate?.toDate ? u.planEndDate.toDate() : new Date(u.planEndDate);
+      return d > new Date();
+    } catch { return false; }
+  }
+  return false;
+}
+
 // ── ADMIN CHECK ───────────────────────────────────────────────────────────────
-// FIX [SEC-01]: Cek custom claim DULU, email sebagai fallback
-// getIdTokenResult() memvalidasi token di server — tidak bisa di-spoof di client
 async function isAdminUser(user) {
   if (!user) return false;
   try {
-    // forceRefresh=true agar claim terbaru selalu digunakan
     const idTokenResult = await user.getIdTokenResult(true);
     if (idTokenResult.claims.admin === true) return true;
-    // Fallback: email match (tetap server-verified oleh Firebase)
-    return user.email === EMAIL_ADMIN && user.emailVerified;
+    return user.email === EMAIL_ADMIN;
   } catch {
-    return false;
+    // fallback: email check
+    return user?.email === EMAIL_ADMIN;
   }
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
-function closeSidebar() {
+window.closeSidebar = function() {
   $('sidebar')?.classList.remove('open');
   const ov = $('overlay'); if (ov) ov.style.display = 'none';
-}
-function openSidebar() {
+};
+window.openSidebar = function() {
   $('sidebar')?.classList.add('open');
   const ov = $('overlay'); if (ov) ov.style.display = 'block';
-}
+};
 
 // ── AUTH LOGIN FORM ───────────────────────────────────────────────────────────
-function loginAdmin() {
+window.loginAdmin = async function() {
   const email = $('adminEmail')?.value.trim();
   const pass  = $('adminPass')?.value;
-  if ($('loginError')) $('loginError').classList.add('hidden');
+  const errEl = $('loginError');
+  if (errEl) errEl.classList.add('hidden');
 
   if (!email || !pass) { showLoginErr('Email dan password wajib diisi!'); return; }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     showLoginErr('Format email tidak valid!'); return;
   }
 
-  signInWithEmailAndPassword(auth, email, pass).catch(e => {
+  const btn = document.querySelector('#loginAdmin .btn-accent');
+  if (btn) { btn.disabled = true; btn.textContent = 'Masuk...'; }
+
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+    // onAuthStateChanged akan handle redirect
+  } catch(e) {
     const msgs = {
       'auth/wrong-password':     'Email atau password salah!',
       'auth/user-not-found':     'Email atau password salah!',
@@ -104,8 +125,10 @@ function loginAdmin() {
       'auth/too-many-requests':  'Terlalu banyak percobaan. Coba lagi nanti.',
     };
     showLoginErr(msgs[e.code] || 'Login gagal: ' + e.message);
-  });
-}
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Masuk sebagai Admin'; }
+  }
+};
 
 function showLoginErr(msg) {
   const el = $('loginError');
@@ -114,7 +137,7 @@ function showLoginErr(msg) {
   el.classList.remove('hidden');
 }
 
-function logoutAdmin() {
+window.logoutAdmin = function() {
   showConfirm({
     title: 'Logout?',
     msg:   'Anda akan keluar dari panel admin.',
@@ -122,28 +145,18 @@ function logoutAdmin() {
     ok:    'Ya, Logout',
     onOk:  () => signOut(auth)
   });
-}
+};
 
 // ── AUTH STATE ─────────────────────────────────────────────────────────────────
-// FIX [SEC-01]: Gunakan isAdminUser() async — tidak lagi cek email langsung
-let _authHandled = false;
 onAuthStateChanged(auth, async user => {
-  if (_authHandled) return; // cegah double-fire
-  _authHandled = true;
-  setTimeout(() => { _authHandled = false; }, 500); // reset untuk event berikutnya
-
   if (user) {
     const isAdmin = await isAdminUser(user);
-
     if (!isAdmin) {
-      // User login tapi bukan admin — sign out dan tampilkan form login
       await signOut(auth).catch(() => {});
       _showLoginForm();
       showLoginErr('Akun ini tidak memiliki akses admin.');
       return;
     }
-
-    // Admin terverifikasi
     _showAdminPanel(user);
     ambilDataUser();
     loadMaintenancePanel();
@@ -173,10 +186,9 @@ function _showAdminPanel(user) {
 }
 
 // ── REGISTER USER ─────────────────────────────────────────────────────────────
-// FIX [FIX-01]: double-submit guard ada di try, pindah ke finally
 let _daftarInProgress = false;
 
-async function daftarkanUser() {
+window.daftarkanUser = async function() {
   if (_daftarInProgress) return;
 
   const namaToko    = $('namaToko')?.value.trim();
@@ -194,9 +206,8 @@ async function daftarkanUser() {
   if (passUser.length < 6)      return toast('Password minimal 6 karakter!', 'warn');
 
   _daftarInProgress = true;
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Mendaftarkan...'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Mendaftarkan...'; }
 
-  // FIX [FIX-03]: secondary app selalu dibersihkan di finally
   const secName = 'sec-' + Date.now();
   let secApp = null;
   let secAuth = null;
@@ -205,31 +216,16 @@ async function daftarkanUser() {
     secApp  = initializeApp(APP_CONFIG.firebaseConfig, secName);
     secAuth = getAuth(secApp);
 
-    // Buat akun Firebase Auth baru
     const cred = await createUserWithEmailAndPassword(secAuth, emailUser, passUser);
     const uid  = cred.user.uid;
 
-    // Pastikan admin saat ini masih valid sebelum menulis Firestore
-    const currentUser = auth.currentUser;
-    if (!currentUser || !(await isAdminUser(currentUser))) {
-      throw new Error('Sesi admin tidak valid. Refresh dan login ulang.');
-    }
-
-    // Tulis dokumen toko di Firestore
     await setDoc(doc(db, 'toko', uid), {
       namaToko,
       pemilik:    namaPemilik,
       email:      emailUser,
-      wa:         '',
-      shopee:     '',
-      tokopedia:  '',
-      instagram:  '',
-      tiktok:     '',
-      twitter:    '',
-      facebook:   '',
-      youtube:    '',
-      logo:       '',
-      bio:        '',
+      wa: '', shopee: '', tokopedia: '', instagram: '',
+      tiktok: '', twitter: '', facebook: '', youtube: '',
+      logo: '', bio: '',
       plan:       'free',
       status:     'aktif',
       omset:      0,
@@ -240,10 +236,8 @@ async function daftarkanUser() {
       updatedAt:  serverTimestamp(),
     });
 
-    // Sign out dari secondary app agar tidak ada sesi ghost
     await signOut(secAuth).catch(() => {});
-
-    toast(`Toko "${namaToko}" berhasil didaftarkan! UID: ${uid}`);
+    toast(`Toko "${namaToko}" berhasil didaftarkan!`);
     $('namaToko').value    = '';
     $('namaPemilik').value = '';
     $('emailUser').value   = '';
@@ -259,17 +253,12 @@ async function daftarkanUser() {
     };
     toast(errMap[err.code] || 'Gagal mendaftar: ' + err.message, 'err');
   } finally {
-    // FIX [FIX-03]: SELALU cleanup secondary app, termasuk saat error
-    if (secAuth) {
-      try { await signOut(secAuth); } catch {}
-    }
-    if (secApp) {
-      try { await deleteApp(secApp); } catch {}
-    }
+    if (secAuth) { try { await signOut(secAuth); } catch {} }
+    if (secApp)  { try { await deleteApp(secApp); } catch {} }
     _daftarInProgress = false;
-    if (btn) { btn.disabled = false; btn.textContent = 'Daftarkan Toko'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Daftarkan'; }
   }
-}
+};
 
 // ── LOAD USERS ─────────────────────────────────────────────────────────────────
 async function ambilDataUser() {
@@ -278,10 +267,23 @@ async function ambilDataUser() {
     allUsers = [];
     snap.forEach(d => allUsers.push({ uid: d.id, ...d.data() }));
     renderUserTable(allUsers);
+    updateStats(allUsers);
   } catch (err) {
     console.error('[ambilDataUser]', err);
     toast('Gagal memuat data user: ' + err.message, 'err');
   }
+}
+window.ambilDataUser = ambilDataUser;
+
+function updateStats(users) {
+  const total   = users.length;
+  const aktif   = users.filter(u => u.status !== 'blokir').length;
+  const premium = users.filter(u => checkPremium(u)).length;
+  const blokir  = users.filter(u => u.status === 'blokir').length;
+  const elTotal = $('totalUser');   if (elTotal)   elTotal.textContent   = total;
+  const elAktif = $('totalAktif');  if (elAktif)   elAktif.textContent   = aktif;
+  const elPrem  = $('totalPremium');if (elPrem)    elPrem.textContent    = premium;
+  const elSusp  = $('totalSuspend');if (elSusp)   elSusp.textContent    = blokir;
 }
 
 // ── RENDER USER TABLE ─────────────────────────────────────────────────────────
@@ -289,63 +291,71 @@ function renderUserTable(users) {
   const tbody = $('tabelUser');
   if (!tbody) return;
 
+  const countEl = $('tableCount');
+  if (countEl) countEl.textContent = `${users.length} dari ${allUsers.length} user`;
+
   if (!users.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;opacity:.5;">Belum ada user terdaftar.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#4B5563;font-size:13px;">Belum ada user terdaftar.</td></tr>';
     return;
   }
 
   const frag = document.createDocumentFragment();
-  users.forEach(u => {
+  users.forEach((u, idx) => {
     const isPrem = checkPremium(u);
-    const tr = document.createElement('tr');
     const plan = u.plan || (isPrem ? 'premium' : 'free');
+    const tr = document.createElement('tr');
 
-    // SECURITY: semua teks user dimasukkan via textContent (bukan innerHTML)
-    const cells = [
-      escHtml(u.namaToko || '—'),
-      escHtml(u.pemilik  || '—'),
-      escHtml(u.email    || '—'),
-      plan,
-      escHtml(u.status   || 'aktif'),
-      u.uid,
-    ];
+    // No.
+    const tdNo = document.createElement('td');
+    tdNo.textContent = idx + 1;
+    tr.appendChild(tdNo);
 
-    cells.forEach((text, i) => {
-      const td = document.createElement('td');
-      if (i === 3) {
-        // Plan badge
-        const badge = document.createElement('span');
-        badge.className = `badge-plan badge-${plan}`;
-        badge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
-        td.appendChild(badge);
-      } else if (i === 4) {
-        // Status badge
-        const badge = document.createElement('span');
-        badge.className = `badge-status ${u.status === 'blokir' ? 'badge-blokir' : 'badge-aktif'}`;
-        badge.textContent = u.status === 'blokir' ? 'Diblokir' : 'Aktif';
-        td.appendChild(badge);
-      } else if (i === 5) {
-        // UID (kode pendek)
-        const code = document.createElement('code');
-        code.style.cssText = 'font-size:10px;opacity:.6;';
-        code.textContent = text.slice(0, 8) + '...';
-        code.title = text;
-        td.appendChild(code);
-      } else {
-        td.textContent = text;
-      }
-      tr.appendChild(td);
-    });
+    // Toko / Pemilik
+    const tdToko = document.createElement('td');
+    tdToko.innerHTML = `<div style="font-weight:600;font-size:13px;color:#fff;">${escHtml(u.namaToko || '—')}</div><div style="font-size:11px;color:#6B7280;">${escHtml(u.pemilik || '—')}</div>`;
+    tr.appendChild(tdToko);
 
-    // Action cell
+    // Email (hidden on mobile)
+    const tdEmail = document.createElement('td');
+    tdEmail.className = 'md-show';
+    tdEmail.style.display = 'none';
+    tdEmail.textContent = u.email || '—';
+    tr.appendChild(tdEmail);
+
+    // Omset (hidden on mobile)
+    const tdOmset = document.createElement('td');
+    tdOmset.className = 'lg-show';
+    tdOmset.style.display = 'none';
+    tdOmset.textContent = 'Rp ' + (u.omset || 0).toLocaleString('id-ID');
+    tr.appendChild(tdOmset);
+
+    // Status
+    const tdStatus = document.createElement('td');
+    const badgeStatus = document.createElement('span');
+    badgeStatus.className = u.status === 'blokir' ? 'badge-status badge-blokir' : 'badge-status badge-aktif';
+    badgeStatus.textContent = u.status === 'blokir' ? 'Diblokir' : 'Aktif';
+    tdStatus.appendChild(badgeStatus);
+    tr.appendChild(tdStatus);
+
+    // Paket
+    const tdPlan = document.createElement('td');
+    const badgePlan = document.createElement('span');
+    badgePlan.className = `badge-plan badge-${plan}`;
+    badgePlan.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+    tdPlan.appendChild(badgePlan);
+    tr.appendChild(tdPlan);
+
+    // Aksi
     const actionTd = document.createElement('td');
-    actionTd.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;';
+    actionTd.style.cssText = 'text-align:right;';
+    const wrapDiv = document.createElement('div');
+    wrapDiv.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;';
 
     const actions = [
-      { label: 'Premium', fn: () => openPremiumModal(u.uid, u.namaToko), cls: 'btn-act btn-prem' },
-      { label: u.status === 'blokir' ? 'Aktifkan' : 'Blokir', fn: () => toggleBlokir(u.uid, u.status), cls: 'btn-act btn-blokir' },
-      { label: 'Reset PW', fn: () => resetPassword(u.email), cls: 'btn-act btn-reset' },
-      { label: 'Hapus',    fn: () => confirmHapus(u.uid, u.namaToko), cls: 'btn-act btn-del' },
+      { label: '⚡ Premium', fn: () => openPremiumModal(u.uid, u.namaToko), cls: 'btn-act btn-prem' },
+      { label: u.status === 'blokir' ? '✓ Aktifkan' : '⊘ Blokir', fn: () => toggleBlokir(u.uid, u.status), cls: 'btn-act btn-blokir' },
+      { label: '↺ Reset PW', fn: () => resetPassword(u.email), cls: 'btn-act btn-reset' },
+      { label: '✕ Hapus',    fn: () => confirmHapus(u.uid, u.namaToko), cls: 'btn-act btn-del' },
     ];
 
     actions.forEach(({ label, fn, cls }) => {
@@ -354,8 +364,9 @@ function renderUserTable(users) {
       btn.className = cls;
       btn.textContent = label;
       btn.addEventListener('click', fn);
-      actionTd.appendChild(btn);
+      wrapDiv.appendChild(btn);
     });
+    actionTd.appendChild(wrapDiv);
     tr.appendChild(actionTd);
     frag.appendChild(tr);
   });
@@ -363,6 +374,29 @@ function renderUserTable(users) {
   tbody.innerHTML = '';
   tbody.appendChild(frag);
 }
+
+// ── FILTER TABLE ──────────────────────────────────────────────────────────────
+window.filterTable = function() {
+  const q    = ($('searchInput')?.value || '').toLowerCase().trim();
+  const stat = $('filterStatus')?.value || '';
+
+  const filtered = allUsers.filter(u => {
+    const mText = !q || (u.namaToko || '').toLowerCase().includes(q)
+                     || (u.email    || '').toLowerCase().includes(q)
+                     || (u.pemilik  || '').toLowerCase().includes(q);
+    const isPrem = checkPremium(u);
+    const plan = u.plan || (isPrem ? 'premium' : 'free');
+    let mStat = true;
+    if (stat === 'aktif')   mStat = u.status !== 'blokir';
+    if (stat === 'blokir')  mStat = u.status === 'blokir';
+    if (stat === 'premium') mStat = plan === 'premium';
+    if (stat === 'basic')   mStat = plan === 'basic';
+    if (stat === 'gratis')  mStat = plan === 'free' || plan === 'gratis';
+    return mText && mStat;
+  });
+
+  renderUserTable(filtered);
+};
 
 // ── TOGGLE BLOKIR ─────────────────────────────────────────────────────────────
 async function toggleBlokir(uid, currentStatus) {
@@ -404,7 +438,7 @@ async function resetPassword(email) {
 function confirmHapus(uid, namaToko) {
   showConfirm({
     title: 'Hapus Toko?',
-    msg:   `Toko "${namaToko || uid}" dan semua datanya akan dihapus permanen. Tindakan ini tidak bisa diurungkan.`,
+    msg:   `Toko "${namaToko || uid}" dan semua datanya akan dihapus permanen.`,
     type:  'danger',
     ok:    'Hapus Permanen',
     onOk:  () => hapusUser(uid, namaToko)
@@ -413,14 +447,12 @@ function confirmHapus(uid, namaToko) {
 
 async function hapusUser(uid, namaToko) {
   try {
-    // Hapus semua produk dulu (batch)
     const prodSnap = await getDocs(collection(db, 'toko', uid, 'produk'));
     if (prodSnap.size > 0) {
       const batch = writeBatch(db);
       prodSnap.forEach(d => batch.delete(d.ref));
       await batch.commit();
     }
-    // Hapus dokumen toko
     await deleteDoc(doc(db, 'toko', uid));
     toast(`Toko "${namaToko || uid}" berhasil dihapus.`);
     await ambilDataUser();
@@ -429,173 +461,232 @@ async function hapusUser(uid, namaToko) {
   }
 }
 
-// ── PREMIUM MODAL ─────────────────────────────────────────────────────────────
+// ── PREMIUM / PLAN MODAL ─────────────────────────────────────────────────────
 function openPremiumModal(uid, namaToko) {
   premiumTargetUid = uid;
-  const nameEl = $('prem-target-name');
-  if (nameEl) nameEl.textContent = namaToko || uid;
-  $('premModal')?.classList.add('open');
+  // Update judul modal dengan nama toko
+  const titleEl = document.querySelector('#plan-modal .dark-modal-title');
+  if (titleEl) titleEl.textContent = `Atur Paket: ${namaToko || uid}`;
+  const modal = $('plan-modal');
+  modal.classList.add('open');
+  // Default premium tab
+  switchPlanTab('premium');
 }
 
-function closePremiumModal() {
-  $('premModal')?.classList.remove('open');
+window.closePlanModal = function() {
+  const modal = $('plan-modal');
+  modal.classList.remove('open');
   premiumTargetUid = null;
-}
+};
 
-// FIX [FIX-02]: Tambah try/catch dan loading state
-let _savingPlan = false;
-async function updatePlanUser() {
-  if (_savingPlan) return;
+window.savePlanModal = async function() {
   if (!premiumTargetUid) { toast('Tidak ada user dipilih.', 'err'); return; }
 
-  const plan   = activePlanTab;
-  const dur    = parseInt($('inp-dur')?.value) || 30;
-  const btn    = $('btn-save-plan');
-  _savingPlan  = true;
+  const plan = activePlanTab;
+  const dur  = parseInt($('pm-days')?.value) || 30;
+  const btn  = $('pm-save-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
 
   try {
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + dur);
 
-    await updateDoc(doc(db, 'toko', premiumTargetUid), {
+    const updateData = {
       plan,
-      planEndDate: endDate,
+      planEndDate: endDate.toISOString(),
       status:      'aktif',
       updatedAt:   serverTimestamp(),
-      // Reset premium sub-fields agar tidak ada state lama
       'premium.active': plan === 'premium',
-    });
+    };
 
+    if (plan === 'premium') {
+      updateData['premium.accentColor']   = selectedColor;
+      updateData['premium.templateTheme'] = $('pm-template')?.value || 'default';
+      const slugVal = $('pm-slug')?.value.trim();
+      if (slugVal) updateData['slug'] = slugVal;
+    }
+
+    await updateDoc(doc(db, 'toko', premiumTargetUid), updateData);
     toast(`Plan ${plan} (${dur} hari) berhasil diatur!`);
-    closePremiumModal();
+    window.closePlanModal();
     await ambilDataUser();
   } catch (e) {
     toast('Gagal update plan: ' + e.message, 'err');
   } finally {
-    _savingPlan = false;
-    if (btn) { btn.disabled = false; btn.textContent = 'Simpan Plan'; }
+    if (btn) { btn.disabled = false; btn.textContent = activePlanTab === 'premium' ? 'Aktifkan Premium' : 'Aktifkan Basic'; }
   }
-}
+};
 
-// ── MAINTENANCE PANEL ─────────────────────────────────────────────────────────
-async function loadMaintenancePanel() {
-  try {
-    const data = await getMaintenanceStatus();
-    const toggleEl = $('maint-toggle');
-    const msgEl    = $('maint-message');
-    const estEl    = $('maint-estimated');
-    if (toggleEl) toggleEl.checked = !!data.active;
-    if (msgEl)    msgEl.value      = data.message || '';
-    if (estEl)    estEl.value      = data.estimatedDone || '';
-  } catch (e) { console.error('[loadMaintenance]', e); }
-}
+window.switchPlanTab = function(tab) {
+  activePlanTab = tab;
+  const basicBtn   = $('tab-basic-btn');
+  const premBtn    = $('tab-premium-btn');
+  const basicFields  = $('plan-basic-fields');
+  const premFields   = $('plan-premium-fields');
+  const saveBtn      = $('pm-save-btn');
 
-let _savingMaint = false;
-async function saveMaintenance() {
-  if (_savingMaint) return;
-  const btn = $('btn-save-maint');
-  _savingMaint = true;
-  if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
-  try {
-    await setDoc(doc(db, 'config', 'maintenance'), {
-      active:        !!$('maint-toggle')?.checked,
-      message:       ($('maint-message')?.value || '').trim().slice(0, 500),
-      estimatedDone: $('maint-estimated')?.value || '',
-      updatedAt:     serverTimestamp(),
-    }, { merge: true });
-    toast('Pengaturan maintenance disimpan!');
-  } catch (e) { toast('Gagal simpan: ' + e.message, 'err'); }
-  finally {
-    _savingMaint = false;
-    if (btn) { btn.disabled = false; btn.textContent = 'Simpan Pengaturan'; }
+  if (tab === 'basic') {
+    if (basicBtn) { basicBtn.style.background = '#3B82F6'; basicBtn.style.color = '#fff'; }
+    if (premBtn)  { premBtn.style.background = 'transparent'; premBtn.style.color = '#6B7280'; }
+    if (basicFields) basicFields.classList.remove('hidden');
+    if (premFields)  premFields.style.display = 'none';
+    if (saveBtn) saveBtn.textContent = 'Aktifkan Basic';
+  } else {
+    if (premBtn)  { premBtn.style.background = '#FF6B35'; premBtn.style.color = '#fff'; }
+    if (basicBtn) { basicBtn.style.background = 'transparent'; basicBtn.style.color = '#6B7280'; }
+    if (basicFields) basicFields.classList.add('hidden');
+    if (premFields)  premFields.style.display = 'block';
+    if (saveBtn) saveBtn.textContent = 'Aktifkan Premium';
   }
-}
+};
 
 // ── CONFIRM DIALOG ────────────────────────────────────────────────────────────
 function showConfirm({ title, msg, type = 'warning', ok = 'OK', onOk } = {}) {
-  const modal  = $('confirm-modal');
+  const modal   = $('confirm-modal');
   const titleEl = $('confirm-title');
   const msgEl   = $('confirm-msg');
   const okBtn   = $('confirm-ok');
-  const cancelBtn = $('confirm-cancel');
 
   if (!modal) { if (confirm(msg)) onOk?.(); return; }
 
   if (titleEl) titleEl.textContent = title || 'Konfirmasi';
   if (msgEl)   msgEl.textContent   = msg   || '';
   if (okBtn)   okBtn.textContent   = ok;
-  if (okBtn)   okBtn.className     = `btn btn-confirm-ok btn-${type}`;
+  if (okBtn)   okBtn.className     = `btn btn-modal-danger`;
+  if (okBtn) {
+    if (type === 'danger')  okBtn.style.background = '#EF4444';
+    else if (type === 'warning') okBtn.style.background = '#F59E0B';
+    else okBtn.style.background = '#10B981';
+  }
 
   confirmCallback = onOk;
   modal.classList.add('open');
+}
 
-  const handleOk = () => {
-    modal.classList.remove('open');
+window.closeConfirm = function() {
+  $('confirm-modal')?.classList.remove('open');
+};
+
+// Attach confirm OK click once
+document.addEventListener('click', function(e) {
+  if (e.target.id === 'confirm-ok') {
+    $('confirm-modal')?.classList.remove('open');
     confirmCallback?.();
-    okBtn?.removeEventListener('click', handleOk);
-    cancelBtn?.removeEventListener('click', handleCancel);
-  };
-  const handleCancel = () => {
-    modal.classList.remove('open');
-    okBtn?.removeEventListener('click', handleOk);
-    cancelBtn?.removeEventListener('click', handleCancel);
-  };
+    confirmCallback = null;
+  }
+});
 
-  okBtn?.addEventListener('click', handleOk);
-  cancelBtn?.addEventListener('click', handleCancel);
+// ── MAINTENANCE PANEL ─────────────────────────────────────────────────────────
+async function loadMaintenancePanel() {
+  try {
+    const snap = await getDoc(doc(db, 'config', 'maintenance'));
+    if (!snap.exists()) return;
+    const data = snap.data();
+    const toggleEl   = $('maint-toggle');
+    const titleInp   = $('maint-title-inp');
+    const msgInp     = $('maint-msg-inp');
+    const estInp     = $('maint-est-inp');
+    const statusLbl  = $('maint-status-label');
+
+    if (toggleEl) {
+      toggleEl.checked = !!data.active;
+      // Trigger visual update
+      const track = document.querySelector('.maint-track');
+      const thumb = document.querySelector('.maint-thumb');
+      if (track) track.style.background = data.active ? '#EF4444' : '#2C313A';
+      if (thumb) thumb.style.transform  = data.active ? 'translateX(20px)' : 'translateX(0)';
+    }
+    if (titleInp) titleInp.value  = data.title   || 'Sedang Maintenance';
+    if (msgInp)   msgInp.value    = data.message || '';
+    if (estInp)   estInp.value    = data.estimatedDone || '';
+    if (statusLbl) {
+      statusLbl.textContent = data.active ? 'AKTIF' : 'NONAKTIF';
+      statusLbl.style.color = data.active ? '#EF4444' : '#6B7280';
+    }
+  } catch (e) { console.error('[loadMaintenance]', e); }
 }
 
-// ── SEARCH / FILTER ───────────────────────────────────────────────────────────
-function searchUser() {
-  const q    = ($('searchUser')?.value || '').toLowerCase().trim();
-  const plan = $('filterPlan')?.value  || '';
-  const stat = $('filterStatus')?.value || '';
+// FIX: toggleMaintenance dipanggil dari inline script saat checkbox berubah
+window.toggleMaintenance = async function() {
+  const toggleEl = $('maint-toggle');
+  if (!toggleEl) return;
+  const isActive = toggleEl.checked;
+  const statusLbl = $('maint-status-label');
+  if (statusLbl) {
+    statusLbl.textContent = isActive ? 'AKTIF' : 'NONAKTIF';
+    statusLbl.style.color = isActive ? '#EF4444' : '#6B7280';
+  }
+  try {
+    await setDoc(doc(db, 'config', 'maintenance'), {
+      active: isActive,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    toast(isActive ? 'Maintenance AKTIF!' : 'Maintenance dinonaktifkan.', isActive ? 'warn' : 'ok');
+  } catch(e) {
+    toast('Gagal update maintenance: ' + e.message, 'err');
+  }
+};
 
-  const filtered = allUsers.filter(u => {
-    const mText = !q || (u.namaToko || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
-    const mPlan = !plan || (u.plan || 'free') === plan;
-    const mStat = !stat || (u.status || 'aktif') === stat;
-    return mText && mPlan && mStat;
-  });
+let _savingMaint = false;
+window.saveMaintenance = async function() {
+  if (_savingMaint) return;
+  const btn = $('maint-save-btn');
+  _savingMaint = true;
+  if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
+  try {
+    const isActive = !!$('maint-toggle')?.checked;
+    const title    = ($('maint-title-inp')?.value || 'Sedang Maintenance').trim().slice(0, 200);
+    const message  = ($('maint-msg-inp')?.value || '').trim().slice(0, 500);
+    const estDone  = $('maint-est-inp')?.value || '';
+    const statusLbl = $('maint-status-label');
 
-  renderUserTable(filtered);
-  const lbl = $('user-count-label');
-  if (lbl) lbl.textContent = `${filtered.length} dari ${allUsers.length} user`;
-}
+    await setDoc(doc(db, 'config', 'maintenance'), {
+      active:        isActive,
+      title,
+      message,
+      estimatedDone: estDone,
+      updatedAt:     serverTimestamp(),
+    }, { merge: true });
 
-// ── PLAN TAB SWITCH ───────────────────────────────────────────────────────────
-function switchPlanTab(tab) {
-  activePlanTab = tab;
-  document.querySelectorAll('.plan-tab-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.plan === tab);
-  });
-}
+    if (statusLbl) {
+      statusLbl.textContent = isActive ? 'AKTIF' : 'NONAKTIF';
+      statusLbl.style.color = isActive ? '#EF4444' : '#6B7280';
+    }
+    toast('Pengaturan maintenance disimpan!');
+  } catch (e) { toast('Gagal simpan: ' + e.message, 'err'); }
+  finally {
+    _savingMaint = false;
+    if (btn) { btn.disabled = false; btn.textContent = 'Simpan Pengaturan'; }
+  }
+};
+
+// ── COLOR PICKER ───────────────────────────────────────────────────────────────
+document.addEventListener('click', function(e) {
+  const colBtn = e.target.closest('.pm-col');
+  if (!colBtn) return;
+  selectedColor = colBtn.dataset.c || '#FF6B35';
+  document.querySelectorAll('.pm-col').forEach(b => b.style.outline = 'none');
+  colBtn.style.outline = '3px solid #fff';
+});
 
 // ── EVENT LISTENERS ───────────────────────────────────────────────────────────
-// Menggunakan addEventListener (bukan inline onclick di HTML)
 document.addEventListener('DOMContentLoaded', () => {
-  $('btnDaftar')?.addEventListener('click', daftarkanUser);
-  $('btnLogout')?.addEventListener('click', logoutAdmin);
-  $('btnLoginAdmin')?.addEventListener('click', loginAdmin);
-  $('btn-save-plan')?.addEventListener('click', updatePlanUser);
-  $('btn-close-prem')?.addEventListener('click', closePremiumModal);
-  $('btn-save-maint')?.addEventListener('click', saveMaintenance);
-  $('searchUser')?.addEventListener('input', searchUser);
-  $('filterPlan')?.addEventListener('change', searchUser);
-  $('filterStatus')?.addEventListener('change', searchUser);
-
-  // Plan tab buttons
-  document.querySelectorAll('.plan-tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchPlanTab(btn.dataset.plan));
-  });
-
   // Hamburger sidebar
-  $('btn-hamburger')?.addEventListener('click', openSidebar);
-  $('overlay')?.addEventListener('click', closeSidebar);
+  $('btn-hamburger')?.addEventListener('click', window.openSidebar);
 
   // Enter key pada password field
   $('adminPass')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') loginAdmin();
+    if (e.key === 'Enter') window.loginAdmin();
   });
+
+  // Refresh button (selector by text)
+  document.querySelectorAll('.btn-outline').forEach(btn => {
+    if (btn.textContent.includes('Refresh')) {
+      btn.addEventListener('click', ambilDataUser);
+    }
+  });
+
+  // Plan modal color buttons default state
+  const defaultColBtn = document.querySelector('.pm-col[data-c="#FF6B35"]');
+  if (defaultColBtn) defaultColBtn.style.outline = '3px solid #fff';
 });

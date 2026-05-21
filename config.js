@@ -13,7 +13,7 @@ export const APP_CONFIG = {
   
   cloudinary: {
     cloudName: "dxq06iq2r",
-    uploadPreset: "tokobudi_signed  "
+    uploadPreset: "tokobudi_signed"
   },
   
   theme: {

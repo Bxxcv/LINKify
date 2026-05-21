@@ -1289,3 +1289,16 @@ $('btn-save-gallery')?.addEventListener('click', async () => {
   } catch (e) { showToast('Gagal simpan gallery: ' + e.message, 'error'); }
   finally { _savingGallery = false; if (btn) btn.disabled = false; }
 });
+
+// ── GLOBAL TAB SWITCHER (untuk inline onclick di HTML) ─────────────────────────
+window.goTab = function(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('show'));
+  const tabBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+  const tabPage = document.getElementById('tab-' + tabName);
+  if (tabBtn)  tabBtn.classList.add('active-tab');
+  if (tabPage) tabPage.classList.add('show');
+  // Close sidebar on mobile
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('overlay')?.classList.remove('show');
+};
