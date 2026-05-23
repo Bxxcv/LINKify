@@ -1136,9 +1136,9 @@ $('btn-save-custom-btns')?.addEventListener('click', async () => {
   if (_savingCustomBtns) return;
   const uid = auth.currentUser?.uid; if (!uid) return;
   const cleaned = customBtns.filter(b => b.label?.trim() && b.url?.trim());
-  // Validasi URL setiap tombol
+  // Validasi URL setiap tombol — Firestore rules HANYA terima https://
   for (const b of cleaned) {
-    if (!/^https?:\/\/.+/.test(b.url)) { showToast(`URL tombol "${b.label}" tidak valid (harus https://).`, 'warn'); return; }
+    if (!/^https:\/\/.+/i.test(b.url)) { showToast(`URL tombol "${b.label}" harus diawali https:// (http biasa ditolak server).`, 'warn'); return; }
   }
   const btn = $('btn-save-custom-btns');
   _savingCustomBtns = true;

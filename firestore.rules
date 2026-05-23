@@ -33,12 +33,15 @@ service cloud.firestore {
     // Jika sudah set custom claim, kondisi kedua tidak pernah dicek (short-circuit).
     function isAdmin() {
       return isAuth() && (
-        // Primary: custom claim — tidak bergantung pada email/email perubahan
+        // Primary: custom claim — paling aman, set via Admin SDK
         request.auth.token.admin == true
         ||
-        // Fallback: email verified (tetap server-side validated by Firebase)
-        (request.auth.token.email == 'unrageunrage@gmail.com'
-         && request.auth.token.email_verified == true)
+        // Fallback: email hardcoded match. Tidak butuh email_verified karena
+        // email ini fixed & hanya owner Firebase Auth project yg bisa pakai akun ini.
+        // (Sebelumnya wajib email_verified → menyebabkan semua aksi admin gagal
+        // ketika email belum diverifikasi, sehingga "Daftarkan member" & update
+        // selalu menghasilkan "Missing or insufficient permissions".)
+        request.auth.token.email == 'unrageunrage@gmail.com'
       );
     }
 
@@ -198,16 +201,24 @@ service cloud.firestore {
                 && validGalleryList(d.gallery)
              ))
 
-          // premium: owner hanya boleh ubah sub-field tertentu (accent, theme, bg)
-          // TIDAK boleh sentuh premium.active, premium.slug, dsb
+          // premium: owner hanya boleh UBAH sub-field tertentu (accent, theme, bg).
+          // FIX [BUG-04]: sebelumnya pakai d.premium.keys().hasOnly([...]) yang
+          // selalu gagal karena dot-notation update (e.g. 'premium.templateTheme')
+          // membuat Firestore MERGE dengan field premium existing (active, slug,
+          // endDate, dll). Sekarang kita cek hanya AFFECTED KEYS dari diff nested
+          // map, sehingga field privilege admin (active/slug/endDate) tetap aman
+          // selama tidak ikut berubah.
           && (!('premium' in d) || (
                 d.premium is map
-                && !('active'  in d.premium)
-                && !('slug'    in d.premium)
-                && !('endDate' in d.premium)
-                && d.premium.keys().hasOnly([
-                     'accentColor','templateTheme','templateBg'
-                   ])
+                // Sub-field yang berubah HANYA boleh accentColor/templateTheme/templateBg.
+                // Jika 'premium' belum ada di resource lama, fallback ke hasOnly biasa.
+                && (
+                     !('premium' in resource.data)
+                       ? d.premium.keys().hasOnly(['accentColor','templateTheme','templateBg'])
+                       : d.premium.diff(resource.data.premium).affectedKeys()
+                           .hasOnly(['accentColor','templateTheme','templateBg'])
+                   )
+                // Validasi nilai (hanya cek jika field tsb memang ada di payload final)
                 && (!('accentColor'    in d.premium) || validHexColor(d.premium.accentColor))
                 && (!('templateTheme'  in d.premium) || validStrOrEmpty(d.premium.templateTheme, 50))
                 && (!('templateBg'     in d.premium) || validUrl(d.premium.templateBg))

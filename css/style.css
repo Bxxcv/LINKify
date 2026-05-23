@@ -3,42 +3,47 @@
    Used by: admin.html, login-user.html, admin-daftar.html
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:           #F5F6FA;
+  /* Charcoal & Ember — paper-warm light surface, ember accent */
+  --bg:           #F7F5F2;
   --surface:      #FFFFFF;
-  --surface2:     #F0F1F6;
-  --border:       #E5E7EB;
-  --border2:      #D1D5DB;
-  --text:         #0D1117;
-  --text-2:       #4B5563;
-  --text-3:       #9CA3AF;
-  --accent:       #FF6B35;
-  --accent-soft:  rgba(255,107,53,0.10);
-  --accent-hover: #E85A26;
-  --danger:       #EF4444;
+  --surface2:     #EFEBE6;
+  --border:       #E5E1DB;
+  --border2:      #CFC9C1;
+  --text:         #1A1A1A;
+  --text-2:       #3E3A35;
+  --text-3:       #8A847D;
+  --accent:       #E85D3A;
+  --accent-soft:  rgba(232,93,58,0.10);
+  --accent-hover: #C84A2A;
+  --ember-deep:   #B43F1E;
+  --danger:       #DC2626;
   --danger-soft:  #FEF2F2;
   --success:      #10B981;
   --success-soft: #ECFDF5;
-  --warning:      #F59E0B;
-  --warning-soft: #FFFBEB;
-  --info:         #3B82F6;
+  --warning:      #D97706;
+  --warning-soft: #FEF3C7;
+  --info:         #2563EB;
   --info-soft:    #EFF6FF;
-  --shadow-sm:    0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md:    0 4px 14px rgba(0,0,0,0.07),0 2px 4px rgba(0,0,0,0.04);
-  --shadow-lg:    0 8px 28px rgba(0,0,0,0.09),0 3px 8px rgba(0,0,0,0.05);
-  --radius-sm:    8px;
-  --radius-md:    12px;
-  --radius-lg:    16px;
-  --radius-xl:    20px;
+  --shadow-sm:    0 1px 2px rgba(26,26,26,0.05);
+  --shadow-md:    0 6px 18px rgba(26,26,26,0.07), 0 2px 4px rgba(26,26,26,0.04);
+  --shadow-lg:    0 18px 40px rgba(26,26,26,0.10), 0 4px 10px rgba(26,26,26,0.05);
+  --radius-sm:    6px;
+  --radius-md:    10px;
+  --radius-lg:    14px;
+  --radius-xl:    18px;
   --sidebar-w:    244px;
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
 }
 
 html, body { height: 100%; background: var(--bg); font-family: 'Inter', sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
 .hidden { display: none !important; }
+
+.page-title, .sidebar-brand-text, .clock-time, .sec-title, .card-title, .stat-card-val, .dark-stat-val, .dark-card-title, .dark-modal-title, .mob-title { font-family: var(--font-display); letter-spacing: -0.02em; }
 
 /* ── SCROLLBAR ─────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar        { width: 5px; height: 5px; }
@@ -897,3 +902,44 @@ input[type="text"],input[type="email"],input[type="password"],input[type="number
 /* page-title + page-sub */
 .page-title { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; margin-bottom: 4px; }
 .page-sub   { font-size: 13px; color: var(--text-3); margin-bottom: 20px; }
+
+/* ── ADDITIONAL BADGES & FIXES (Charcoal & Ember refresh) ────────────── */
+.badge-plan { display:inline-flex; align-items:center; padding:3px 9px; border-radius:99px; font-size:11px; font-weight:700; white-space:nowrap; letter-spacing:0.2px; }
+.badge-basic   { background:rgba(37,99,235,0.13);  color:#60A5FA; }
+.badge-free,
+.badge-gratis  { background:rgba(138,132,125,0.18); color:#9CA3AF; }
+.badge-premium { background:rgba(232,93,58,0.16);  color:#FCA178; }
+
+/* Editorial flourish: section heads with small ember tick */
+.sec-title { position:relative; padding-left:14px; }
+.sec-title::before { content:""; position:absolute; left:0; top:50%; transform:translateY(-50%); width:6px; height:6px; background:var(--accent); border-radius:50%; box-shadow:0 0 0 3px rgba(232,93,58,0.18); }
+.dark-card-title { padding-left:14px; position:relative; }
+.dark-card-title::before { content:""; position:absolute; left:0; top:50%; transform:translateY(-50%); width:6px; height:6px; background:var(--accent); border-radius:50%; box-shadow:0 0 0 3px rgba(232,93,58,0.22); }
+
+/* Refine action buttons in admin-daftar */
+.act-btn { font-weight:700; letter-spacing:0.1px; padding:5px 10px; border-radius:6px; }
+.act-btn:hover { transform:translateY(-1px); }
+.act-btn:active { transform:translateY(0); }
+
+/* Clock widget warmer */
+.clock-widget { background:linear-gradient(135deg,#1A1A1A 0%, #2D2D2D 60%, #3A3028 100%); border:1px solid rgba(232,93,58,0.20); }
+.clock-link-btn { background:var(--accent); box-shadow:0 4px 14px rgba(232,93,58,0.35); }
+
+/* Sidebar refinements */
+.sidebar { border-right:1px solid var(--border); }
+.sidebar-brand-icon { background:linear-gradient(135deg,#1A1A1A,#3E3A35); }
+.tab-btn.active-tab { background:var(--accent-soft); color:var(--ember-deep); }
+.tab-btn.active-tab svg { color:var(--ember-deep); }
+
+/* Inputs slightly warmer */
+.f-input:focus, .f-area:focus, .f-select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(232,93,58,0.14); }
+
+/* QA buttons hover ember */
+.qa-btn:hover { border-color:var(--accent); color:var(--ember-deep); }
+
+/* Primary buttons (if generic .btn-primary used) ember */
+.btn-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.btn-primary:hover { background:var(--accent-hover); border-color:var(--accent-hover); }
+
+/* Premium banner refinement */
+.dark-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(232,93,58,0.18); }

@@ -349,13 +349,14 @@ function renderUserTable(users) {
     const actionTd = document.createElement('td');
     actionTd.style.cssText = 'text-align:right;';
     const wrapDiv = document.createElement('div');
-    wrapDiv.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;';
+    wrapDiv.className = 'act-wrap';
 
+    const isBlokir = u.status === 'blokir';
     const actions = [
-      { label: '⚡ Premium', fn: () => openPremiumModal(u.uid, u.namaToko), cls: 'btn-act btn-prem' },
-      { label: u.status === 'blokir' ? '✓ Aktifkan' : '⊘ Blokir', fn: () => toggleBlokir(u.uid, u.status), cls: 'btn-act btn-blokir' },
-      { label: '↺ Reset PW', fn: () => resetPassword(u.email), cls: 'btn-act btn-reset' },
-      { label: '✕ Hapus',    fn: () => confirmHapus(u.uid, u.namaToko), cls: 'btn-act btn-del' },
+      { label: '⚡ Premium',                            fn: () => openPremiumModal(u.uid, u.namaToko), cls: 'act-btn act-prem' },
+      { label: isBlokir ? '✓ Aktifkan' : '⊘ Blokir',   fn: () => toggleBlokir(u.uid, u.status),       cls: 'act-btn ' + (isBlokir ? 'act-unblock' : 'act-block') },
+      { label: '↺ Reset PW',                            fn: () => resetPassword(u.email),              cls: 'act-btn act-reset' },
+      { label: '✕ Hapus',                               fn: () => confirmHapus(u.uid, u.namaToko),     cls: 'act-btn act-delete' },
     ];
 
     actions.forEach(({ label, fn, cls }) => {
