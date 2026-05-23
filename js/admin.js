@@ -548,7 +548,6 @@ async function _initSettings(uid) {
       }
     }
     updatePremiumUI();
-    await loadTodayVisits(uid);
   } catch (e) { console.error('_initSettings:', e); }
 }
 
@@ -594,6 +593,7 @@ $('btn-save-settings')?.addEventListener('click', async () => {
       facebook:  $('inp-facebook').value.trim()  ? safeUrl($('inp-facebook').value.trim())  : '',
       youtube:   $('inp-youtube').value.trim()   ? safeUrl($('inp-youtube').value.trim())   : '',
       logo:      logoUrl,
+      updatedAt: serverTimestamp(),
     };
     await updateDoc(doc(db, 'toko', uid), updateData);
     clearPublicCache(uid);
