@@ -315,15 +315,17 @@ function renderUserTable(users) {
     tdToko.innerHTML = `<div style="font-weight:600;font-size:13px;color:#fff;">${escHtml(u.namaToko || '—')}</div><div style="font-size:11px;color:#6B7280;">${escHtml(u.pemilik || '—')}</div>`;
     tr.appendChild(tdToko);
 
-    // Email (hidden on mobile, shown via CSS)
+    // Email (hidden on mobile)
     const tdEmail = document.createElement('td');
     tdEmail.className = 'md-show';
+    tdEmail.style.display = 'none';
     tdEmail.textContent = u.email || '—';
     tr.appendChild(tdEmail);
 
-    // Omset (hidden on mobile, shown via CSS)
+    // Omset (hidden on mobile)
     const tdOmset = document.createElement('td');
     tdOmset.className = 'lg-show';
+    tdOmset.style.display = 'none';
     tdOmset.textContent = 'Rp ' + (u.omset || 0).toLocaleString('id-ID');
     tr.appendChild(tdOmset);
 
