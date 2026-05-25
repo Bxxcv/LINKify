@@ -73,6 +73,13 @@ LINKify-main/
 ├── manifest.json
 ├── vercel.json
 │
+├── ai/
+│   ├── index.css
+│   ├── css/
+│          ├── style.css
+│   ├── config/
+│          ├── config.js
+│
 ├── css/
 │   ├── index.css
 │   ├── landing.css
@@ -175,6 +182,15 @@ Digunakan ketika:
 - Website sedang diperbaiki
 - Update sistem
 - Server maintenance
+
+---
+
+# Folder Ai
+
+## `ai/css/style.css.`
+---
+
+## `ai/config/config.js.`
 
 ---
 
