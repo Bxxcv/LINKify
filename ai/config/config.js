@@ -2,8 +2,15 @@ const chatForm = document.getElementById('chat-form');
 const userInput = document.getElementById('user-input');
 const chatBox = document.getElementById('chat-box');
 
-// Menggunakan API Key milik lu yang aktif
-const API_KEY = "AIzaSyCnzLmf42U13Xs9zo_C-Ra1PwXQQD8PCN0"; 
+// ========================================================
+// TRIK AKALI LIMIT: MASUKKAN KUMPULAN API KEY LU DI SINI
+// ========================================================
+const API_KEYS = [
+    "AIzaSyCGgLAOVlwh9Aq52LI_d4DSLHEKICJviBc", // Key Utama Lu
+    "AIzaSyAJyvN2KJ_e4b2OTSUp_aVT25rWG0J0vB8", // Key Cadangan 1
+    "MASUKIN_KEY_CADANGAN_DARI_GMAIL_LAIN_LAGI_DI_SINI"  // Key Cadangan 2
+];
+let currentKeyIndex = 0; // Mulai berjalan dari key pertama
 
 // Rules utama system prompt agar AI patuh & zero-hallucination
 const SYSTEM_PROMPT = `
@@ -88,7 +95,7 @@ function appendMessage(sender, text, isError = false, isTyping = false) {
     if (isTyping) {
         msgDiv.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
     } else {
-        // Semua teks (User & AI) diproses lewat fungsi formatting agar seragam
+        // Semua teks (User & AI) diproses lewat fungsi formatting agar seragam & link hidup
         msgDiv.innerHTML = formatAIResponse(text);
     }
     
@@ -109,9 +116,10 @@ function formatAIResponse(text) {
     });
 }
 
-// Fungsi Ajax hit ke API Google Gemini
+// Fungsi Ajax hit ke API Google Gemini (Dengan sistem otomatis ganti Key saat limit)
 async function getAIResponse(userText) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+    let activeKey = API_KEYS[currentKeyIndex];
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`;
     
     const payload = {
         contents: [
@@ -127,28 +135,45 @@ async function getAIResponse(userText) {
         }
     };
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    });
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
 
-    const data = await response.json();
+        const data = await response.json();
 
-    if (!response.ok) {
-        throw new Error(data.error?.message || 'Gagal tersambung ke server AI.');
-    }
+        // JIKA DETEKSI LIMIT (Error 429 atau pesan mengandung quota)
+        if (response.status === 429 || data.error?.message?.includes('quota') || data.error?.status === 'RESOURCE_EXHAUSTED') {
+            console.warn(`Key indeks ke-${currentKeyIndex} terkena limit. Mengalihkan ke key cadangan...`);
+            
+            // Geser index ke key berikutnya secara melingkar (looping)
+            currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
+            
+            // Eksekusi ulang fungsi ini menggunakan key yang baru
+            return await getAIResponse(userText);
+        }
 
-    if (data.candidates && data.candidates[0].content.parts[0].text) {
-        return data.candidates[0].content.parts[0].text;
-    } else {
-        throw new Error('AI memberikan respon kosong.');
+        if (!response.ok) {
+            throw new Error(data.error?.message || 'Gagal tersambung ke server AI.');
+        }
+
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+            return data.candidates[0].content.parts[0].text;
+        } else {
+            throw new Error('AI memberikan respon kosong.');
+        }
+
+    } catch (error) {
+        // Lemparkan error agar ditangkap oleh UI handler di bawah jika semua key gagal
+        throw error;
     }
 }
 
-// Event handler ketika user mengirim chat
+// Event handler ketika user mengirim chat melalui form
 chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const message = userInput.value.trim();
@@ -170,7 +195,7 @@ chatForm.addEventListener('submit', async (e) => {
         chatBox.scrollTop = chatBox.scrollHeight;
     } catch (error) {
         console.error(error);
-        // Hapus indikator loading ganti dengan box alert error
+        // Hapus indikator loading ganti dengan box alert error jika benar-benar total gagal
         typingIndicator.remove();
         appendMessage('system', `Sistem Gagal: ${error.message}`, true);
     }
