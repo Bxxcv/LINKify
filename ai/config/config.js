@@ -3,7 +3,7 @@ const userInput = document.getElementById('user-input');
 const chatBox = document.getElementById('chat-box');
 
 // Menggunakan API Key milik lu yang aktif
-const API_KEY = "AIzaSyCXkP0_pmJ6P9m8OjXZ0EF8RbVsZUBO738"; 
+const API_KEY = "AIzaSyCGgLAOVlwh9Aq52LI_d4DSLHEKICJviBc"; 
 
 // Rules utama system prompt agar AI patuh & zero-hallucination
 const SYSTEM_PROMPT = `
