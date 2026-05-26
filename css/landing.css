@@ -512,6 +512,120 @@ footer{border-top:1px solid var(--border);padding:40px 24px 32px;}
   .fade-in,.metric-card{opacity:1;transform:none;transition:none;animation:none;}
 }
 
+        /* --- Container Utama FAB --- */
+        .fab-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Gaya Tombol Utama (Garis Tiga) --- */
+        .fab-trigger {
+            width: 60px;
+            height: 60px;
+            background: #1e293b; /* Warna gelap elegan */
+            border: none;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .fab-trigger:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Gaya Garis Tiga (Hamburger) */
+        .fab-trigger .bar {
+            width: 25px;
+            height: 3px;
+            background-color: #ffffff;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        /* --- Animasi Garis Tiga Menjadi Tanda Silang (X) --- */
+        .fab-container.active .fab-trigger {
+            background: #ef4444; /* Berubah jadi merah saat aktif */
+        }
+
+        .fab-container.active .fab-trigger .bar:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+
+        .fab-container.active .fab-trigger .bar:nth-child(2) {
+            opacity: 0;
+        }
+
+        .fab-container.active .fab-trigger .bar:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
+
+        /* --- Container Menu Popup --- */
+        .fab-menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px) scale(0.8);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+
+        /* Menampilkan menu saat container aktif */
+        .fab-container.active .fab-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        /* --- Gaya Tombol Sub-Menu (Item) --- */
+        .fab-item {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .fab-item:hover {
+            transform: scale(1.1);
+        }
+
+        .fab-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Warna Khusus & Gradasi sesuai Logo Anda */
+        .btn-whatsapp {
+            border: 2px solid #25D366; /* Warna khas WhatsApp */
+        }
+
+        .btn-linkify {
+            border: 2px solid #00a3e0; /* Warna biru khas Linkify Bot */
+        }
 /* ── RESPONSIVE ───────────────────────────────────────────────────── */
 @media(max-width:768px){
   section{padding:56px 16px;}

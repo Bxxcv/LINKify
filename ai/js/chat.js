@@ -45,7 +45,7 @@ function makeBotAvatar(hidden = false) {
   const el = document.createElement('div');
   el.className = 'msg-avatar' + (hidden ? ' hidden' : '');
   const img = document.createElement('img');
-  img.src = '../logo-linkify.png';
+  img.src = '..//asset/logo-linkify.png';
   img.alt = 'Bot';
   img.onerror = () => { el.textContent = 'L'; el.removeChild(img); };
   el.appendChild(img);

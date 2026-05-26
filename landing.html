@@ -32,8 +32,8 @@
 
   <!-- PWA -->
   <meta name="theme-color" content="#FF6B35">
-  <link rel="icon" type="image/png" sizes="32x32" href="logo-linkify.png">
-  <link rel="apple-touch-icon" href="logo-linkify.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/asset/logo-linkify.png">
+  <link rel="apple-touch-icon" href="/asset/logo-linkify.png">
   <link rel="manifest" href="manifest.json">
 
   <!-- Fonts -->
@@ -107,7 +107,7 @@
 <header role="banner">
   <nav aria-label="Navigasi utama">
     <a href="/" class="nav-brand" aria-label="LINKify - Beranda">
-      <img src="logo-linkify.png" alt="LINKify logo" width="28" height="28">
+      <img src="/asset/logo-linkify.png" alt="LINKify logo" width="28" height="28">
       <span class="logo-text">
         <span class="logo-link">LINK</span><span class="logo-ify">ify</span>
       </span>
@@ -602,7 +602,7 @@
   <div class="footer-inner">
     <div class="footer-top">
       <a href="/" class="footer-brand2" aria-label="LINKify beranda">
-        <img src="logo-linkify.png" alt="LINKify" width="24" height="24" loading="lazy">
+        <img src="/asset/logo-linkify.png" alt="LINKify" width="24" height="24" loading="lazy">
         <span class="logo-text"><span class="logo-link">LINK</span><span class="logo-ify">ify</span></span>
       </a>
       <p class="footer-tagline">Platform link bio toko online terbaik untuk UMKM Indonesia.<br>Satu link untuk semua platform jualan.</p>
@@ -632,7 +632,42 @@
   </div>
 </footer>
 
+<div class="fab-container" id="myFabContainer">
+        
+        <div class="fab-menu">
+            <a href="/ai/index.html" class="fab-item btn-linkify" title="Linkify Bot">
+                <img src="/asset/img/botlogo.jpg" alt="Linkify Bot">
+            </a>
+
+            <a href="https://wa.me/628123456789" target="_blank" class="fab-item btn-whatsapp" title="Hubungi WhatsApp">
+                <img src="/asset/img/wa.jpg" alt="WhatsApp">
+            </a>
+        </div>
+
+        <button class="fab-trigger" id="fabToggleBtn">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+
+    </div>
+
 <script>
+ const fabContainer = document.getElementById('myFabContainer');
+        const fabToggleBtn = document.getElementById('fabToggleBtn');
+
+        // Fungsi untuk membuka/tutup menu saat diklik
+        fabToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Mencegah event bubbling
+            fabContainer.classList.toggle('active');
+        });
+
+        // Menutup menu secara otomatis jika pengguna mengklik di luar area menu
+        document.addEventListener('click', (e) => {
+            if (!fabContainer.contains(e.target)) {
+                fabContainer.classList.remove('active');
+            }
+        });
 (function(){
   const io = new IntersectionObserver(function(entries){
     entries.forEach(function(e){
