@@ -1,43 +1,73 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asisten LINKify</title>
-    <meta name="description" content="Assisten Linkify">
-  <meta property="og:title" content="Cs - LINKify">
-    <link rel="icon" type="image/png" sizes="32x32" href="/logo-linkify.png">
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Asisten LINKify</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" href="../logo-linkify.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div class="chat-container">
-        <header>
-            <div class="avatar">Cs</div>
-            <div>
-                <h2>Assisten Linkify</h2>
-                <p>Online</p>
-            </div>
-        </header>
-
-        <div id="chat-box" class="chat-box">
-            <div class="message ai-message">Ada yang bisa di bantu atau kendala lain di Linkify?</div>
-        </div>
-        <div style="display: flex; gap: 8px; padding: 10px 16px; overflow-x: auto; background: rgba(20,22,37,0.9);">
-    <button type="button" onclick="sendQuickAction('🚀 Cara Mulai?')" style="width: auto; height: auto; padding: 6px 12px; border-radius: 12px; font-size: 12px; background: rgba(255,255,255,0.1);">🚀 Cara Mulai?</button>
-    <button type="button" onclick="sendQuickAction('💎 Upgrade Premium')" style="width: auto; height: auto; padding: 6px 12px; border-radius: 12px; font-size: 12px; background: rgba(255,255,255,0.1);">💎 Upgrade Premium</button>
-    <button type="button" onclick="sendQuickAction('📸 Cara Upload Foto')" style="width: auto; height: auto; padding: 6px 12px; border-radius: 12px; font-size: 12px; background: rgba(255,255,255,0.1);">📸 Cara Upload Foto</button>
-</div>
-        <form id="chat-form" class="input-area">
-            <div class="input-wrapper">
-                <input type="text" id="user-input" placeholder="Ketik pesan di sini..." autocomplete="off" required>
-            </div>
-            <button type="submit" id="btn-submit">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            </button>
-        </form>
+  <!-- HEADER -->
+  <header class="chat-header" id="chat-header">
+    <button class="header-back" id="btn-back" aria-label="Kembali">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="header-avatar" aria-hidden="true">
+      <img src="../logo-linkify.png" alt="LINKify" class="avatar-img" onerror="this.style.display='none';this.parentElement.textContent='L'">
+      <span class="avatar-online" aria-label="Online"></span>
     </div>
+    <div class="header-info">
+      <div class="header-name">Asisten Bot LINKify</div>
+      <div class="header-status" id="header-status">
+        <span class="status-dot"></span>
+        Online
+      </div>
+    </div>
+    <button class="header-menu" id="btn-menu" aria-label="Menu" aria-expanded="false">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+    </button>
+  </header>
 
-    <script src="config/config.js"></script>
+  <!-- CHAT MESSAGES -->
+  <main class="chat-body" id="chat-body" role="log" aria-live="polite" aria-label="Percakapan">
+    <!-- messages injected by JS -->
+  </main>
+
+  <!-- QUICK REPLIES -->
+  <div class="quick-replies-wrap" id="quick-replies-wrap" role="complementary" aria-label="Pertanyaan cepat">
+    <div class="quick-replies" id="quick-replies">
+      <!-- injected by JS -->
+    </div>
+  </div>
+
+  <!-- INPUT BAR -->
+  <footer class="chat-footer" id="chat-footer">
+    <div class="input-wrap">
+      <textarea
+        id="chat-input"
+        class="chat-input"
+        placeholder="Ketik pesan di sini..."
+        rows="1"
+        maxlength="500"
+        aria-label="Ketik pesan"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      ></textarea>
+      <button type="button" id="btn-send" class="send-btn" aria-label="Kirim pesan" disabled>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M22 2L11 13" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </footer>
+
+  <script src="botJs/bot.js"></script>
+  <script src="js/chat.js"></script>
 </body>
 </html>
