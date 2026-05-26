@@ -1,18 +1,9 @@
+// js/config.js atau js/script.js
 const chatForm = document.getElementById('chat-form');
 const userInput = document.getElementById('user-input');
 const chatBox = document.getElementById('chat-box');
 
-// ========================================================
-// TRIK AKALI LIMIT: MASUKKAN KUMPULAN API KEY LU DI SINI
-// ========================================================
-const API_KEYS = [
-    "AIzaSyCGgLAOVlwh9Aq52LI_d4DSLHEKICJviBc", // Key Utama Lu
-    "AIzaSyAJyvN2KJ_e4b2OTSUp_aVT25rWG0J0vB8", // Key Cadangan 1
-    "MASUKIN_KEY_CADANGAN_DARI_GMAIL_LAIN_LAGI_DI_SINI"  // Key Cadangan 2
-];
-let currentKeyIndex = 0; // Mulai berjalan dari key pertama
-
-// Rules utama system prompt agar AI patuh & zero-hallucination
+// Rules utama system prompt agar AI patuh, zero-hallucination & anti-bocor
 const SYSTEM_PROMPT = `
 =========================================
 IDENTITAS & PERSONALITY (LIVE CHAT VIBE)
@@ -75,13 +66,11 @@ RULE TAMBAHAN
 - Jika user mengucapkan terima kasih atau salam penutup, berikan impresi yang berkesan dan ajak mereka untuk segera mendaftar di landing page.
 `;
 
-// Fungsi untuk tombol Quick Replies / FAQ instan
 function sendQuickAction(text) {
     userInput.value = text;
     chatForm.dispatchEvent(new Event('submit'));
 }
 
-// Fungsi utama penampil pesan di layar chat
 function appendMessage(sender, text, isError = false, isTyping = false) {
     const msgDiv = document.createElement('div');
     msgDiv.classList.add('message');
@@ -95,7 +84,6 @@ function appendMessage(sender, text, isError = false, isTyping = false) {
     if (isTyping) {
         msgDiv.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
     } else {
-        // Semua teks (User & AI) diproses lewat fungsi formatting agar seragam & link hidup
         msgDiv.innerHTML = formatAIResponse(text);
     }
     
@@ -104,98 +92,58 @@ function appendMessage(sender, text, isError = false, isTyping = false) {
     return msgDiv;
 }
 
-// Fungsi pemformat teks AI: Hapus markdown asteriks (*) dan bikin URL otomatis bisa diklik
 function formatAIResponse(text) {
-    // 1. Bersihkan tanda format bold/italic markdown (* atau **)
     let cleanedText = text.replace(/\*\*?\*?/g, '');
-    
-    // 2. Deteksi URL (http:// atau https://) dan ubah jadi elemen link HTML <a>
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return cleanedText.replace(urlRegex, function(url) {
         return `<a href="${url}" target="_blank" style="color: #00ffaa; text-decoration: underline; font-weight: bold;">${url}</a>`;
     });
 }
 
-// Fungsi Ajax hit ke API Google Gemini (Dengan sistem otomatis ganti Key saat limit)
+// SEKARANG MANGGIL BACKEND INTERNAL (API KEY AMAN)
 async function getAIResponse(userText) {
-    let activeKey = API_KEYS[currentKeyIndex];
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`;
+    const url = `/api/chat`; // Tinggal panggil folder api kita tadi
     
-    const payload = {
-        contents: [
-            {
-                role: "user",
-                parts: [
-                    { text: `${SYSTEM_PROMPT}\n\nPertanyaan user: ${userText}` }
-                ]
-            }
-        ],
-        generationConfig: {
-            temperature: 0.1 // Deterministic & anti-ngarang
-        }
-    };
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-
-        // JIKA DETEKSI LIMIT (Error 429 atau pesan mengandung quota)
-        if (response.status === 429 || data.error?.message?.includes('quota') || data.error?.status === 'RESOURCE_EXHAUSTED') {
-            console.warn(`Key indeks ke-${currentKeyIndex} terkena limit. Mengalihkan ke key cadangan...`);
-            
-            // Geser index ke key berikutnya secara melingkar (looping)
-            currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
-            
-            // Eksekusi ulang fungsi ini menggunakan key yang baru
-            return await getAIResponse(userText);
-        }
-
-        if (!response.ok) {
-            throw new Error(data.error?.message || 'Gagal tersambung ke server AI.');
-        }
-
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
-            return data.candidates[0].content.parts[0].text;
-        } else {
-            throw new Error('AI memberikan respon kosong.');
-        }
-
-    } catch (error) {
-        // Lemparkan error agar ditangkap oleh UI handler di bawah jika semua key gagal
-        throw error;
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            userText: userText,
+            systemPrompt: SYSTEM_PROMPT
+        })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+        throw new Error(data.error || 'Gagal tersambung ke server AI.');
+    }
+    
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+        return data.candidates[0].content.parts[0].text;
+    } else {
+        throw new Error('AI memberikan respon kosong.');
     }
 }
 
-// Event handler ketika user mengirim chat melalui form
 chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const message = userInput.value.trim();
     if (!message) return;
-
-    // 1. Render pesan user di layar
+    
     appendMessage('user', message);
     userInput.value = '';
-
-    // 2. Tampilkan animasi loading mengetik bawaan aplikasi
+    
     const typingIndicator = appendMessage('ai', '', false, true);
-
+    
     try {
-        // 3. Request data ke API Gemini
         const aiResponse = await getAIResponse(message);
-        
-        // 4. Update indikator loading menjadi text asli hasil format
         typingIndicator.innerHTML = formatAIResponse(aiResponse);
         chatBox.scrollTop = chatBox.scrollHeight;
     } catch (error) {
         console.error(error);
-        // Hapus indikator loading ganti dengan box alert error jika benar-benar total gagal
         typingIndicator.remove();
         appendMessage('system', `Sistem Gagal: ${error.message}`, true);
     }
