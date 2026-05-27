@@ -1,7 +1,5 @@
 
-# LINKify — Link Bio & Mini Store Platform
-
-## 📌 Apa Itu LINKify?
+## DESKRIPSI SINGKAT WEBSITE SAYA 
 
 LINKify adalah platform Link in Bio + Mini Store berbasis Firebase yang dibuat untuk membantu seller online, UMKM, affiliate marketer, content creator, maupun jasa digital agar memiliki halaman toko profesional hanya menggunakan satu link.
 
@@ -14,15 +12,8 @@ Project ini dibuat menggunakan:
 - Cloudinary
 - Vercel
 
-README ini dibuat agar:
-- Developer mudah memahami struktur project
-- AI seperti Claude/Gemini/ChatGPT tidak halu
-- Mempermudah maintenance project
-- Mempermudah scaling fitur
 
----
-
-# 🧠 Cara Kerja Sistem LINKify
+# SISTEM KERJA LINKify
 
 ## Alur User
 
@@ -38,7 +29,7 @@ Halaman Toko Publik
 
 ---
 
-## Alur Admin Utama
+## Alur Admin Utama (Khusus Saya)
 
 Admin Utama Login
 ↓
@@ -77,7 +68,7 @@ Jika file ini rusak:
 
 ## admin.html
 
-Dashboard khusus user.
+Dashboard Admin khusus user.
 
 Digunakan untuk:
 - Menambah produk
@@ -150,24 +141,58 @@ Fitur:
 # 📁 Struktur Folder
 
 ```bash
-LINKify-main/
+LINKify/
 │
-├── admin-daftar.html
-├── admin.html
-├── index.html
-├── login-user.html
-├── maintenance.html
-├── landing.html
+├── admin-daftar.html (Super Admin Panel)
+├── admin.html (Dashboard Admin User)
+├── index.html (Halaman Utama User)
+├── login-user.html (Login User)
+├── maintenance.html (Halaman Maintenance)
+├── landing.html (Halaman Landing Page)
 │
 ├── css/
+│    ├── index.css
+│    ├── landing.css
+│    ├── linear-inspired-override.css
+│    ├── style.css
+│    ├── themes.css
+│
 ├── js/
+│    ├── admin-daftar.js
+│    ├── admin.js
+│    ├── cloudinary-upload.js
+│    ├── login-user.js
+│    ├── maintenance.js
+│    ├── script.js
+│    ├── templates.js
+│    ├── utils.js
+│
 ├── asset/
+│    ├── img/
+│        ├── botlogo.jpg
+│        ├── wa.jpg
+│
+│    ├── logo-linkify.jpg
+│
 ├── ai/
+│    ├── botJs/
+│         ├── bot.js
+│
+│    ├── css/
+│         ├── style.css
+│
+│    ├── js/
+│        ├── chat.js
+│
+│    ├── index.html
+│
 ├── functions/
+│    ├── index.js
 │
 ├── firebase.js
 ├── config.js
 ├── manifest.json
+├── firestore.rules
 ├── vercel.json
 ├── sitemap.xml
 └── robots.txt
@@ -256,52 +281,12 @@ admin-daftar.html
 
 ---
 
-# 🚀 Cara Menjalankan Project
-
-## 1. Clone Repository
-
-```bash
-git clone https://github.com/USERNAME/LINKify.git
-```
-
-## 2. Setup Firebase
-
-Edit:
-config.js
-
-Masukkan Firebase config milik sendiri.
-
-## 3. Jalankan Local Server
-
-Bisa menggunakan:
-- VSCode Live Server
-- SPCK Editor
-- Vercel
-
----
-
-# 🤖 AI Notes
-
-README ini dibuat panjang dan detail agar:
-- Claude memahami struktur project
-- Gemini tidak salah generate
-- ChatGPT memahami arsitektur project
-- AI tidak merusak struktur project
-
----
-
-# 📈 Rencana Upgrade
-
-- Payment gateway
-- Checkout system
-- Analytics realtime
-- AI caption generator
-- QR code toko
-- Customer review
-- Multi language
-
----
-
 # ❤️ LINKify
 
 Satu link untuk semua jualan.
+
+---
+
+# 📝 Lisensi 
+
+Create By Muhammad Farid © 2026
