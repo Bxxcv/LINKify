@@ -89,7 +89,7 @@ File ini fokus pada user experience pemilik toko.
 Halaman toko publik milik user.
 
 Contoh:
-https://domain.com/?uid=USER_ID
+https://linkify-linkbio.vercel.app/?uid=NSmi1SVRxfR5OOWYvY8u7jkaAtN2
 
 Menggunakan parameter:
 ?uid=
