@@ -298,7 +298,7 @@ btnBack.addEventListener('click', () => {
   if (window.history.length > 1) {
     history.back();
   } else {
-    window.location.href = '../landing.html';
+    window.location.href = '../index.html';
   }
 });
 

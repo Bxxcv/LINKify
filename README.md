@@ -5,7 +5,7 @@ LINKify adalah platform Link in Bio + Mini Store berbasis Firebase yang dibuat u
 
 Project ini dibuat menggunakan:
 
-- HTML
+- HTML()
 - CSS
 - Vanilla JavaScript
 - Firebase
@@ -145,10 +145,10 @@ LINKify/
 │
 ├── admin-daftar.html (Super Admin Panel)
 ├── admin.html (Dashboard Admin User)
-├── index.html (Halaman Utama User)
+├── toko.html (Halaman Utama User)
 ├── login-user.html (Login User)
 ├── maintenance.html (Halaman Maintenance)
-├── landing.html (Halaman Landing Page)
+├── index.html (Halaman Landing Page)
 │
 ├── css/
 │    ├── index.css

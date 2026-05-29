@@ -1,7 +1,7 @@
 /**
  * LINKify — Premium Templates System (templates.js)
  * 6 Tema Premium dengan styling unik dan optimasi performa
- * Used by: index.html, admin.html untuk preview dan pemilihan template
+ * Used by: toko.html, admin.html untuk preview dan pemilihan template
  */
 
 export const PREMIUM_TEMPLATES = {

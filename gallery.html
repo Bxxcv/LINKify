@@ -190,7 +190,7 @@ const params = new URLSearchParams(location.search);
 const _rawUid = params.get('uid') || '';
 // SECURITY: validate UID format
 const uid = /^[a-zA-Z0-9]{10,128}$/.test(_rawUid) ? _rawUid : null;
-document.getElementById('back-btn').href = uid ? `index.html?uid=${uid}` : 'landing.html';
+document.getElementById('back-btn').href = uid ? `toko.html?uid=${uid}` : 'index.html';
 
 // allPhotos = full list, filteredPhotos = currently shown (after kategori filter)
 let allPhotos      = [];
