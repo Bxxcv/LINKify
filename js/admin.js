@@ -102,7 +102,7 @@ $('btn-copy-link')?.addEventListener('click', () => {
 
 $('btn-preview-store')?.addEventListener('click', () => {
   const uid = auth.currentUser?.uid;
-  if (uid) window.open(`${window.location.origin}${BASE_PATH}/?uid=${uid}`, '_blank');
+  if (uid) window.open(`${window.location.origin}${BASE_PATH}toko/?uid=${uid}`, '_blank');
 });
 
 $('btn-logout')?.addEventListener('click', () => {
