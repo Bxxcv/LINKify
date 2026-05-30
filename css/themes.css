@@ -1,7 +1,6 @@
 /* ================================================================
-   LINKify — Themes Font Loader (themes.css)
-   Google Fonts untuk 5 template premium.
-   Semua styling template ada di css/index.css
+   LINKify — Themes Font Loader
    ================================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Space+Grotesk:wght@500;700&display=swap');
+/* Fashion: Cormorant Garamond (editorial serif italic) + Jost (geometric) */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400;1,500&family=Jost:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Space+Grotesk:wght@500;700&display=swap');
