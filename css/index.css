@@ -794,1134 +794,108 @@ body[class*="template-"]:not(.template-elektronik) {
    Applied on top of base when body has .template-{id} class
    ════════════════════════════════════════════════════════════════════ */
 
-/* ─────────────────────────────────────────────────────────────────
-   TEMPLATE 1 · KREATOR
-   Karakter: Berlin creative studio. Dark. Raw. Tidak minta izin.
-   Referensi: Awwwards, zine culture, neo-brutalism yang serius.
-   Warna: #0C0C0C · #D4FF1E · #F0F0EC · #1C1C1C
-   ───────────────────────────────────────────────────────────────── */
-
-body.template-kreator {
-  background: #0C0C0C;
-  color: #F0F0EC;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-}
-body.template-kreator .page-wrap { background: #0C0C0C; }
-
-body.template-kreator .hero {
-  background: #0C0C0C;
-  padding: 40px 20px 20px;
-  border-bottom: 3px solid #D4FF1E;
-  text-align: left;
-  border-radius: 0;
-}
-body.template-kreator .logo-img {
-  border-radius: 6px;
-  border: 2px solid #D4FF1E;
-  box-shadow: 5px 5px 0 0 #D4FF1E;
-  transform: rotate(-2deg);
-}
-body.template-kreator .store-name {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-weight: 900;
-  font-size: clamp(24px, 7vw, 36px);
-  color: #F0F0EC;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  margin-top: 14px;
-}
-body.template-kreator .store-desc {
-  color: #505050;
-  font-weight: 600;
-  font-size: 12px;
-  letter-spacing: 0.01em;
-  margin-top: 6px;
-}
-body.template-kreator .verified-badge {
-  background: #D4FF1E;
-  border: 1.5px solid #0C0C0C;
-  color: #0C0C0C;
-  border-radius: 2px;
-  font-family: 'Space Mono', monospace;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-}
-body.template-kreator .verified-badge svg { color: #0C0C0C !important; }
-
-body.template-kreator .social-icon-btn {
-  background: #1C1C1C;
-  border: 1.5px solid #2E2E2E;
-  border-radius: 4px;
-  color: #707070;
-  transition: border-color 0.14s, color 0.14s;
-}
-body.template-kreator .social-icon-btn:hover {
-  border-color: #D4FF1E;
-  color: #D4FF1E;
-}
-
-body.template-kreator .platform-btn {
-  background: #D4FF1E !important;
-  color: #0C0C0C !important;
-  border: 2px solid #0C0C0C !important;
-  box-shadow: 4px 4px 0 0 rgba(212,255,30,0.35) !important;
-  border-radius: 2px !important;
-  font-family: 'Plus Jakarta Sans', sans-serif !important;
-  font-weight: 800 !important;
-  font-size: 13.5px !important;
-  letter-spacing: -0.01em !important;
-  transition: box-shadow 0.12s, transform 0.12s !important;
-}
-body.template-kreator .platform-btn:hover {
-  box-shadow: 6px 6px 0 0 rgba(212,255,30,0.5) !important;
-  transform: translate(-1px, -1px) !important;
-}
-body.template-kreator .platform-btn:active {
-  box-shadow: 1px 1px 0 0 rgba(212,255,30,0.3) !important;
-  transform: translate(2px, 2px) !important;
-}
-body.template-kreator .wa-btn,
-body.template-kreator .shopee-btn,
-body.template-kreator .tokped-btn {
-  background: #D4FF1E; color: #0C0C0C;
-  border: 2px solid #0C0C0C; border-radius: 2px;
-  box-shadow: 4px 4px 0 0 rgba(212,255,30,0.35);
-}
-body.template-kreator .gallery-link-btn {
-  background: #141414;
-  border: 2px solid #2E2E2E;
-  border-radius: 2px;
-  color: #F0F0EC;
-}
-body.template-kreator .gallery-btn-label { color: #F0F0EC; font-weight: 700; }
-body.template-kreator .gallery-btn-count { color: #505050; font-size: 12px; }
-
-body.template-kreator .section-title {
-  color: #F0F0EC;
-  font-weight: 800;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-body.template-kreator .unggulan-label {
-  color: #F0F0EC;
-  font-weight: 800;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-body.template-kreator .kat-btn {
-  background: #141414;
-  border: 1.5px solid #2E2E2E;
-  border-radius: 2px;
-  color: #606060;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  transition: border-color 0.12s, color 0.12s;
-}
-body.template-kreator .kat-btn:hover { border-color: #505050; color: #A0A0A0; }
-body.template-kreator .kat-btn.active {
-  background: #F0F0EC;
-  border-color: #F0F0EC;
-  color: #0C0C0C;
-}
-
-body.template-kreator .product-card {
-  background: #141414;
-  border: 2px solid #2A2A2A;
-  border-radius: 2px !important;
-  box-shadow: none;
-  transition: border-color 0.14s, box-shadow 0.14s;
-}
-body.template-kreator .product-card:hover {
-  border-color: #D4FF1E;
-  box-shadow: 4px 4px 0 0 rgba(212,255,30,0.18);
-  transform: none;
-}
-body.template-kreator .product-img { border-bottom: 2px solid #2A2A2A; }
-body.template-kreator .product-name { color: #F0F0EC; font-weight: 800; font-size: 12.5px; letter-spacing: -0.01em; }
-body.template-kreator .product-price { color: #D4FF1E; font-weight: 800; letter-spacing: -0.02em; }
-body.template-kreator .product-desc { color: #505050; font-size: 11.5px; }
-body.template-kreator .harga-coret { color: #303030; }
-
-body.template-kreator .badge-diskon {
-  background: #D4FF1E; color: #0C0C0C;
-  border-radius: 1px; font-weight: 900; font-size: 9px; letter-spacing: 0.04em;
-}
-body.template-kreator .badge-unggulan {
-  background: #0C0C0C; color: #D4FF1E;
-  border: 1.5px solid #D4FF1E; border-radius: 50%;
-  width: 22px; height: 22px; font-size: 12px;
-}
-body.template-kreator .badge-stok { background: #FF3D2E; color: #fff; border-radius: 1px; font-size: 9px; }
-
-body.template-kreator .prod-btn-wa {
-  background: #0C0C0C; color: #D4FF1E;
-  border: 1.5px solid #D4FF1E; border-radius: 2px;
-  font-weight: 700; font-size: 11.5px;
-}
-body.template-kreator .prod-btn-shopee {
-  background: #1C1C1C; color: #F0F0EC;
-  border: 1.5px solid #2E2E2E; border-radius: 2px;
-  font-weight: 700; font-size: 11.5px;
-}
-body.template-kreator .prod-btn-tokped {
-  background: #D4FF1E; color: #0C0C0C;
-  border: 1.5px solid #0C0C0C; border-radius: 2px;
-  font-weight: 700; font-size: 11.5px;
-}
-
-body.template-kreator .skeleton {
-  background: linear-gradient(90deg, #141414 0%, #222222 45%, #141414 100%);
-  background-size: 200% 100%;
-}
-body.template-kreator .skeleton-box { background: #141414; border: 2px solid #2A2A2A; border-radius: 2px; }
-body.template-kreator footer { border-top: 3px solid #D4FF1E; padding: 16px 20px; }
-body.template-kreator .footer-copy-text { color: #383838; font-size: 11px; font-weight: 600; }
-body.template-kreator .footer-brand { color: #383838; }
-body.template-kreator .floating-wa {
-  background: #0C0C0C; border-radius: 4px;
-  border: 2px solid #D4FF1E;
-  box-shadow: 3px 3px 0 0 rgba(212,255,30,0.4);
-}
-body.template-kreator .unggulan-divider { background: #2A2A2A; }
-body.template-kreator .share-btn { background: #1C1C1C; border-color: #2E2E2E; color: #606060; border-radius: 2px; }
-
-
-/* ─────────────────────────────────────────────────────────────────
-   TEMPLATE 2 · KULINER
-   Karakter: Warung premium Nusantara. Hangat. Tradisi. Penuh rasa.
-   Referensi: Menu kafe Bali, kuliner Jawa, visual food photography.
-   Warna: #FFF9F0 · #C85A1A · #FFEDD0 · #2D1A0A · #E8A020
-   ───────────────────────────────────────────────────────────────── */
-
-body.template-kuliner {
-  background: #FFF9F0;
-  color: #2D1A0A;
-  font-family: 'Fredoka', 'Plus Jakarta Sans', sans-serif;
-}
-body.template-kuliner .page-wrap { background: #FFF9F0; }
-
-body.template-kuliner .hero {
-  background: linear-gradient(170deg, #FFEDD0 0%, #FFE0B0 100%);
-  padding: 36px 20px 28px;
-  border-radius: 0 0 24px 24px;
-  border-bottom: none;
-  text-align: center;
-}
-body.template-kuliner .logo-img {
-  border: 3px solid #C85A1A;
-  border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(200,90,26,0.22);
-}
-body.template-kuliner .store-name {
-  font-family: 'Fredoka', sans-serif;
-  font-weight: 700;
-  font-size: clamp(26px, 7vw, 38px);
-  color: #2D1A0A;
-  letter-spacing: 0.01em;
-}
-body.template-kuliner .store-desc {
-  color: #7A4A28;
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-}
-body.template-kuliner .verified-badge {
-  background: #C85A1A;
-  border-color: #C85A1A;
-  color: #fff;
-  border-radius: 20px;
-  font-family: 'Fredoka', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  padding: 2px 12px;
-}
-body.template-kuliner .verified-badge svg { color: #fff !important; }
-
-body.template-kuliner .social-icon-btn {
-  background: #FFF9F0;
-  border: 1.5px solid #EACBA0;
-  border-radius: 50%;
-  color: #C85A1A;
-  transition: background 0.15s;
-}
-body.template-kuliner .social-icon-btn:hover { background: #FFEDD0; }
-
-body.template-kuliner .platform-btn {
-  background: #fff !important;
-  color: #2D1A0A !important;
-  border: 1.5px solid #C85A1A !important;
-  box-shadow: 0 4px 0 0 #C85A1A !important;
-  border-radius: 14px !important;
-  font-family: 'Fredoka', sans-serif !important;
-  font-weight: 600 !important;
-  font-size: 14px !important;
-  transition: box-shadow 0.12s, transform 0.12s !important;
-}
-body.template-kuliner .platform-btn:hover {
-  box-shadow: 0 6px 0 0 #A84A10 !important;
-  transform: translateY(-1px) !important;
-}
-body.template-kuliner .platform-btn:active {
-  box-shadow: 0 1px 0 0 #C85A1A !important;
-  transform: translateY(3px) !important;
-}
-body.template-kuliner .wa-btn,
-body.template-kuliner .shopee-btn,
-body.template-kuliner .tokped-btn {
-  background: #fff; color: #2D1A0A;
-  border: 1.5px solid #C85A1A;
-  box-shadow: 0 4px 0 0 #C85A1A;
-  border-radius: 14px;
-}
-body.template-kuliner .gallery-link-btn {
-  background: #FFF9F0;
-  border: 1.5px dashed #C85A1A;
-  border-radius: 14px;
-  color: #2D1A0A;
-  transition: background 0.14s;
-}
-body.template-kuliner .gallery-link-btn:hover { background: #FFEDD0; }
-body.template-kuliner .gallery-btn-label { color: #2D1A0A; font-weight: 600; }
-body.template-kuliner .gallery-btn-count { color: #7A4A28; }
-
-body.template-kuliner .section-title {
-  color: #7A4A28;
-  font-family: 'Fredoka', sans-serif;
-  font-weight: 600;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-body.template-kuliner .unggulan-label {
-  color: #7A4A28;
-  font-family: 'Fredoka', sans-serif;
-  font-weight: 600;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-body.template-kuliner .kat-btn {
-  background: #FFEDD0;
-  border: 1.5px solid #EACBA0;
-  border-radius: 20px;
-  color: #7A4A28;
-  font-family: 'Fredoka', sans-serif;
-  font-weight: 600;
-  font-size: 13px;
-  transition: background 0.13s, border-color 0.13s;
-}
-body.template-kuliner .kat-btn:hover { background: #FFE0B0; border-color: #C85A1A; }
-body.template-kuliner .kat-btn.active {
-  background: #C85A1A;
-  border-color: #C85A1A;
-  color: #fff;
-}
-
-body.template-kuliner .product-card {
-  background: #fff;
-  border: 1.5px solid #EACBA0;
-  border-radius: 16px !important;
-  box-shadow: 0 2px 12px rgba(200,90,26,0.06);
-  transition: box-shadow 0.18s, transform 0.18s;
-}
-body.template-kuliner .product-card:hover {
-  box-shadow: 0 8px 28px rgba(200,90,26,0.15);
-  transform: translateY(-3px);
-}
-body.template-kuliner .product-img { border-bottom: 1.5px solid #EACBA0; border-radius: 14px 14px 0 0; }
-body.template-kuliner .product-name {
-  color: #2D1A0A;
-  font-family: 'Fredoka', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-}
-body.template-kuliner .product-price { color: #C85A1A; font-weight: 700; letter-spacing: -0.01em; }
-body.template-kuliner .product-desc { color: #7A4A28; font-size: 12px; opacity: 0.75; }
-body.template-kuliner .harga-coret { color: #C8B8A0; }
-
-body.template-kuliner .badge-diskon {
-  background: #E8A020; color: #fff;
-  border-radius: 8px; font-weight: 700; font-size: 9.5px;
-}
-body.template-kuliner .badge-unggulan {
-  background: #E8A020; color: #fff; border-radius: 50%;
-  width: 22px; height: 22px; font-size: 13px;
-}
-body.template-kuliner .badge-stok { background: #DC2626; color: #fff; border-radius: 8px; }
-
-body.template-kuliner .prod-btn-wa {
-  background: #25D366; color: #fff;
-  border-radius: 10px; font-weight: 600;
-}
-body.template-kuliner .prod-btn-shopee {
-  background: #EE4D2D; color: #fff;
-  border-radius: 10px; font-weight: 600;
-}
-body.template-kuliner .prod-btn-tokped {
-  background: #03AC0E; color: #fff;
-  border-radius: 10px; font-weight: 600;
-}
-
-body.template-kuliner .skeleton {
-  background: linear-gradient(90deg, #FFF3E0 0%, #FFE5B8 45%, #FFF3E0 100%);
-  background-size: 200% 100%;
-}
-body.template-kuliner .skeleton-box { background: #FFFDF8; border: 1.5px solid #EACBA0; border-radius: 16px; }
-body.template-kuliner footer {
-  border-top: 1.5px dashed #EACBA0;
-  background: #FFF9F0;
-  padding: 20px;
-}
-body.template-kuliner .footer-copy-text { color: #B8906A; font-size: 12px; }
-body.template-kuliner .footer-brand { color: #B8906A; }
-body.template-kuliner .floating-wa {
-  background: #C85A1A;
-  border-radius: 50%;
-  box-shadow: 0 4px 16px rgba(200,90,26,0.38);
-}
-body.template-kuliner .unggulan-divider { background: #EACBA0; }
-body.template-kuliner .share-btn {
-  background: rgba(200,90,26,0.07);
-  border-color: #EACBA0;
-  color: #7A4A28;
-  border-radius: 10px;
-}
-
-
-/* ─────────────────────────────────────────────────────────────────
-   TEMPLATE 3 · KECANTIKAN
-   Karakter: Korean beauty brand. Airy. Petal soft. Sangat bersih.
-   Referensi: Laneige, Innisfree, Harnn — minimalis Asia Timur.
-   Warna: #FDFCFB · #C8707A · #EDE0E1 · #1E1A1B
-   ───────────────────────────────────────────────────────────────── */
-
-body.template-kecantikan {
-  background: #FDFCFB;
-  color: #1E1A1B;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-}
-body.template-kecantikan .page-wrap { background: #FDFCFB; }
-
-body.template-kecantikan .hero {
-  background: #fff;
-  padding: 44px 20px 32px;
-  border-radius: 0 0 32px 32px;
-  border-bottom: none;
-  box-shadow: 0 1px 0 #EDE0E1;
-  text-align: center;
-}
-body.template-kecantikan .logo-img {
-  border: 2px solid #fff;
-  border-radius: 50%;
-  box-shadow: 0 0 0 3px #EDE0E1, 0 8px 28px rgba(200,112,122,0.14);
-}
-body.template-kecantikan .store-name {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-style: italic;
-  font-weight: 400;
-  font-size: clamp(22px, 6vw, 30px);
-  color: #1E1A1B;
-  letter-spacing: -0.01em;
-}
-body.template-kecantikan .store-desc {
-  color: #8C7E80;
-  font-size: 12.5px;
-  font-weight: 400;
-  letter-spacing: 0.03em;
-  line-height: 1.6;
-}
-body.template-kecantikan .verified-badge {
-  background: #FDF0F1;
-  border: 1px solid #E8C8CA;
-  color: #C8707A;
-  border-radius: 20px;
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  padding: 3px 11px;
-}
-body.template-kecantikan .verified-badge svg { color: #C8707A !important; }
-
-body.template-kecantikan .social-icon-btn {
-  background: #FDF0F1;
-  border: 1px solid #EDE0E1;
-  border-radius: 50%;
-  color: #C8707A;
-  transition: background 0.14s;
-}
-body.template-kecantikan .social-icon-btn:hover { background: #F8E0E2; }
-
-body.template-kecantikan .platform-btn {
-  background: #fff !important;
-  color: #1E1A1B !important;
-  border: 1px solid #EDE0E1 !important;
-  box-shadow: 0 3px 0 0 #EDE0E1 !important;
-  border-radius: 12px !important;
-  font-weight: 500 !important;
-  font-size: 13.5px !important;
-  transition: border-color 0.14s, box-shadow 0.12s !important;
-}
-body.template-kecantikan .platform-btn:hover {
-  border-color: #C8707A !important;
-  box-shadow: 0 3px 0 0 #C8707A !important;
-}
-body.template-kecantikan .wa-btn,
-body.template-kecantikan .shopee-btn,
-body.template-kecantikan .tokped-btn {
-  background: #fff; color: #1E1A1B;
-  border: 1px solid #EDE0E1;
-  box-shadow: 0 3px 0 0 #EDE0E1;
-  border-radius: 12px;
-}
-body.template-kecantikan .gallery-link-btn {
-  background: #fff;
-  border: 1px dashed #C8707A;
-  border-radius: 12px;
-  color: #1E1A1B;
-}
-body.template-kecantikan .gallery-btn-label { color: #1E1A1B; font-weight: 500; }
-body.template-kecantikan .gallery-btn-count { color: #8C7E80; font-size: 12px; }
-
-body.template-kecantikan .section-title {
-  color: #C8707A;
-  font-weight: 600;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-body.template-kecantikan .unggulan-label {
-  color: #C8707A;
-  font-weight: 600;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-
-body.template-kecantikan .kat-btn {
-  background: #FDF0F1;
-  border: 1px solid #EDE0E1;
-  border-radius: 20px;
-  color: #8C7E80;
-  font-weight: 500;
-  font-size: 12px;
-  transition: background 0.13s, border-color 0.13s, color 0.13s;
-}
-body.template-kecantikan .kat-btn:hover { border-color: #C8707A; color: #C8707A; }
-body.template-kecantikan .kat-btn.active {
-  background: #C8707A;
-  border-color: #C8707A;
-  color: #fff;
-}
-
-body.template-kecantikan .product-card {
-  background: #fff;
-  border: 1px solid #EDE0E1;
-  border-radius: 16px !important;
-  box-shadow: 0 1px 6px rgba(200,112,122,0.06);
-  transition: box-shadow 0.18s, border-color 0.18s;
-}
-body.template-kecantikan .product-card:hover {
-  border-color: #C8707A;
-  box-shadow: 0 6px 22px rgba(200,112,122,0.14);
-  transform: translateY(-2px);
-}
-body.template-kecantikan .product-img { border-bottom: 1px solid #EDE0E1; }
-body.template-kecantikan .product-name {
-  color: #1E1A1B;
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-size: 14px;
-  font-weight: 400;
-}
-body.template-kecantikan .product-price { color: #C8707A; font-weight: 700; }
-body.template-kecantikan .product-desc { color: #8C7E80; font-size: 12px; }
-body.template-kecantikan .harga-coret { color: #CCC0C1; }
-
-body.template-kecantikan .badge-diskon {
-  background: #C8707A; color: #fff;
-  border-radius: 6px; font-weight: 700; font-size: 9.5px;
-}
-body.template-kecantikan .badge-unggulan {
-  background: #FFF0A0; color: #8A7000;
-  border-radius: 50%; width: 22px; height: 22px; font-size: 13px;
-}
-body.template-kecantikan .badge-stok { background: #DC2626; color: #fff; border-radius: 6px; }
-
-body.template-kecantikan .prod-btn-wa {
-  background: #1E1A1B; color: #fff;
-  border-radius: 10px; font-weight: 600; font-size: 12px;
-}
-body.template-kecantikan .prod-btn-shopee {
-  background: #FDF0F1; color: #C8707A;
-  border: 1px solid #E8C8CA;
-  border-radius: 10px; font-weight: 600; font-size: 12px;
-  box-shadow: none;
-}
-body.template-kecantikan .prod-btn-tokped {
-  background: #03AC0E; color: #fff;
-  border-radius: 10px; font-weight: 600; font-size: 12px;
-}
-
-body.template-kecantikan .skeleton {
-  background: linear-gradient(90deg, #FAF5F6 0%, #F0E4E6 45%, #FAF5F6 100%);
-  background-size: 200% 100%;
-}
-body.template-kecantikan .skeleton-box { background: #fff; border: 1px solid #EDE0E1; border-radius: 16px; }
-body.template-kecantikan footer {
-  border-top: 1px solid #EDE0E1;
-  background: #fff;
-  padding: 22px 20px;
-}
-body.template-kecantikan .footer-copy-text { color: #B0A0A2; font-size: 11px; letter-spacing: 0.04em; }
-body.template-kecantikan .footer-brand { color: #B0A0A2; }
-body.template-kecantikan .floating-wa {
-  background: #C8707A;
-  border-radius: 50%;
-  box-shadow: 0 4px 18px rgba(200,112,122,0.4);
-}
-body.template-kecantikan .unggulan-divider { background: #EDE0E1; }
-body.template-kecantikan .share-btn {
-  background: #FDF0F1; border-color: #EDE0E1; color: #8C7E80; border-radius: 10px;
-}
-
-
-/* ─────────────────────────────────────────────────────────────────
-   TEMPLATE 4 · ELEKTRONIK
-   Karakter: Tech enthusiast serius. Gelap. Presisi. Bukan gaming norak.
-   Referensi: Verge, MKBHD aesthetic, premium electronics retailer.
-   Warna: #050812 · #00E0FF · #FF2050 · #0D1828 · #C8D4E8
-   ───────────────────────────────────────────────────────────────── */
-
-body.template-elektronik {
-  background: #050812;
-  color: #C8D4E8;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-}
-body.template-elektronik .page-wrap { background: #050812; }
-
-body.template-elektronik .hero {
-  background: #0D1828;
-  padding: 36px 20px 28px;
-  border-radius: 0;
-  border-bottom: 2px solid #00E0FF;
-}
-body.template-elektronik .logo-img {
-  border: 2px dashed #00E0FF;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(0,224,255,0.2), 0 0 40px rgba(0,224,255,0.08);
-}
-body.template-elektronik .store-name {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: clamp(17px, 4.8vw, 24px);
-  color: #E8F0FF;
-  letter-spacing: 0.02em;
-}
-body.template-elektronik .store-desc {
-  color: #6880A8;
-  font-size: 12px;
-  font-style: italic;
-  letter-spacing: 0.02em;
-}
-body.template-elektronik .verified-badge {
-  background: #00E0FF;
-  border-color: #00E0FF;
-  color: #050812;
-  border-radius: 4px;
-  font-family: 'Space Mono', monospace;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  padding: 3px 10px;
-}
-body.template-elektronik .verified-badge svg { color: #050812 !important; }
-
-body.template-elektronik .social-icon-btn {
-  background: rgba(0,224,255,0.06);
-  border: 1px solid #1A2845;
-  border-radius: 8px;
-  color: #6880A8;
-  transition: border-color 0.14s, color 0.14s;
-}
-body.template-elektronik .social-icon-btn:hover {
-  border-color: #00E0FF;
-  color: #00E0FF;
-}
-
-body.template-elektronik .platform-btn {
-  background: #0D1828 !important;
-  color: #C8D4E8 !important;
-  border: 1px solid #1A2845 !important;
-  box-shadow: none !important;
-  border-radius: 6px !important;
-  font-weight: 600 !important;
-  font-size: 13.5px !important;
-  transition: border-color 0.14s, box-shadow 0.14s !important;
-}
-body.template-elektronik .platform-btn:hover {
-  border-color: #00E0FF !important;
-  box-shadow: 0 0 12px rgba(0,224,255,0.12) !important;
-}
-body.template-elektronik .wa-btn,
-body.template-elektronik .shopee-btn,
-body.template-elektronik .tokped-btn {
-  background: #0D1828; color: #C8D4E8;
-  border: 1px solid #1A2845; border-radius: 6px;
-}
-body.template-elektronik .gallery-link-btn {
-  background: #0D1828;
-  border: 1px dashed #1A2845;
-  border-radius: 6px;
-  color: #C8D4E8;
-  transition: border-color 0.14s;
-}
-body.template-elektronik .gallery-link-btn:hover { border-color: #00E0FF; }
-body.template-elektronik .gallery-btn-label { color: #E8F0FF; font-weight: 600; }
-body.template-elektronik .gallery-btn-count { color: #6880A8; }
-
-body.template-elektronik .section-title {
-  color: #FF2050;
-  font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-body.template-elektronik .unggulan-label {
-  color: #FF2050;
-  font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-body.template-elektronik .kat-btn {
-  background: #0D1828;
-  border: 1px solid #1A2845;
-  border-radius: 6px;
-  color: #6880A8;
-  font-size: 12px;
-  font-weight: 600;
-  transition: border-color 0.12s, color 0.12s, background 0.12s;
-}
-body.template-elektronik .kat-btn:hover { border-color: #00E0FF; color: #00E0FF; }
-body.template-elektronik .kat-btn.active {
-  background: #00E0FF;
-  border-color: #00E0FF;
-  color: #050812;
-  font-weight: 700;
-}
-
-body.template-elektronik .product-card {
-  background: #0D1828;
-  border: 1px solid #1A2845;
-  border-radius: 10px !important;
-  box-shadow: none;
-  transition: border-color 0.16s, box-shadow 0.16s;
-}
-body.template-elektronik .product-card:hover {
-  border-color: #00E0FF;
-  box-shadow: 0 0 20px rgba(0,224,255,0.14);
-  transform: translateY(-2px);
-}
-body.template-elektronik .product-img { border-bottom: 1px solid #1A2845; }
-body.template-elektronik .product-name {
-  color: #E8F0FF;
-  font-family: 'Space Mono', monospace;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-body.template-elektronik .product-price { color: #00E0FF; font-weight: 800; letter-spacing: -0.01em; }
-body.template-elektronik .product-desc { color: #6880A8; font-size: 11.5px; }
-body.template-elektronik .harga-coret { color: #2A3848; }
-
-body.template-elektronik .badge-diskon {
-  background: #FF2050; color: #fff;
-  border-radius: 4px; font-weight: 700; font-size: 9px;
-}
-body.template-elektronik .badge-unggulan {
-  color: #00E0FF; background: transparent; font-size: 16px;
-}
-body.template-elektronik .badge-stok {
-  background: #FF2050; color: #fff; border-radius: 4px;
-  font-family: 'Space Mono', monospace; font-size: 9px;
-}
-
-body.template-elektronik .prod-btn-wa {
-  background: transparent; color: #00E0FF;
-  border: 1px solid #00E0FF; border-radius: 6px;
-  font-weight: 700; font-size: 11.5px;
-  transition: background 0.14s;
-}
-body.template-elektronik .prod-btn-wa:hover { background: rgba(0,224,255,0.1); }
-body.template-elektronik .prod-btn-shopee {
-  background: #FF2050; color: #fff;
-  border-radius: 6px; font-weight: 700; font-size: 11.5px;
-}
-body.template-elektronik .prod-btn-tokped {
-  background: #00E0FF; color: #050812;
-  border-radius: 6px; font-weight: 700; font-size: 11.5px;
-}
-
-body.template-elektronik .skeleton {
-  background: linear-gradient(90deg, #0D1828 0%, rgba(0,224,255,0.07) 45%, #0D1828 100%);
-  background-size: 200% 100%;
-}
-body.template-elektronik .skeleton-box { background: #0D1828; border: 1px solid #1A2845; border-radius: 10px; }
-body.template-elektronik footer {
-  border-top: 1px dashed #1A2845;
-  background: #050812;
-  padding: 20px;
-}
-body.template-elektronik .footer-copy-text {
-  font-family: 'Space Mono', monospace;
-  color: #2A3848; font-size: 10px; letter-spacing: 0.06em;
-}
-body.template-elektronik .footer-brand { color: #2A3848; }
-body.template-elektronik .floating-wa {
-  background: #00E0FF;
-  border-radius: 10px;
-  box-shadow: 0 0 18px rgba(0,224,255,0.45);
-}
-body.template-elektronik .unggulan-divider { background: rgba(0,224,255,0.08); }
-body.template-elektronik .share-btn {
-  background: rgba(0,224,255,0.05); border-color: #1A2845; color: #6880A8; border-radius: 6px;
-}
-
-
-/* ─────────────────────────────────────────────────────────────────
-   TEMPLATE 5 · RESELLER
-   Karakter: Seller marketplace muda. Percaya diri. Agresif harga.
-   Referensi: Tokopedia campaign, Shopee power seller, athletic brand.
-   Warna: #F8F9FC · #1554F0 · #FF3D00 · #0E1523 · #E2E6EE
-   ───────────────────────────────────────────────────────────────── */
-
-body.template-reseller {
-  background: #F8F9FC;
-  color: #0E1523;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-}
-body.template-reseller .page-wrap { background: #F8F9FC; }
-
-body.template-reseller .hero {
-  background: #fff;
-  padding: 28px 20px 22px;
-  border-radius: 0;
-  border-bottom: 3px solid #1554F0;
-}
-body.template-reseller .logo-img {
-  border: 3px solid #1554F0;
-  border-radius: 50%;
-  box-shadow: 0 0 0 4px rgba(21,84,240,0.1);
-}
-body.template-reseller .store-name {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-weight: 800;
-  font-size: clamp(20px, 5.5vw, 28px);
-  color: #0E1523;
-  letter-spacing: -0.03em;
-}
-body.template-reseller .store-desc { color: #687080; font-size: 12.5px; font-weight: 400; }
-body.template-reseller .verified-badge {
-  background: #EEF2FF;
-  border: 1px solid #C7D2FE;
-  color: #1554F0;
-  border-radius: 6px;
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 2px 9px;
-}
-body.template-reseller .verified-badge svg { color: #1554F0 !important; }
-
-body.template-reseller .social-icon-btn {
-  background: #fff;
-  border: 1px solid #E2E6EE;
-  border-radius: 8px;
-  color: #687080;
-  transition: border-color 0.13s, color 0.13s;
-}
-body.template-reseller .social-icon-btn:hover { border-color: #1554F0; color: #1554F0; }
-
-body.template-reseller .platform-btn {
-  background: #fff !important;
-  color: #0E1523 !important;
-  border: 1px solid #E2E6EE !important;
-  box-shadow: none !important;
-  border-radius: 10px !important;
-  font-weight: 600 !important;
-  font-size: 13.5px !important;
-  transition: border-color 0.13s, background 0.13s !important;
-}
-body.template-reseller .platform-btn:hover {
-  border-color: #1554F0 !important;
-  background: #F5F7FF !important;
-}
-body.template-reseller .wa-btn,
-body.template-reseller .shopee-btn,
-body.template-reseller .tokped-btn {
-  background: #fff; color: #0E1523;
-  border: 1px solid #E2E6EE; border-radius: 10px;
-}
-body.template-reseller .gallery-link-btn {
-  background: #fff;
-  border: 1px solid #E2E6EE;
-  border-radius: 10px;
-  color: #0E1523;
-}
-body.template-reseller .gallery-btn-label { color: #0E1523; font-weight: 600; }
-body.template-reseller .gallery-btn-count { color: #687080; }
-
-body.template-reseller .section-title {
-  color: #687080;
-  font-weight: 700;
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-body.template-reseller .unggulan-label {
-  color: #687080;
-  font-weight: 700;
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-body.template-reseller .kat-btn {
-  background: #EEF2FF;
-  border: 1px solid #C7D2FE;
-  border-radius: 8px;
-  color: #1554F0;
-  font-weight: 700;
-  font-size: 12px;
-  transition: background 0.12s, border-color 0.12s;
-}
-body.template-reseller .kat-btn:hover { background: #E0E8FF; }
-body.template-reseller .kat-btn.active {
-  background: #1554F0;
-  border-color: #1554F0;
-  color: #fff;
-}
-
-body.template-reseller .product-card {
-  background: #fff;
-  border: 1px solid #E2E6EE;
-  border-radius: 12px !important;
-  box-shadow: 0 1px 4px rgba(14,21,35,0.05);
-  transition: border-color 0.16s, box-shadow 0.16s;
-}
-body.template-reseller .product-card:hover {
-  border-color: #1554F0;
-  box-shadow: 0 4px 18px rgba(21,84,240,0.1);
-  transform: translateY(-2px);
-}
-body.template-reseller .product-img { border-bottom: 1px solid #E2E6EE; }
-body.template-reseller .product-name { color: #0E1523; font-weight: 700; font-size: 13px; letter-spacing: -0.01em; }
-body.template-reseller .product-price { color: #FF3D00; font-weight: 800; letter-spacing: -0.02em; }
-body.template-reseller .product-desc { color: #687080; font-size: 12px; }
-body.template-reseller .harga-coret { color: #C0C8D8; }
-
-body.template-reseller .badge-diskon {
-  background: #1554F0; color: #fff;
-  border-radius: 6px; font-weight: 800; font-size: 9px;
-}
-body.template-reseller .badge-unggulan {
-  background: #FF3D00; color: #fff; border-radius: 4px;
-  font-size: 10px; font-weight: 700; width: auto; height: auto; padding: 1px 6px;
-}
-body.template-reseller .badge-stok { background: #64748B; color: #fff; border-radius: 6px; }
-
-body.template-reseller .prod-btn-wa {
-  background: #ECFDF5; color: #059669;
-  border: 1px solid #A7F3D0; border-radius: 8px;
-  font-weight: 700; font-size: 12px; box-shadow: none;
-}
-body.template-reseller .prod-btn-shopee {
-  background: #FF3D00; color: #fff;
-  border-radius: 8px; font-weight: 700; font-size: 12px;
-}
-body.template-reseller .prod-btn-tokped {
-  background: #03AC0E; color: #fff;
-  border-radius: 8px; font-weight: 700; font-size: 12px;
-}
-
-body.template-reseller .skeleton {
-  background: linear-gradient(90deg, #F8F9FC 0%, #E8ECFF 45%, #F8F9FC 100%);
-  background-size: 200% 100%;
-}
-body.template-reseller .skeleton-box { background: #fff; border: 1px solid #E2E6EE; border-radius: 12px; }
-body.template-reseller footer {
-  border-top: 1px solid #E2E6EE;
-  background: #fff;
-  padding: 20px;
-}
-body.template-reseller .footer-copy-text { color: #A0AAC0; font-size: 11.5px; }
-body.template-reseller .footer-brand { color: #A0AAC0; }
-body.template-reseller .floating-wa {
-  background: #25D366;
-  border-radius: 50%;
-  box-shadow: 0 4px 16px rgba(37,211,102,0.32);
-}
-body.template-reseller .unggulan-divider { background: #E2E6EE; }
-body.template-reseller .share-btn {
-  background: #EEF2FF; border-color: #C7D2FE; color: #687080; border-radius: 8px;
-}
-
-
-/* ─────────────────────────────────────────────────────────────────
-   TEMPLATE 6 · FASHION
-   Karakter: Desainer lokal yang belajar di Paris. Sunyi. Intens.
-   Referensi: Toteme, Lemaire, Maison Margiela — bukan Zara biasa.
-   Warna: #F4F1EC · #100F0D · #D8D2C8 · #6E6860
-   Typography: Cormorant Garamond italic + Jost ultralight
-   ───────────────────────────────────────────────────────────────── */
-
+/* ── FASHION — Editorial Luxury  (#F5F2EC + hitam #100F0D + aksara Cormorant)
+   Referensi estetik: Celine, Toteme, Zara Editorial
+   Karakter: sharp corners, italic serif, monokrom hangat, full-width black btn
+   ──────────────────────────────────────────────────────────────────────── */
 body.template-fashion {
-  background: #F4F1EC;
+  background-color: #F5F2EC;
   color: #100F0D;
   font-family: 'Jost', 'Inter', sans-serif;
-  font-weight: 400;
+  letter-spacing: 0.01em;
 }
-body.template-fashion .page-wrap { background: #F4F1EC; }
+body.template-fashion .page-wrap { background: #F5F2EC; }
 
+/* Hero — putih bersih, tanpa radius, garis bawah tipis */
 body.template-fashion .hero {
-  background: #fff;
-  padding: 48px 24px 36px;
+  background: #FFFFFF;
+  padding: 44px 24px 32px;
+  border-bottom: 1px solid #DDD9D2;
   border-radius: 0;
-  border-bottom: 1px solid #D8D2C8;
   text-align: center;
 }
+
+/* Logo — square, tipis, tanpa shadow */
 body.template-fashion .logo-img {
-  border: 1px solid #D8D2C8;
-  border-radius: 2px;
+  border: 1px solid #CCC8C0;
+  border-radius: 4px;
   box-shadow: none;
 }
+
+/* Store name — Cormorant italic, besar, hangat */
 body.template-fashion .store-name {
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-style: italic;
-  font-weight: 300;
-  font-size: clamp(28px, 7.5vw, 40px);
+  font-size: clamp(26px, 7.5vw, 38px);
+  font-weight: 400;
   color: #100F0D;
   letter-spacing: -0.01em;
-  line-height: 1.05;
+  line-height: 1.1;
 }
+
+/* Bio — Jost light, tracking lebar */
 body.template-fashion .store-desc {
   font-family: 'Jost', sans-serif;
   font-weight: 300;
-  font-size: 12px;
-  color: #6E6860;
-  letter-spacing: 0.06em;
-  line-height: 1.65;
+  font-size: 12.5px;
+  color: #7C786F;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
 }
+
+/* Verified badge — outline kotak kecil, no fill */
 body.template-fashion .verified-badge {
   background: transparent;
-  border: 1px solid #B8B0A6;
-  color: #6E6860;
+  border: 1px solid #B0AAA0;
+  color: #7C786F;
   border-radius: 0;
   font-family: 'Jost', sans-serif;
-  font-size: 8.5px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  padding: 3px 10px;
-}
-body.template-fashion .verified-badge svg { color: #6E6860 !important; }
-
-body.template-fashion .social-icon-btn {
-  background: transparent;
-  border: 1px solid #D8D2C8;
-  border-radius: 0;
-  color: #6E6860;
-  transition: background 0.16s, color 0.16s;
-}
-body.template-fashion .social-icon-btn:hover {
-  background: #100F0D;
-  color: #F4F1EC;
-  border-color: #100F0D;
-}
-
-body.template-fashion .platform-btn {
-  background: #100F0D !important;
-  color: #F4F1EC !important;
-  border: 1px solid #100F0D !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  font-family: 'Jost', sans-serif !important;
-  font-weight: 500 !important;
-  font-size: 12.5px !important;
-  letter-spacing: 0.06em !important;
-  transition: background 0.16s !important;
-}
-body.template-fashion .platform-btn:hover { background: #2A2824 !important; }
-body.template-fashion .wa-btn,
-body.template-fashion .shopee-btn,
-body.template-fashion .tokped-btn {
-  background: #100F0D; color: #F4F1EC;
-  border: 1px solid #100F0D; border-radius: 0;
-}
-body.template-fashion .gallery-link-btn {
-  background: #fff;
-  border: 1px solid #D8D2C8;
-  border-radius: 0;
-  color: #100F0D;
-  transition: background 0.16s;
-}
-body.template-fashion .gallery-link-btn:hover { background: #F4F1EC; }
-body.template-fashion .gallery-btn-label {
-  font-family: 'Jost', sans-serif;
-  color: #100F0D;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-}
-body.template-fashion .gallery-btn-count { color: #A09890; font-size: 12px; }
-
-body.template-fashion .section-title {
-  font-family: 'Jost', sans-serif;
-  color: #A09890;
   font-weight: 500;
   font-size: 9px;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+}
+body.template-fashion .verified-badge svg { color: #7C786F !important; }
+
+/* Section labels — ALL CAPS, tracking ekstrem, sangat muted */
+body.template-fashion .section-title {
+  font-family: 'Jost', sans-serif;
+  color: #A09A90;
+  font-weight: 500;
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 body.template-fashion .unggulan-label {
   font-family: 'Jost', sans-serif;
-  color: #A09890;
+  color: #A09A90;
   font-weight: 500;
-  font-size: 9px;
-  letter-spacing: 0.28em;
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 
+/* Category tabs — teks murni, underline aktif, tanpa fill */
 body.template-fashion .kat-btn {
   background: transparent;
   border: none;
-  border-bottom: 1px solid transparent;
+  border-bottom: 1.5px solid transparent;
   border-radius: 0;
-  color: #A09890;
+  color: #A09A90;
   font-family: 'Jost', sans-serif;
   font-weight: 500;
   font-size: 11px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 7px 4px;
-  margin-right: 18px;
-  transition: color 0.14s, border-color 0.14s;
+  padding: 7px 2px;
+  margin-right: 20px;
+  transition: color 0.18s, border-color 0.18s;
 }
 body.template-fashion .kat-btn:hover {
   background: transparent;
   color: #100F0D;
+  border-bottom-color: rgba(16,15,13,0.3);
 }
 body.template-fashion .kat-btn.active {
   background: transparent;
@@ -1930,25 +904,71 @@ body.template-fashion .kat-btn.active {
   font-weight: 600;
 }
 
+/* Platform buttons — hitam penuh, tanpa radius, SANGAT editorial */
+body.template-fashion .platform-btn {
+  background: #100F0D !important;
+  color: #FFFFFF !important;
+  border: 1px solid #100F0D !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  font-family: 'Jost', sans-serif !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.04em !important;
+  transition: background 0.18s, color 0.18s !important;
+}
+body.template-fashion .platform-btn:hover {
+  background: #2A2925 !important;
+}
+body.template-fashion .wa-btn,
+body.template-fashion .shopee-btn,
+body.template-fashion .tokped-btn {
+  background: #100F0D;
+  color: #FFFFFF;
+  border: 1px solid #100F0D;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* Gallery link — border atas+bawah saja, sangat editorial */
+body.template-fashion .gallery-link-btn {
+  background: #FFFFFF;
+  border: 1px solid #DDD9D2;
+  border-radius: 0;
+  color: #100F0D;
+}
+body.template-fashion .gallery-btn-label {
+  font-family: 'Jost', sans-serif;
+  font-weight: 500;
+  color: #100F0D;
+  letter-spacing: 0.03em;
+}
+body.template-fashion .gallery-btn-count {
+  color: #A09A90;
+  font-size: 12px;
+}
+
+/* Product cards — tanpa radius, zero shadow, tipis border */
 body.template-fashion .product-card {
-  background: #fff;
-  border: 1px solid #D8D2C8;
+  background: #FFFFFF;
+  border: 1px solid #DDD9D2;
   border-radius: 0 !important;
   box-shadow: none;
-  transition: border-color 0.18s;
+  transition: border-color 0.2s;
 }
 body.template-fashion .product-card:hover {
   border-color: #100F0D;
-  transform: none;
   box-shadow: none;
+  transform: none;
 }
-body.template-fashion .product-img { border-bottom: 1px solid #D8D2C8; }
+
+/* Product text */
 body.template-fashion .product-name {
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-style: italic;
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 500;
   color: #100F0D;
+  letter-spacing: 0.01em;
   line-height: 1.3;
 }
 body.template-fashion .product-price {
@@ -1959,75 +979,864 @@ body.template-fashion .product-price {
 }
 body.template-fashion .product-desc {
   font-family: 'Jost', sans-serif;
-  color: #6E6860;
-  font-size: 11.5px;
+  color: #7C786F;
+  font-size: 12px;
   font-weight: 300;
-  line-height: 1.55;
+  letter-spacing: 0.02em;
 }
-body.template-fashion .harga-coret { color: #C4BEB6; font-weight: 300; }
+body.template-fashion .harga-coret {
+  color: #C4BFB8;
+  font-weight: 400;
+}
 
+/* Badges */
 body.template-fashion .badge-diskon {
-  background: #100F0D; color: #F4F1EC;
-  border-radius: 0; font-family: 'Jost', sans-serif;
-  font-weight: 600; font-size: 8.5px; letter-spacing: 0.1em;
+  background: #100F0D;
+  color: #F5F2EC;
+  border-radius: 0;
+  font-family: 'Jost', sans-serif;
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: 0.08em;
 }
 body.template-fashion .badge-unggulan {
-  background: transparent; color: #100F0D;
-  border: 1px solid #100F0D; border-radius: 0;
-  width: 20px; height: 20px; font-size: 11px;
+  background: #100F0D;
+  color: #FFFFFF;
+  border-radius: 0;
+  font-size: 11px;
+  width: 20px;
+  height: 20px;
 }
 body.template-fashion .badge-stok {
-  background: #6E6860; color: #fff;
-  border-radius: 0; font-size: 8.5px; letter-spacing: 0.08em;
+  background: #100F0D;
+  color: #FFFFFF;
+  border-radius: 0;
+  font-size: 9px;
+  letter-spacing: 0.08em;
 }
 
+/* Product action buttons */
 body.template-fashion .prod-btn-wa {
-  background: #100F0D; color: #F4F1EC;
-  border: 1px solid #100F0D; border-radius: 0;
-  font-family: 'Jost', sans-serif; font-weight: 500;
-  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  background: #100F0D;
+  color: #FFFFFF;
+  border: 1px solid #100F0D;
+  border-radius: 0;
+  font-family: 'Jost', sans-serif;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 body.template-fashion .prod-btn-shopee {
-  background: #fff; color: #100F0D;
-  border: 1px solid #D8D2C8; border-radius: 0; box-shadow: none;
-  font-family: 'Jost', sans-serif; font-weight: 500;
-  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
-  transition: background 0.14s;
+  background: #FFFFFF;
+  color: #100F0D;
+  border: 1px solid #100F0D;
+  border-radius: 0;
+  font-family: 'Jost', sans-serif;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: none;
 }
-body.template-fashion .prod-btn-shopee:hover { background: #F4F1EC; }
 body.template-fashion .prod-btn-tokped {
-  background: #fff; color: #100F0D;
-  border: 1px solid #D8D2C8; border-radius: 0; box-shadow: none;
-  font-family: 'Jost', sans-serif; font-weight: 500;
-  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  background: #FFFFFF;
+  color: #100F0D;
+  border: 1px solid #100F0D;
+  border-radius: 0;
+  font-family: 'Jost', sans-serif;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: none;
 }
 
+/* Skeleton */
 body.template-fashion .skeleton {
-  background: linear-gradient(90deg, #EDE9E2 0%, #E4DFD6 45%, #EDE9E2 100%);
+  background: linear-gradient(90deg, #EDEBE5 0%, #E3E0D8 50%, #EDEBE5 100%);
   background-size: 200% 100%;
 }
-body.template-fashion .skeleton-box { background: #FAFAF8; border: 1px solid #D8D2C8; border-radius: 0; }
-body.template-fashion footer {
-  border-top: 1px solid #D8D2C8;
-  background: #fff;
-  padding: 24px 20px;
+body.template-fashion .skeleton-box {
+  background: #FAFAF8;
+  border: 1px solid #DDD9D2;
+  border-radius: 0;
 }
+
+/* Social icons */
+body.template-fashion .social-icon-btn {
+  background: #FFFFFF;
+  border: 1px solid #DDD9D2;
+  border-radius: 0;
+  color: #7C786F;
+  transition: background 0.15s, color 0.15s;
+}
+body.template-fashion .social-icon-btn:hover {
+  background: #100F0D;
+  color: #FFFFFF;
+  border-color: #100F0D;
+}
+
+/* Footer */
 body.template-fashion .footer-copy-text {
   font-family: 'Jost', sans-serif;
-  color: #A09890; font-size: 9.5px;
-  letter-spacing: 0.18em; text-transform: uppercase;
+  color: #A09A90;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 400;
 }
-body.template-fashion .footer-brand { color: #A09890; }
+body.template-fashion .footer-brand {
+  color: #A09A90;
+  letter-spacing: 0.1em;
+}
+body.template-fashion footer {
+  border-top: 1px solid #DDD9D2;
+  background: #FFFFFF;
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+/* Floating WA */
 body.template-fashion .floating-wa {
   background: #100F0D;
   border-radius: 0;
-  box-shadow: 2px 2px 0 0 rgba(16,15,13,0.3);
+  box-shadow: none;
 }
-body.template-fashion .unggulan-divider { background: #D8D2C8; }
+body.template-fashion .unggulan-divider { background: #DDD9D2; }
 body.template-fashion .share-btn {
-  background: #fff; border-color: #D8D2C8; color: #6E6860; border-radius: 0;
+  background: #FFFFFF;
+  border: 1px solid #DDD9D2;
+  border-radius: 0;
+  color: #7C786F;
 }
+body.template-fashion .product-img { border-bottom: 1px solid #DDD9D2; }
 
+
+/* ═══════════════════════════════════════════════════════════════════
+   KREATOR — Neo-Brutalism Dark  (hitam + lime #cafe48)
+   Screenshot 1: dark background, lime neon accent, box-shadow style
+   ═══════════════════════════════════════════════════════════════════ */
+body.template-kreator {
+  background-color: #0d0d0d;
+  color: #ffffff;
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+}
+body.template-kreator .page-wrap {
+  background: #0d0d0d;
+}
+/* Hero — left-aligned, flat black */
+body.template-kreator .hero {
+  background: #0d0d0d;
+  padding: 36px 20px 24px;
+  border-bottom: 3px solid #cafe48;
+  border-radius: 0;
+  text-align: left;
+}
+/* Logo — square, tilted, lime drop-shadow */
+body.template-kreator .logo-img {
+  border: 3px solid #0d0d0d;
+  border-radius: 10px;
+  box-shadow: 5px 5px 0 #cafe48;
+  transform: rotate(-3deg);
+}
+body.template-kreator .store-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(22px, 7vw, 34px);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  margin-top: 12px;
+}
+body.template-kreator .store-desc { color: #888888; font-weight: 700; font-size: 13px; }
+/* Verified badge — lime bg, dark text */
+body.template-kreator .verified-badge {
+  background: #cafe48;
+  border: 2px solid #000;
+  color: #000;
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  border-radius: 0;
+  padding: 2px 10px;
+}
+body.template-kreator .verified-badge svg { color: #000 !important; }
+/* Section labels */
+body.template-kreator .section-title {
+  color: #ffffff;
+  letter-spacing: 0.05em;
+  font-weight: 800;
+  font-size: 11px;
+}
+body.template-kreator .unggulan-label {
+  color: #ffffff;
+  letter-spacing: 0.05em;
+  font-weight: 800;
+  font-size: 11px;
+}
+/* Category filter — brutalist tabs */
+body.template-kreator .kat-btn {
+  background: #0d0d0d;
+  border: 2px solid #fff;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 0;
+  box-shadow: 2px 2px 0 #cafe48;
+}
+body.template-kreator .kat-btn:hover { background: #1a1a1a; }
+body.template-kreator .kat-btn.active {
+  background: #fff;
+  border-color: #fff;
+  color: #000;
+  box-shadow: 2px 2px 0 #cafe48;
+}
+/* Platform buttons — lime bg, dark text, brutal shadow */
+body.template-kreator .platform-btn {
+  background: #cafe48 !important;
+  color: #000000 !important;
+  border: 2px solid #000 !important;
+  box-shadow: 4px 4px 0 #000 !important;
+  border-radius: 0 !important;
+  font-weight: 800 !important;
+}
+body.template-kreator .wa-btn,
+body.template-kreator .shopee-btn,
+body.template-kreator .tokped-btn {
+  background: #cafe48;
+  color: #000;
+  border: 2px solid #000;
+  box-shadow: 4px 4px 0 #000;
+  border-radius: 0;
+}
+/* Gallery link — white bg, brutal border */
+body.template-kreator .gallery-link-btn {
+  background: #0d0d0d;
+  border: 2px solid #fff;
+  box-shadow: 4px 4px 0 #000;
+  border-radius: 0;
+  color: #fff;
+}
+body.template-kreator .gallery-btn-label { color: #fff; font-weight: 800; }
+body.template-kreator .gallery-btn-count { color: #888; }
+/* Product cards */
+body.template-kreator .product-card {
+  background: #1a1a1a;
+  border: 2px solid #ffffff;
+  box-shadow: 4px 4px 0 #cafe48;
+  border-radius: 0 !important;
+}
+body.template-kreator .product-card:hover {
+  box-shadow: 6px 6px 0 #cafe48;
+  transform: translate(-2px, -2px);
+}
+body.template-kreator .product-name { color: #ffffff; font-weight: 800; font-size: 12px; }
+body.template-kreator .product-price { color: #cafe48; font-weight: 800; }
+body.template-kreator .product-desc { color: #555555; font-weight: 700; }
+body.template-kreator .harga-coret { color: #444; }
+body.template-kreator .badge-diskon { background: #cafe48; color: #000; border-radius: 0; font-weight: 800; }
+body.template-kreator .badge-stok { background: #ff4444; color: #fff; border-radius: 0; }
+body.template-kreator .badge-unggulan { background: #cafe48; color: #000; border: 2px solid #000; border-radius: 0; }
+/* Product action buttons */
+body.template-kreator .prod-btn-wa {
+  background: #000;
+  color: #fff;
+  border: 2px solid #fff;
+  border-radius: 0;
+}
+body.template-kreator .prod-btn-shopee {
+  background: #fff;
+  color: #000;
+  border: 2px solid #000;
+  border-radius: 0;
+}
+body.template-kreator .prod-btn-tokped {
+  background: #cafe48;
+  color: #000;
+  border: 2px solid #000;
+  border-radius: 0;
+}
+/* Skeleton */
+body.template-kreator .skeleton { background: linear-gradient(90deg,#1a1a1a 0%,#2a2a2a 50%,#1a1a1a 100%); background-size:200% 100%; }
+body.template-kreator .skeleton-box { background: #1a1a1a; border-color: #333; border-radius: 0; }
+/* Social icons */
+body.template-kreator .social-icon-btn { background: #1a1a1a; border-color: #fff; border: 2px solid #fff; color: #fff; border-radius: 0; }
+body.template-kreator .social-icon-btn:hover { background: #cafe48; color: #000; border-color: #000; }
+/* Footer */
+body.template-kreator .footer-copy-text { color: #555; font-weight: 800; font-size: 11px; }
+body.template-kreator .footer-brand { color: #555; }
+body.template-kreator footer { border-top: 3px solid #000; }
+/* Floating WA */
+body.template-kreator .floating-wa {
+  background: #0d0d0d;
+  border: 2px solid #fff;
+  box-shadow: -4px 4px 0 #cafe48;
+  border-radius: 50%;
+}
+body.template-kreator .unggulan-divider { background: #2a2a2a; }
+body.template-kreator .share-btn { background: #1a1a1a; border-color: #333; color: #888; border-radius: 0; }
+/* Product image area bottom border */
+body.template-kreator .product-img { border-bottom: 2px solid #000; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   KULINER — Warm Amber  (krem hangat + oranye #ff9f43)
+   Screenshot 2 & 4: cream bg, amber hero, orange outlined buttons
+   ═══════════════════════════════════════════════════════════════════ */
+body.template-kuliner {
+  background-color: #fffaf0;
+  color: #4a2c11;
+  font-family: 'Fredoka', 'Poppins', sans-serif;
+}
+body.template-kuliner .page-wrap { background: #fffaf0; }
+/* Hero — warm yellow card, big rounded bottom */
+body.template-kuliner .hero {
+  background: #ffeaa7;
+  padding: 32px 20px 24px;
+  border-bottom: none;
+  border-radius: 0 0 32px 32px;
+  text-align: center;
+}
+/* Logo — orange circle ring */
+body.template-kuliner .logo-img {
+  border: 4px solid #ff9f43;
+  border-radius: 50%;
+  box-shadow: 0 6px 20px rgba(255,140,66,0.25), 0 0 0 6px rgba(255,140,66,0.08);
+  animation: float-kuliner 3s ease-in-out infinite;
+}
+@keyframes float-kuliner {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+body.template-kuliner .store-name {
+  font-family: 'Fredoka', sans-serif;
+  font-size: clamp(24px, 7vw, 36px);
+  font-weight: 700;
+  color: #4a2c11;
+}
+body.template-kuliner .store-desc { color: #7d6b5b; opacity: 0.85; }
+/* Badge — orange pill */
+body.template-kuliner .verified-badge {
+  background: #ff9f43;
+  border-color: #ff9f43;
+  color: #fff;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 10px;
+}
+body.template-kuliner .verified-badge svg { color: #fff !important; }
+/* Section labels */
+body.template-kuliner .section-title {
+  color: #7d6b5b;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+body.template-kuliner .unggulan-label {
+  color: #7d6b5b;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+/* Category filter */
+body.template-kuliner .kat-btn {
+  background: #ffeaa7;
+  border: none;
+  color: #d35400;
+  font-weight: 600;
+  border-radius: 12px;
+  font-family: 'Fredoka', sans-serif;
+}
+body.template-kuliner .kat-btn:hover { background: #ffd080; }
+body.template-kuliner .kat-btn.active { background: #ff9f43; color: #fff; border-color: transparent; }
+/* Platform buttons — white bg + orange border + drop shadow */
+body.template-kuliner .platform-btn {
+  background: #ffffff !important;
+  color: #4a2c11 !important;
+  border: 2px solid #ff9f43 !important;
+  box-shadow: 0 5px 0 #ff9f43 !important;
+  border-radius: 16px !important;
+  font-weight: 600 !important;
+}
+body.template-kuliner .platform-btn:active { box-shadow: 0 2px 0 #ff9f43 !important; transform: translateY(3px) !important; }
+body.template-kuliner .wa-btn,
+body.template-kuliner .shopee-btn,
+body.template-kuliner .tokped-btn {
+  background: #ffffff;
+  color: #4a2c11;
+  border: 2px solid #ff9f43;
+  box-shadow: 0 5px 0 #ff9f43;
+  border-radius: 16px;
+}
+/* Gallery link — dashed orange border */
+body.template-kuliner .gallery-link-btn {
+  background: #fff;
+  border: 2px dashed #ff9f43;
+  border-radius: 16px;
+  color: #4a2c11;
+}
+body.template-kuliner .gallery-btn-label { color: #4a2c11; font-weight: 700; }
+body.template-kuliner .gallery-btn-count { color: #7d6b5b; }
+/* Product cards */
+body.template-kuliner .product-card {
+  background: #fff;
+  border: 2px solid #f39c12;
+  border-radius: 18px !important;
+  box-shadow: 0 4px 16px rgba(210,105,30,0.08);
+}
+body.template-kuliner .product-card:hover {
+  box-shadow: 0 12px 30px rgba(255,140,66,0.22);
+  transform: translateY(-4px);
+}
+body.template-kuliner .product-name { color: #4a2c11; font-family: 'Fredoka', sans-serif; font-size: 14px; }
+body.template-kuliner .product-price { color: #e67e22; font-weight: 700; }
+body.template-kuliner .product-desc { color: #7d6b5b; opacity: 0.7; }
+body.template-kuliner .harga-coret { color: #bbb; }
+body.template-kuliner .badge-diskon { background: #e67e22; color: #fff; border-radius: 6px; }
+body.template-kuliner .badge-unggulan { background: #eab308; color: #fff; border-radius: 50%; width: 22px; height: 22px; }
+/* Buttons */
+body.template-kuliner .prod-btn-wa { background: linear-gradient(135deg,#25D366,#128C7E); border-radius: 10px; }
+body.template-kuliner .prod-btn-shopee { background: #ff4d00; color: #fff; border-radius: 10px; }
+body.template-kuliner .prod-btn-tokped { background: linear-gradient(135deg,#03AC0E,#028B0B); border-radius: 10px; }
+/* Skeleton */
+body.template-kuliner .skeleton { background: linear-gradient(90deg,#fff4e6 0%,#ffe8cc 50%,#fff4e6 100%); background-size:200% 100%; }
+body.template-kuliner .skeleton-box { background: #fff9f3; border: 1px solid #f5e6d3; }
+/* Socials */
+body.template-kuliner .social-icon-btn { background: #fff4e6; border-color: #f5e6d3; color: #d35400; }
+body.template-kuliner .social-icon-btn:hover { background: #ffe8cc; color: #d35400; }
+/* Footer */
+body.template-kuliner .footer-copy-text { color: #c8b09a; }
+body.template-kuliner .footer-brand { color: #c8b09a; }
+body.template-kuliner footer { border-top: 2px dashed #ffeaa7; }
+/* Floating WA */
+body.template-kuliner .floating-wa { background: #ff9f43; box-shadow: 0 4px 12px rgba(230,126,34,0.35); }
+body.template-kuliner .unggulan-divider { background: #f5e6d3; }
+body.template-kuliner .share-btn { background: rgba(210,105,30,0.08); border-color: rgba(210,105,30,0.15); color: #7d6b5b; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   KECANTIKAN (SKINCARE) — Elegant Minimal  (putih + mauve #b392ac)
+   Design ref skincare.css: sharp corners, Playfair italic, earthy
+   ═══════════════════════════════════════════════════════════════════ */
+body.template-kecantikan {
+  background-color: #faf6f5;
+  color: #4a3f3b;
+  font-family: 'Plus Jakarta Sans', 'Lato', sans-serif;
+}
+body.template-kecantikan .page-wrap { background: #faf6f5; }
+/* Hero — white card, large rounded bottom */
+body.template-kecantikan .hero {
+  background: #ffffff;
+  padding: 40px 20px 28px;
+  border-bottom: none;
+  border-radius: 0 0 40px 40px;
+  box-shadow: 0 4px 20px rgba(74,63,59,0.05);
+}
+/* Logo — circular with thin mauve ring + inner padding */
+body.template-kecantikan .logo-img {
+  border: 1px solid #e2d5d1;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px #fff, 0 0 0 5px #e2d5d1;
+}
+body.template-kecantikan .store-name {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: clamp(20px, 5.5vw, 28px);
+  font-weight: 600;
+  color: #4a3f3b;
+  letter-spacing: 0;
+}
+body.template-kecantikan .store-desc { color: #8a7a74; font-size: 12px; line-height: 1.55; }
+/* Badge — outlined mauve */
+body.template-kecantikan .verified-badge {
+  background: transparent;
+  border: 1px solid #b392ac;
+  color: #b392ac;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  border-radius: 0;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+body.template-kecantikan .verified-badge svg { color: #b392ac !important; }
+/* Section labels */
+body.template-kecantikan .section-title {
+  color: #8a7a74;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  font-size: 10px;
+}
+body.template-kecantikan .unggulan-label {
+  color: #8a7a74;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  font-size: 10px;
+}
+/* Category tabs — sharp corners, elegant */
+body.template-kecantikan .kat-btn {
+  background: #fff;
+  border: 1px solid #e2d5d1;
+  color: #8a7a74;
+  border-radius: 0;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+body.template-kecantikan .kat-btn:hover { background: #faf0ee; }
+body.template-kecantikan .kat-btn.active { background: #4a3f3b; border-color: #4a3f3b; color: #fff; }
+/* Platform buttons — flat white, thin border, no radius */
+body.template-kecantikan .platform-btn {
+  background: #ffffff !important;
+  color: #4a3f3b !important;
+  border: 1px solid #e2d5d1 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+}
+body.template-kecantikan .wa-btn,
+body.template-kecantikan .shopee-btn,
+body.template-kecantikan .tokped-btn {
+  background: #ffffff;
+  color: #4a3f3b;
+  border: 1px solid #e2d5d1;
+  box-shadow: none;
+  border-radius: 0;
+}
+/* Gallery link */
+body.template-kecantikan .gallery-link-btn {
+  background: #fff;
+  border: 1px solid #e2d5d1;
+  border-radius: 0;
+  color: #4a3f3b;
+}
+body.template-kecantikan .gallery-btn-label { color: #4a3f3b; }
+body.template-kecantikan .gallery-btn-count { color: #8a7a74; }
+/* Product cards — sharp corners */
+body.template-kecantikan .product-card {
+  background: #fff;
+  border: 1px solid #e2d5d1;
+  border-radius: 0 !important;
+  box-shadow: none;
+}
+body.template-kecantikan .product-card:hover {
+  box-shadow: 0 6px 24px rgba(74,63,59,0.08);
+  transform: translateY(-3px);
+}
+body.template-kecantikan .product-name { color: #4a3f3b; font-weight: 600; }
+body.template-kecantikan .product-price { color: #9c7c73; font-weight: 600; }
+body.template-kecantikan .product-desc { color: #8a7a74; }
+body.template-kecantikan .harga-coret { color: #c4b8cc; opacity: 0.45; }
+body.template-kecantikan .badge-diskon { background: #4a3f3b; color: #fff; border-radius: 0; letter-spacing: 0.05em; }
+/* Buttons */
+body.template-kecantikan .prod-btn-wa { background: #4a3f3b; color: #fff; border-radius: 0; }
+body.template-kecantikan .prod-btn-shopee { background: #faf6f5; color: #4a3f3b; border: 1px solid #e2d5d1; border-radius: 0; box-shadow: none; }
+body.template-kecantikan .prod-btn-tokped { background: linear-gradient(135deg,#03AC0E,#028B0B); border-radius: 0; }
+/* Skeleton */
+body.template-kecantikan .skeleton { background: linear-gradient(90deg,rgba(240,168,216,0.06) 0%,rgba(240,168,216,0.14) 50%,rgba(240,168,216,0.06) 100%); background-size:200% 100%; }
+body.template-kecantikan .skeleton-box { background: rgba(255,255,255,0.7); border: 1px solid #e2d5d1; border-radius: 0; }
+/* Socials */
+body.template-kecantikan .social-icon-btn { background: rgba(240,168,216,0.07); border-color: #e2d5d1; color: #8a7a74; border-radius: 0; }
+body.template-kecantikan .social-icon-btn:hover { background: rgba(240,168,216,0.15); color: #b392ac; }
+/* Footer */
+body.template-kecantikan .footer-copy-text { color: #8a7a74; letter-spacing: 0.1em; font-size: 10px; text-transform: uppercase; }
+body.template-kecantikan .footer-brand { color: #8a7a74; }
+body.template-kecantikan footer { border-top: 1px solid #e2d5d1; }
+/* Floating WA */
+body.template-kecantikan .floating-wa { background: #4a3f3b; border-radius: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+body.template-kecantikan .unggulan-divider { background: #e2d5d1; }
+body.template-kecantikan .share-btn { background: rgba(178,146,172,0.07); border-color: #e2d5d1; color: #8a7a74; border-radius: 0; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ELEKTRONIK (GADGET) — Cyber Dark  (#060814 + neon teal #00ffcc)
+   Screenshot 5: dark navy, teal accent, Space Grotesk, dashed logo
+   ═══════════════════════════════════════════════════════════════════ */
+body.template-elektronik {
+  background-color: #060814;
+  color: #d0ddf0;
+  font-family: 'Space Mono', 'Roboto', monospace;
+}
+body.template-elektronik .page-wrap { background: #060814; }
+/* Hero — dark card, teal bottom border */
+body.template-elektronik .hero {
+  background: #0c102b;
+  padding: 36px 20px 28px;
+  border-bottom: 2px solid #00ffcc;
+  border-radius: 0;
+  position: relative;
+}
+/* Logo — dashed teal border, square */
+body.template-elektronik .logo-img {
+  border: 2px dashed #00ffcc;
+  border-radius: 12px;
+  box-shadow: 0 0 18px rgba(0,255,204,0.25);
+}
+body.template-elektronik .store-name {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(17px, 4.5vw, 24px);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+body.template-elektronik .store-desc { color: #8fa0dd; font-size: 12px; }
+/* Badge — teal filled */
+body.template-elektronik .verified-badge {
+  background: #00ffcc;
+  border-color: #00ffcc;
+  color: #060814;
+  font-weight: 700;
+  font-size: 9px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+body.template-elektronik .verified-badge svg { color: #060814 !important; }
+/* Section labels — teal color */
+body.template-elektronik .section-title {
+  color: #ff0055;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  font-size: 11px;
+}
+body.template-elektronik .unggulan-label {
+  color: #ff0055;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  font-size: 11px;
+}
+/* Category tabs */
+body.template-elektronik .kat-btn {
+  background: #0c102b;
+  border: 1px solid #2f3875;
+  color: #8fa0dd;
+  border-radius: 6px;
+  font-family: 'Space Mono', monospace;
+}
+body.template-elektronik .kat-btn:hover { border-color: #00ffcc; color: #00ffcc; background: rgba(0,255,204,0.05); }
+body.template-elektronik .kat-btn.active { background: #00ffcc; border-color: #00ffcc; color: #060814; font-weight: 700; }
+/* Platform buttons — dark card bg, subtle teal border */
+body.template-elektronik .platform-btn {
+  background: #0c102b !important;
+  color: #ffffff !important;
+  border: 1px solid #2f3875 !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+body.template-elektronik .platform-btn:hover { border-color: #00ffcc !important; box-shadow: 0 0 10px rgba(0,255,204,0.15) !important; }
+body.template-elektronik .wa-btn,
+body.template-elektronik .shopee-btn,
+body.template-elektronik .tokped-btn {
+  background: #0c102b;
+  color: #ffffff;
+  border: 1px solid #2f3875;
+  border-radius: 8px;
+}
+/* Gallery link — dashed dark border */
+body.template-elektronik .gallery-link-btn {
+  background: #0c102b;
+  border: 1px dashed #2f3875;
+  border-radius: 8px;
+  color: #d0ddf0;
+}
+body.template-elektronik .gallery-btn-label { color: #ffffff; font-weight: 600; }
+body.template-elektronik .gallery-btn-count { color: #8fa0dd; }
+/* Product cards */
+body.template-elektronik .product-card {
+  background: #0c102b;
+  border: 1px solid #2f3875;
+  border-radius: 12px !important;
+}
+body.template-elektronik .product-card:hover {
+  border-color: #00ffcc;
+  box-shadow: 0 0 18px rgba(0,255,204,0.2);
+  transform: translateY(-3px);
+}
+body.template-elektronik .product-name { color: #ffffff; font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.3px; }
+body.template-elektronik .product-price { color: #00ffcc; font-weight: 700; }
+body.template-elektronik .product-desc { color: #8fa0dd; }
+body.template-elektronik .harga-coret { color: rgba(143,160,221,0.4); }
+body.template-elektronik .badge-diskon { background: #ff0055; color: #fff; border-radius: 4px; font-weight: 700; }
+body.template-elektronik .badge-unggulan { color: #00ffcc; background: transparent; font-size: 16px; }
+body.template-elektronik .badge-stok { background: #ff4444; color: #fff; border-radius: 4px; }
+/* Buttons */
+body.template-elektronik .prod-btn-wa {
+  background: #111;
+  color: #00ffcc;
+  border: 1px solid #00ffcc;
+  border-radius: 6px;
+}
+body.template-elektronik .prod-btn-shopee {
+  background: #ff0055;
+  color: #fff;
+  border-radius: 6px;
+}
+body.template-elektronik .prod-btn-tokped {
+  background: #00ffcc;
+  color: #060814;
+  border-radius: 6px;
+  font-weight: 700;
+}
+/* Skeleton */
+body.template-elektronik .skeleton { background: linear-gradient(90deg,#0c102b 0%,rgba(0,255,204,0.08) 50%,#0c102b 100%); background-size:200% 100%; }
+body.template-elektronik .skeleton-box { background: #0c102b; border: 1px solid #2f3875; border-radius: 12px; }
+/* Socials */
+body.template-elektronik .social-icon-btn { background: rgba(0,255,204,0.06); border: 1px solid #2f3875; color: #8fa0dd; }
+body.template-elektronik .social-icon-btn:hover { background: rgba(0,255,204,0.12); color: #00ffcc; border-color: rgba(0,255,204,0.35); }
+/* Footer */
+body.template-elektronik .footer-copy-text { color: rgba(143,160,221,0.5); letter-spacing: 0.05em; font-size: 10px; }
+body.template-elektronik .footer-brand { color: rgba(143,160,221,0.5); }
+body.template-elektronik footer { border-top: 1px dashed #2f3875; }
+/* Floating WA */
+body.template-elektronik .floating-wa {
+  background: #00ffcc;
+  color: #060814;
+  box-shadow: 0 0 15px rgba(0,255,204,0.5);
+}
+body.template-elektronik .unggulan-divider { background: rgba(0,255,204,0.1); }
+body.template-elektronik .share-btn { background: rgba(0,255,204,0.06); border-color: rgba(0,255,204,0.15); color: #8fa0dd; }
+body.template-elektronik .platform-btn { border-radius: 8px; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESELLER (DROPSHIP) — Clean Blue  (#f4f6f9 + biru #0064d2)
+   Screenshot 3: light gray bg, white hero, blue accent, ghost WA btn
+   ═══════════════════════════════════════════════════════════════════ */
+body.template-reseller {
+  background-color: #f4f6f9;
+  color: #333333;
+  font-family: 'Plus Jakarta Sans', 'Open Sans', sans-serif;
+}
+body.template-reseller .page-wrap { background: #f4f6f9; }
+/* Hero — white card, thin bottom border */
+body.template-reseller .hero {
+  background: #ffffff;
+  padding: 28px 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 0;
+}
+/* Logo — circular blue ring */
+body.template-reseller .logo-img {
+  border: 2px solid #0064d2;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(0,100,210,0.08);
+}
+body.template-reseller .store-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(18px, 5.5vw, 26px);
+  font-weight: 700;
+  color: #111827;
+}
+body.template-reseller .store-desc { color: #4b5563; font-size: 12px; }
+/* Badge — soft blue pill */
+body.template-reseller .verified-badge {
+  background: #e0f2fe;
+  border-color: #bae6fd;
+  color: #0369a1;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+}
+body.template-reseller .verified-badge svg { color: #0369a1 !important; }
+/* Section labels */
+body.template-reseller .section-title {
+  color: #6b7280;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+}
+body.template-reseller .unggulan-label {
+  color: #6b7280;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+}
+/* Category tabs — rounded pill style */
+body.template-reseller .kat-btn {
+  background: #e5e7eb;
+  border: none;
+  color: #4b5563;
+  border-radius: 99px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+body.template-reseller .kat-btn:hover { background: #d1d5db; }
+body.template-reseller .kat-btn.active { background: #0064d2; color: #fff; }
+/* Platform buttons — white bg, thin gray border */
+body.template-reseller .platform-btn {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+}
+body.template-reseller .platform-btn:hover { border-color: #0064d2 !important; }
+body.template-reseller .wa-btn,
+body.template-reseller .shopee-btn,
+body.template-reseller .tokped-btn {
+  background: #ffffff;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
+  box-shadow: none;
+  border-radius: 10px;
+}
+/* Gallery link */
+body.template-reseller .gallery-link-btn {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  color: #1f2937;
+}
+body.template-reseller .gallery-btn-label { color: #1f2937; font-weight: 600; }
+body.template-reseller .gallery-btn-count { color: #6b7280; }
+/* Product cards */
+body.template-reseller .product-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+body.template-reseller .product-card:hover {
+  border-color: #0064d2;
+  box-shadow: 0 6px 18px rgba(0,100,210,0.1);
+  transform: translateY(-3px);
+}
+body.template-reseller .product-name { color: #111827; font-weight: 600; font-size: 12px; }
+body.template-reseller .product-price { color: #ff5722; font-weight: 700; font-size: 14px; }
+body.template-reseller .product-desc { color: #6b7280; }
+body.template-reseller .harga-coret { color: #bbb; opacity: 0.45; }
+body.template-reseller .badge-diskon { background: #0064d2; color: #fff; border-radius: 4px; font-weight: 700; font-size: 9px; }
+body.template-reseller .badge-unggulan { background: #eab308; color: #fff; border-radius: 4px; font-size: 10px; }
+body.template-reseller .badge-stok { background: #ef4444; color: #fff; border-radius: 4px; }
+/* Buttons — ghost WA + orange Shopee */
+body.template-reseller .prod-btn-wa {
+  background: #e8fff0;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  box-shadow: none;
+}
+body.template-reseller .prod-btn-shopee {
+  background: #ff5722;
+  color: #fff;
+  border-radius: 6px;
+}
+body.template-reseller .prod-btn-tokped {
+  background: linear-gradient(135deg,#03AC0E,#028B0B);
+  color: #fff;
+  border-radius: 6px;
+}
+/* Skeleton */
+body.template-reseller .skeleton { background: linear-gradient(90deg,#f4f6f9 0%,#e5e7eb 50%,#f4f6f9 100%); background-size:200% 100%; }
+body.template-reseller .skeleton-box { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; }
+/* Socials */
+body.template-reseller .social-icon-btn { background: #fff; border-color: #e5e7eb; color: #4b5563; }
+body.template-reseller .social-icon-btn:hover { background: #f3f4f6; color: #0064d2; border-color: #0064d2; }
+/* Footer */
+body.template-reseller .footer-copy-text { color: #6b7280; }
+body.template-reseller .footer-brand { color: #6b7280; }
+body.template-reseller footer { border-top: 1px solid #e5e7eb; }
+/* Floating WA */
+body.template-reseller .floating-wa { background: #25D366; box-shadow: 0 4px 14px rgba(37,211,102,0.3); }
+body.template-reseller .unggulan-divider { background: #e5e7eb; }
+body.template-reseller .share-btn { background: rgba(0,100,210,0.06); border-color: rgba(0,100,210,0.15); color: #4b5563; }
+body.template-reseller .platform-btn { border-radius: 10px; }
 
 
 /* ── REDUCED MOTION ──────────────────────────────────────────────── */
