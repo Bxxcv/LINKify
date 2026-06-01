@@ -172,7 +172,8 @@ LINKify/
 │        ├── botlogo.jpg
 │        ├── wa.jpg
 │
-│    ├── logo-linkify.jpg
+│    ├── icone.png
+│    ├── icon-panjang.png
 │
 ├── ai/
 │    ├── botJs/

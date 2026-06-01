@@ -22,7 +22,7 @@
   --text-2:        #9AA3B8;
   --text-3:        #5A6278;
   --bubble-bot:    #1e2333;
-  --bubble-user:   #FF6B35;
+  --bubble-user:   #305efb;
   --online:        #22c55e;
   --radius-msg:    18px;
   --font:          'DM Sans', system-ui, -apple-system, sans-serif;
@@ -78,7 +78,7 @@ body {
 .header-avatar {
   position: relative;
   width: 38px; height: 38px; border-radius: 50%;
-  background: var(--accent);
+  background: var(--text);
   display: flex; align-items: center; justify-content: center;
   font-size: 15px; font-weight: 700; color: white;
   flex-shrink: 0; overflow: visible;
@@ -180,7 +180,7 @@ body {
 
 .msg-avatar {
   width: 28px; height: 28px; border-radius: 50%;
-  background: var(--accent);
+  background: var(--text);
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 700; color: white;
   flex-shrink: 0; overflow: hidden; align-self: flex-end;
@@ -346,12 +346,12 @@ body {
 
 .send-btn {
   width: 36px; height: 36px; border-radius: 50%;
-  background: var(--accent); border: none; cursor: pointer;
+  background: var(--bubble-user); border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   transition: background 0.15s, transform 0.1s, opacity 0.15s;
 }
-.send-btn:hover   { background: var(--accent-dark); transform: scale(1.07); }
+.send-btn:hover   { background: var(--text-3); transform: scale(1.07); }
 .send-btn:active  { transform: scale(0.93); }
 .send-btn:disabled { opacity: 0.32; cursor: not-allowed; transform: none !important; }
 
