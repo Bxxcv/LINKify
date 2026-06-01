@@ -61,8 +61,26 @@ function makeUserAvatar(hidden = false) {
 }
 
 // ── MARKDOWN-LITE RENDERER ────────────────────────────────────────
+function escapeHTML(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function safeUrl(url = '') {
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : '';
+  } catch {
+    return '';
+  }
+}
+
 function renderMarkdown(text) {
-  return text
+  return escapeHTML(text)
     // Bold **text**
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     // Italic *text*
@@ -73,27 +91,97 @@ function renderMarkdown(text) {
     .replace(/\n/g, '<br>');
 }
 
+
+function appendTextWithInlineMarkdown(parent, text) {
+  const pattern = /(\*\*([^*]+)\*\*|`([^`]+)`|\*([^*]+)\*)/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parent.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+    }
+
+    if (match[2]) {
+      const strong = document.createElement('strong');
+      strong.textContent = match[2];
+      parent.appendChild(strong);
+    } else if (match[3]) {
+      const code = document.createElement('code');
+      code.className = 'inline-code';
+      code.textContent = match[3];
+      parent.appendChild(code);
+    } else if (match[4]) {
+      const em = document.createElement('em');
+      em.textContent = match[4];
+      parent.appendChild(em);
+    }
+
+    lastIndex = pattern.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parent.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+}
+
+function renderMarkdownFragment(text = '') {
+  const frag = document.createDocumentFragment();
+  const lines = String(text).split('\n');
+
+  lines.forEach((line, index) => {
+    if (index > 0) frag.appendChild(document.createElement('br'));
+    appendTextWithInlineMarkdown(frag, line);
+  });
+
+  return frag;
+}
+
+
 // ── RENDER CARD ───────────────────────────────────────────────────
 function renderCard(card) {
   const el = document.createElement('div');
   el.className = 'bubble-card';
-  el.innerHTML = `
-    <div class="bubble-card-title">${escHtml(card.title)}</div>
-    <div class="bubble-card-body">${escHtml(card.body)}</div>
-    <a href="${card.link}" target="_blank" rel="noopener noreferrer" class="bubble-card-link">
-      ${escHtml(card.linkText)}
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-    </a>
-  `;
-  return el;
-}
 
-function escHtml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  const title = document.createElement('div');
+  title.className = 'bubble-card-title';
+  title.textContent = card?.title || '';
+
+  const body = document.createElement('div');
+  body.className = 'bubble-card-body';
+  body.textContent = card?.body || '';
+
+  const link = document.createElement('a');
+  link.href = safeUrl(card?.link) || '#';
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.className = 'bubble-card-link';
+  link.appendChild(document.createTextNode(card?.linkText || 'Buka link'));
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2.5');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', 'M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6');
+  const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+  polyline.setAttribute('points', '15 3 21 3 21 9');
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', '10');
+  line.setAttribute('y1', '14');
+  line.setAttribute('x2', '21');
+  line.setAttribute('y2', '3');
+
+  svg.append(path, polyline, line);
+  link.appendChild(svg);
+
+  el.append(title, body, link);
+  return el;
 }
 
 // ── APPEND MESSAGE ────────────────────────────────────────────────
@@ -119,7 +207,7 @@ function appendMessage({ role, text, time, card = null, isFirst = false, isLast 
 
   const bubble = document.createElement('div');
   bubble.className = 'bubble ' + (isBot ? 'bot' : 'user');
-  bubble.innerHTML = renderMarkdown(text);
+  bubble.replaceChildren(renderMarkdownFragment(text));
 
   if (card) bubble.appendChild(renderCard(card));
   wrap.appendChild(bubble);
@@ -151,7 +239,11 @@ function showTyping() {
   const av = makeBotAvatar();
   const bubble = document.createElement('div');
   bubble.className = 'typing-bubble';
-  bubble.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  for (let i = 0; i < 3; i += 1) {
+    const dot = document.createElement('div');
+    dot.className = 'typing-dot';
+    bubble.appendChild(dot);
+  }
 
   row.appendChild(av);
   row.appendChild(bubble);
@@ -169,7 +261,7 @@ function hideTyping() {
 
 // ── RENDER QUICK REPLIES ──────────────────────────────────────────
 function renderQuickReplies(chips) {
-  qrContainer.innerHTML = '';
+  qrContainer.replaceChildren();
   if (!chips || chips.length === 0) {
     qrWrap.classList.remove('has-chips');
     return;
@@ -189,7 +281,9 @@ function renderQuickReplies(chips) {
 function appendDateDivider(label) {
   const el = document.createElement('div');
   el.className = 'date-divider';
-  el.innerHTML = `<span>${label}</span>`;
+  const span = document.createElement('span');
+  span.textContent = label;
+  el.appendChild(span);
   chatBody.appendChild(el);
 }
 
@@ -327,4 +421,10 @@ function init() {
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  if (!chatBody || !chatInput || !btnSend || !qrWrap || !qrContainer) {
+    console.warn('[LINKify Chat] Required DOM nodes not found.');
+    return;
+  }
+  init();
+});

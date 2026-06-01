@@ -295,7 +295,14 @@ function renderUserTable(users) {
   if (countEl) countEl.textContent = `${users.length} dari ${allUsers.length} user`;
 
   if (!users.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#4B5563;font-size:13px;">Belum ada user terdaftar.</td></tr>';
+    tbody.replaceChildren();
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 7;
+    td.style.cssText = 'text-align:center;padding:40px;color:#4B5563;font-size:13px;';
+    td.textContent = 'Belum ada user terdaftar.';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
     return;
   }
 
@@ -312,7 +319,13 @@ function renderUserTable(users) {
 
     // Toko / Pemilik
     const tdToko = document.createElement('td');
-    tdToko.innerHTML = `<div style="font-weight:600;font-size:13px;color:#fff;">${escHtml(u.namaToko || '—')}</div><div style="font-size:11px;color:#6B7280;">${escHtml(u.pemilik || '—')}</div>`;
+    const tokoName = document.createElement('div');
+    tokoName.style.cssText = 'font-weight:600;font-size:13px;color:#fff;';
+    tokoName.textContent = u.namaToko || '—';
+    const pemilik = document.createElement('div');
+    pemilik.style.cssText = 'font-size:11px;color:#6B7280;';
+    pemilik.textContent = u.pemilik || '—';
+    tdToko.append(tokoName, pemilik);
     tr.appendChild(tdToko);
 
     // Email (hidden on mobile)
@@ -372,7 +385,7 @@ function renderUserTable(users) {
     frag.appendChild(tr);
   });
 
-  tbody.innerHTML = '';
+  tbody.replaceChildren();
   tbody.appendChild(frag);
 }
 

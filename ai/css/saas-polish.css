@@ -1,0 +1,249 @@
+/*
+ * LINKify Phase 10 — SaaS polish layer
+ * Non-destructive override: keeps existing classes/flow, improves spacing, contrast,
+ * mobile ergonomics, focus states, and production feel.
+ */
+
+:root {
+  --lf-font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --lf-bg: #09090b;
+  --lf-surface: rgba(255,255,255,.045);
+  --lf-surface-2: rgba(255,255,255,.075);
+  --lf-border: rgba(255,255,255,.10);
+  --lf-border-strong: rgba(255,255,255,.16);
+  --lf-text: rgba(255,255,255,.92);
+  --lf-muted: rgba(255,255,255,.58);
+  --lf-soft: rgba(255,255,255,.40);
+  --lf-radius-sm: 10px;
+  --lf-radius-md: 14px;
+  --lf-radius-lg: 18px;
+  --lf-shadow-sm: 0 1px 2px rgba(0,0,0,.22);
+  --lf-shadow-md: 0 12px 32px rgba(0,0,0,.28);
+  --lf-ease: cubic-bezier(.2,.8,.2,1);
+}
+
+html {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--lf-font-sans);
+}
+
+button,
+input,
+select,
+textarea,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid rgba(99,102,241,.72);
+  outline-offset: 3px;
+}
+
+.wrapper,
+.admin-wrapper,
+.dashboard-wrapper {
+  background:
+    radial-gradient(circle at top left, rgba(99,102,241,.10), transparent 28rem),
+    radial-gradient(circle at bottom right, rgba(14,165,233,.08), transparent 30rem),
+    var(--lf-bg);
+}
+
+.sidebar {
+  border-right: 1px solid var(--lf-border);
+  box-shadow: var(--lf-shadow-sm);
+}
+
+.sidebar-brand,
+.admin-card,
+.card,
+.stat-card,
+.content-card,
+.product-card,
+.modal-content,
+.panel,
+.analytics-card,
+.product-form,
+.table-wrap {
+  border: 1px solid var(--lf-border);
+  border-radius: var(--lf-radius-lg);
+  box-shadow: var(--lf-shadow-sm);
+  backdrop-filter: blur(14px);
+}
+
+.tab-btn,
+.btn,
+button,
+.button,
+.action-btn,
+.primary-btn,
+.secondary-btn,
+.prod-btn,
+.platform-btn {
+  border-radius: var(--lf-radius-md);
+  transition: transform .16s var(--lf-ease), background-color .16s var(--lf-ease), border-color .16s var(--lf-ease), opacity .16s var(--lf-ease);
+}
+
+.tab-btn:hover,
+.btn:hover,
+button:hover,
+.action-btn:hover,
+.primary-btn:hover,
+.secondary-btn:hover,
+.prod-btn:hover,
+.platform-btn:hover {
+  transform: translateY(-1px);
+}
+
+.tab-btn:active,
+.btn:active,
+button:active,
+.action-btn:active,
+.primary-btn:active,
+.secondary-btn:active,
+.prod-btn:active,
+.platform-btn:active {
+  transform: translateY(0);
+}
+
+input,
+select,
+textarea {
+  border-radius: var(--lf-radius-md) !important;
+  border-color: var(--lf-border) !important;
+  transition: border-color .16s var(--lf-ease), box-shadow .16s var(--lf-ease), background-color .16s var(--lf-ease);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(99,102,241,.55) !important;
+  box-shadow: 0 0 0 4px rgba(99,102,241,.12) !important;
+}
+
+img {
+  max-width: 100%;
+}
+
+.product-grid,
+.products-grid,
+.stats-grid,
+.analytics-grid,
+.gallery-grid {
+  gap: clamp(12px, 2vw, 20px);
+}
+
+.product-card,
+.admin-product-card,
+.gallery-item,
+.stat-card {
+  contain: content;
+}
+
+.modal,
+.modal-content {
+  overscroll-behavior: contain;
+}
+
+.table-wrap,
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .wrapper,
+  .admin-wrapper,
+  .dashboard-wrapper {
+    min-height: 100dvh;
+  }
+
+  .sidebar {
+    backdrop-filter: blur(18px);
+  }
+
+  .main,
+  .main-content,
+  .content,
+  .dashboard-main {
+    padding-left: clamp(14px, 4vw, 20px) !important;
+    padding-right: clamp(14px, 4vw, 20px) !important;
+  }
+
+  .stat-card,
+  .admin-card,
+  .card,
+  .content-card,
+  .product-card,
+  .modal-content {
+    border-radius: var(--lf-radius-md);
+  }
+
+  .modal-content {
+    width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 24px);
+  }
+
+  .product-grid,
+  .products-grid,
+  .stats-grid,
+  .analytics-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 520px) {
+  :root {
+    --lf-radius-lg: 14px;
+    --lf-radius-md: 12px;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .btn,
+  button,
+  .action-btn,
+  .primary-btn,
+  .secondary-btn {
+    min-height: 42px;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  .sidebar-brand-text,
+  .page-title,
+  h1 {
+    letter-spacing: -.03em;
+  }
+}

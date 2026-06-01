@@ -9,12 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=20260523">
   <link rel="stylesheet" href="css/linear-inspired-override.css">
+  <link rel="stylesheet" href="css/saas-polish.css?v=20260602">
   <link rel="icon" type="image/png" sizes="32x32" href="/asset/icone.png">
 </head>
 <body style="background:#0F1117;">
 
 <!-- OVERLAY mobile -->
-<div id="overlay" onclick="closeSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:25;backdrop-filter:blur(2px);"></div>
+<div id="overlay" data-admin-daftar-action="close-sidebar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:25;backdrop-filter:blur(2px);"></div>
 
 <!-- CONFIRM MODAL -->
 <div id="confirm-modal" class="dark-modal-bg">
@@ -23,7 +24,7 @@
     <div id="confirm-title" class="dark-modal-title"></div>
     <div id="confirm-msg"   class="dark-modal-msg"></div>
     <div class="dark-modal-btns">
-      <button onclick="closeConfirm()" class="btn btn-modal-cancel">Batal</button>
+      <button data-admin-daftar-action="close-confirm" class="btn btn-modal-cancel">Batal</button>
       <button id="confirm-ok" class="btn"></button>
     </div>
   </div>
@@ -34,11 +35,11 @@
   <div class="dark-modal-box wide" style="max-width:500px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
       <div class="dark-modal-title" style="margin-bottom:0;">Atur Paket User</div>
-      <button onclick="closePlanModal()" style="background:none;border:none;cursor:pointer;color:#6B7280;padding:4px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button data-admin-daftar-action="close-plan-modal" style="background:none;border:none;cursor:pointer;color:#6B7280;padding:4px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:18px;background:rgba(255,255,255,0.04);padding:4px;border-radius:10px;">
-      <button id="tab-basic-btn" onclick="switchPlanTab('basic')" style="flex:1;padding:8px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:Inter,sans-serif;background:transparent;color:#6B7280;transition:all .15s;">● Basic</button>
-      <button id="tab-premium-btn" onclick="switchPlanTab('premium')" style="flex:1;padding:8px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:Inter,sans-serif;background:#FF6B35;color:#fff;transition:all .15s;">⚡ Premium</button>
+      <button id="tab-basic-btn" data-admin-daftar-action="switch-basic" style="flex:1;padding:8px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:Inter,sans-serif;background:transparent;color:#6B7280;transition:all .15s;">● Basic</button>
+      <button id="tab-premium-btn" data-admin-daftar-action="switch-premium" style="flex:1;padding:8px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:Inter,sans-serif;background:#FF6B35;color:#fff;transition:all .15s;">⚡ Premium</button>
     </div>
     <div class="dark-form-group">
       <label class="dark-form-label">Durasi Aktif (hari)</label>
@@ -92,8 +93,8 @@
       </div>
     </div>
     <div class="dark-modal-btns" style="margin-top:20px;">
-      <button onclick="closePlanModal()" class="btn btn-modal-cancel">Batal</button>
-      <button id="pm-save-btn" onclick="savePlanModal()" class="btn btn-modal-success">Aktifkan Premium</button>
+      <button data-admin-daftar-action="close-plan-modal" class="btn btn-modal-cancel">Batal</button>
+      <button id="pm-save-btn" data-admin-daftar-action="save-plan-modal" class="btn btn-modal-success">Aktifkan Premium</button>
     </div>
   </div>
 </div>
@@ -129,7 +130,7 @@
         <div class="sidebar-divider" style="background:#1F2329;"></div>
         <div class="sidebar-section-label" style="color:#374151;padding:0 8px;">Sistem</div>
 
-        <button type="button" class="tab-btn" onclick="document.getElementById('maint-panel').scrollIntoView({behavior:'smooth'})" style="color:#F87171;">
+        <button type="button" class="tab-btn" data-admin-daftar-action="scroll-maint" style="color:#F87171;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
           Maintenance Mode
           <span id="maint-status-label" style="margin-left:auto;font-size:10px;font-weight:700;letter-spacing:0.5px;">NONAKTIF</span>
@@ -141,7 +142,7 @@
           <div class="sidebar-user-avatar" id="admin-avatar" style="background:#FF6B35;">A</div>
           <div class="sidebar-user-email" id="adminYgLogin" style="color:#6B7280;font-size:11px;">Memuat...</div>
         </div>
-        <button type="button" onclick="logoutAdmin()" class="tab-btn" style="color:#F87171;margin-top:6px;width:100%;">
+        <button type="button" data-admin-daftar-action="logout-admin" class="tab-btn" style="color:#F87171;margin-top:6px;width:100%;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Logout
         </button>
@@ -181,7 +182,7 @@
               <label class="dark-form-label">Password</label>
               <input id="adminPass" type="password" autocomplete="current-password" placeholder="••••••••" class="dark-form-input">
             </div>
-            <button type="button" onclick="loginAdmin()" class="btn btn-accent btn-w" style="padding:13px;font-size:14px;margin-top:4px;">
+            <button type="button" data-admin-daftar-action="login-admin" class="btn btn-accent btn-w" style="padding:13px;font-size:14px;margin-top:4px;">
               Masuk sebagai Admin
             </button>
             <p id="loginError" class="hidden" style="color:#F87171;font-size:12px;text-align:center;"></p>
@@ -226,7 +227,7 @@
             <input id="namaPemilik" type="text"     placeholder="Nama Pemilik"     class="dark-form-input">
             <input id="emailUser"   type="email"    placeholder="Email"            class="dark-form-input">
             <input id="passUser"    type="password" placeholder="Password (min 6)" class="dark-form-input">
-            <button type="button" id="btnDaftar" onclick="daftarkanUser()" class="btn btn-accent" style="font-size:13px;">
+            <button type="button" id="btnDaftar" data-admin-daftar-action="daftar-user" class="btn btn-accent" style="font-size:13px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Daftarkan
             </button>
@@ -250,7 +251,7 @@
                 <option value="basic">Basic</option>
                 <option value="gratis">Gratis</option>
               </select>
-              <button onclick="ambilDataUser()" class="btn btn-outline" style="font-size:12px;padding:7px 12px;border-color:#2C313A;color:#9CA3AF;">
+              <button data-admin-daftar-action="ambil-data-user" class="btn btn-outline" style="font-size:12px;padding:7px 12px;border-color:#2C313A;color:#9CA3AF;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
                 Refresh
               </button>
@@ -328,7 +329,7 @@
                 <p style="font-size:11px;color:#4B5563;margin-top:5px;">Kosongkan jika tidak ingin menampilkan countdown.</p>
               </div>
 
-              <button type="button" id="maint-save-btn" onclick="saveMaintenance()"
+              <button type="button" id="maint-save-btn" data-admin-daftar-action="save-maintenance"
                 class="btn btn-accent" style="font-size:13px;align-self:flex-start;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
                 Simpan Pengaturan
@@ -366,18 +367,7 @@
 #tab-premium-btn.active { background: #FF6B35 !important; color: #fff !important; }
 </style>
 
-<script>
-// Maintenance toggle visual behavior
-document.addEventListener('change', function(e) {
-  if (e.target.id !== 'maint-toggle') return;
-  const track = document.querySelector('.maint-track');
-  const thumb = document.querySelector('.maint-thumb');
-  if (track) track.style.background = e.target.checked ? '#EF4444' : '#2C313A';
-  if (thumb) thumb.style.transform  = e.target.checked ? 'translateX(20px)' : 'translateX(0)';
-  // FIX: save ke Firestore saat toggle berubah
-  if (typeof window.toggleMaintenance === 'function') window.toggleMaintenance();
-});
-</script>
+<script defer src="./js/admin-daftar-ui.js?v=20260602"></script>
 <script type="module" src="js/admin-daftar.js"></script>
 </body>
 </html>

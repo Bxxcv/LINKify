@@ -9,7 +9,7 @@
  *  - debounced category render
  *  - UID regex stricter
  *  - safeUrl on all hrefs
- *  - no innerHTML with user data except through escHtml
+ *  - DOM rendering hardened for storefront user data
  */
 
 import { db, CONFIG } from '../firebase.js';
@@ -33,6 +33,55 @@ let katListenerSet = false;
 // Single shared observer — created once, reused
 let revealObserver = null;
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function appendSvgPath(svg, d) {
+  const path = document.createElementNS(SVG_NS, 'path');
+  path.setAttribute('d', d);
+  svg.appendChild(path);
+  return path;
+}
+
+function appendSvgCircle(svg, cx, cy, r) {
+  const circle = document.createElementNS(SVG_NS, 'circle');
+  circle.setAttribute('cx', cx);
+  circle.setAttribute('cy', cy);
+  circle.setAttribute('r', r);
+  svg.appendChild(circle);
+  return circle;
+}
+
+function appendSvgLine(svg, x1, y1, x2, y2) {
+  const line = document.createElementNS(SVG_NS, 'line');
+  line.setAttribute('x1', x1);
+  line.setAttribute('y1', y1);
+  line.setAttribute('x2', x2);
+  line.setAttribute('y2', y2);
+  svg.appendChild(line);
+  return line;
+}
+
+function createSvgPath(d, attrs = {}) {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  Object.entries(attrs).forEach(([k, v]) => svg.setAttribute(k, v));
+  appendSvgPath(svg, d);
+  return svg;
+}
+
+function createSvgUse(href, attrs = {}) {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  Object.entries(attrs).forEach(([k, v]) => svg.setAttribute(k, v));
+  const use = document.createElementNS(SVG_NS, 'use');
+  use.setAttribute('href', href);
+  svg.appendChild(use);
+  return svg;
+}
+
+
 // ── INIT ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initOfflineDetection();
@@ -43,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function renderNoStore() {
-  document.body.innerHTML = '';
+  document.body.replaceChildren();
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;text-align:center;font-family:Inter,sans-serif;background:#0A0A0F;color:rgba(255,255,255,0.4);';
   const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -51,7 +100,8 @@ function renderNoStore() {
   svg.setAttribute('viewBox','0 0 24 24'); svg.setAttribute('fill','none');
   svg.setAttribute('stroke','currentColor'); svg.setAttribute('stroke-width','1.5');
   svg.style.cssText = 'margin-bottom:16px;opacity:0.3';
-  svg.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>';
+  appendSvgCircle(svg, '12', '12', '10');
+  appendSvgLine(svg, '4.93', '4.93', '19.07', '19.07');
   const h = document.createElement('div');
   h.style.cssText = 'font-size:15px;font-weight:600;margin-bottom:6px;color:rgba(255,255,255,0.6)';
   h.textContent = 'Toko tidak ditemukan';
@@ -63,7 +113,7 @@ function renderNoStore() {
 }
 
 function renderBlockedStore() {
-  document.body.innerHTML = '';
+  document.body.replaceChildren();
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;text-align:center;font-family:Inter,sans-serif;background:#0A0A0F;color:rgba(255,255,255,0.4);';
   const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -71,7 +121,8 @@ function renderBlockedStore() {
   svg.setAttribute('viewBox','0 0 24 24'); svg.setAttribute('fill','none');
   svg.setAttribute('stroke','currentColor'); svg.setAttribute('stroke-width','1.5');
   svg.style.cssText = 'margin-bottom:16px;opacity:0.5;color:#EF4444';
-  svg.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>';
+  appendSvgCircle(svg, '12', '12', '10');
+  appendSvgLine(svg, '4.93', '4.93', '19.07', '19.07');
   const h = document.createElement('div');
   h.style.cssText = 'font-size:15px;font-weight:600;margin-bottom:6px;color:rgba(255,255,255,0.6)';
   h.textContent = 'Toko Tidak Tersedia';
@@ -329,7 +380,7 @@ function renderSocialIcons(s) {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('width', '20'); svg.setAttribute('height', '20');
     svg.setAttribute('fill', 'currentColor'); svg.setAttribute('aria-hidden', 'true');
-    // SECURITY: use createElementNS instead of innerHTML to avoid XSS via SVG
+    // SECURITY: build SVG nodes directly.
     const useEl = document.createElementNS('http://www.w3.org/2000/svg', 'use');
     useEl.setAttribute('href', `#${id}`);
     svg.appendChild(useEl);
@@ -361,7 +412,9 @@ function renderCustomButtons(buttons) {
     const iconBox = document.createElement('div');
     iconBox.className = 'icon-box';
     iconBox.style.background = 'rgba(0,0,0,.15)';
-    iconBox.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="white" aria-hidden="true"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>';
+    iconBox.appendChild(createSvgPath('M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1', {
+      width: '18', height: '18', fill: 'white'
+    }));
 
     const textDiv = document.createElement('div');
     textDiv.className = 'custom-btn-text';
@@ -381,7 +434,7 @@ function renderCustomButtons(buttons) {
     arrow.setAttribute('stroke','white'); arrow.setAttribute('stroke-width','2');
     arrow.setAttribute('stroke-linecap','round'); arrow.setAttribute('width','14'); arrow.setAttribute('height','14');
     arrow.classList.add('btn-arrow');
-    arrow.innerHTML = '<path d="M5 12h14M12 5l7 7-7 7"/>';
+    appendSvgPath(arrow, 'M5 12h14M12 5l7 7-7 7');
 
     a.append(iconBox, textDiv, arrow);
     frag.appendChild(a);
@@ -400,7 +453,7 @@ function renderGalleryButton(photos, uid) {
   btn.href = `gallery.html?uid=${encodeURIComponent(uid)}`;
 
   if (prev) {
-    prev.innerHTML = '';
+    prev.replaceChildren();
     photos.slice(0, 3).forEach(item => {
       const url = typeof item === 'string' ? item : (item?.url || '');
       if (!url || !/^https?:\/\//i.test(url)) return;
@@ -509,7 +562,7 @@ function renderFilteredProducts() {
   observeNewCards(container);
 }
 
-// ── PRODUCT CARDS — DOM-based render (no innerHTML with user data) ────────────
+// ── PRODUCT CARDS — DOM-based render ─────────────────────────────────────────
 function renderProductCards(container, products) {
   container.textContent = '';
   const frag = document.createDocumentFragment();
@@ -588,7 +641,7 @@ function buildProductCard(p) {
   waLink.target = '_blank'; waLink.rel = 'noopener noreferrer';
   waLink.className = 'prod-btn prod-btn-wa jelly-click';
   waLink.addEventListener('click', () => window.trackClick('wa'));
-  waLink.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="white" aria-hidden="true"><use href="#ico-wa"/></svg>';
+  waLink.appendChild(createSvgUse('#ico-wa', { width: '11', height: '11', fill: 'white' }));
   waLink.append(' Pesan WA');
   btnWrap.appendChild(waLink);
 
@@ -599,7 +652,7 @@ function buildProductCard(p) {
       shopeeLink.href = shopeeUrl; shopeeLink.target = '_blank'; shopeeLink.rel = 'noopener noreferrer';
       shopeeLink.className = 'prod-btn prod-btn-shopee jelly-click';
       shopeeLink.addEventListener('click', () => window.trackClick('shopee'));
-      shopeeLink.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="white" aria-hidden="true"><use href="#ico-shopee"/></svg>';
+      shopeeLink.appendChild(createSvgUse('#ico-shopee', { width: '11', height: '11', fill: 'white' }));
       shopeeLink.append(' Shopee');
       btnWrap.appendChild(shopeeLink);
     }

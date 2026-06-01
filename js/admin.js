@@ -11,16 +11,13 @@
  *  [MEM-01] revealObserver dan listener tidak di-attach ulang
  */
 
-import { auth, db, CONFIG } from '../firebase.js';
+import { auth, CONFIG } from '../firebase.js';
 import {
   onAuthStateChanged, signOut, updatePassword,
   verifyBeforeUpdateEmail,
   EmailAuthProvider, reauthenticateWithCredential
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import {
-  collection, getDocs, addDoc, doc, updateDoc, deleteDoc,
-  serverTimestamp, getDoc, query, orderBy, where
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import {
   escHtml, checkPremium, checkPlan, hexToRgb, ACCENT_COLORS, DAY_NAMES,
   formatDate, TEMPLATE_LIST, showToast, validateImageFile, sanitizeText, safeUrl,
@@ -28,6 +25,49 @@ import {
 } from './utils.js';
 import { PREMIUM_TEMPLATES, getTemplate, getAllTemplates, getThemePreviewData } from './templates.js';
 import { uploadToCloudinary } from './cloudinary-upload.js';
+import {
+  getProducts as productGetProducts,
+  getProduct as productGetProduct,
+  createProduct as productCreateProduct,
+  updateProduct as productUpdateProduct,
+  deleteProduct as productDeleteProduct
+} from '../src/services/product.service.js';
+import {
+  renderAdminProductGrid,
+  renderProductSkeleton,
+  renderProductEmpty,
+  renderProductError
+} from '../src/components/admin-product-card.js';
+import { validateProductPayload } from '../src/helpers/validators.js';
+import { getLastDays, getStatsRange, getTodayStats } from '../src/services/analytics.service.js';
+import { renderStatsChart } from '../src/components/admin-stats-chart.js';
+import {
+  CUSTOM_BUTTON_COLORS,
+  renderCustomButtonList
+} from '../src/components/custom-button-editor.js';
+import {
+  normalizeGalleryItem as normalizeGalleryEntry,
+  getGalleryKategoriList as getGalleryKategoriEntries,
+  renderGalleryEditorGrid
+} from '../src/components/gallery-editor.js';
+import {
+  renderPremiumTemplateOptions,
+  renderCancelTemplateButton
+} from '../src/components/premium-template-picker.js';
+import {
+  getToko,
+  updateTokoFields,
+  updatePremiumAccent,
+  updatePremiumBackground,
+  updatePremiumTemplate,
+  resetPremiumTemplate,
+  updateCustomButtons,
+  updateGallery
+} from '../src/services/toko.service.js';
+import {
+  setButtonBusy,
+  setButtonReady
+} from '../src/ui/button-state.js';
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
 const CLOUD_NAME = CONFIG.cloudinary.cloudName;
@@ -113,18 +153,18 @@ $('btn-logout')?.addEventListener('click', () => {
 onAuthStateChanged(auth, async user => {
   if (!user) { window.location.href = 'login-user.html'; return; }
 
-  const tokoSnap = await withTimeout(
-    getDoc(doc(db, 'toko', user.uid)),
+  const tokoData = await withTimeout(
+    getToko(user.uid),
     8000,
     'Koneksi timeout. Refresh halaman.'
   );
-  if (!tokoSnap.exists()) {
+  if (!tokoData) {
     showToast('Akun ini belum terdaftar sebagai toko! Hubungi admin.', 'error');
     setTimeout(() => signOut(auth), 2000);
     return;
   }
 
-  currentTokoData = tokoSnap.data();
+  currentTokoData = tokoData;
 
   if (currentTokoData.status === 'blokir') {
     showToast('Akun Anda telah dinonaktifkan. Hubungi admin.', 'error');
@@ -138,7 +178,7 @@ onAuthStateChanged(auth, async user => {
   if (avatarEl) avatarEl.textContent = (user.email || 'U').charAt(0).toUpperCase();
   if ($('inp-new-email')) $('inp-new-email').value = user.email;
 
-  const prodSnap = await getDocs(query(collection(db, 'toko', user.uid, 'produk'), orderBy('createdAt', 'desc')));
+  const prodSnap = await productGetProducts(user.uid);
 
   try {
     await Promise.all([
@@ -154,8 +194,6 @@ onAuthStateChanged(auth, async user => {
 });
 
 // ── HELPERS ────────────────────────────────────────────────────────────────
-const produkCol = uid => collection(db, 'toko', uid, 'produk');
-const produkDoc = (uid, id) => doc(db, 'toko', uid, 'produk', id);
 const rupiah    = v => Number(v || 0).toLocaleString('id-ID');
 
 function clearPublicCache(uid) {
@@ -163,20 +201,35 @@ function clearPublicCache(uid) {
 }
 
 // ── DASHBOARD STATS ────────────────────────────────────────────────────────
+function normalizeProductCollection(input) {
+  if (!input) return [];
+  if (Array.isArray(input)) return input;
+  if (Array.isArray(input.docs)) {
+    return input.docs.map(item => ({ id: item.id, ...item.data() }));
+  }
+  const list = [];
+  if (typeof input.forEach === 'function') {
+    input.forEach(item => {
+      if (item && typeof item.data === 'function') list.push({ id: item.id, ...item.data() });
+      else if (item && typeof item === 'object') list.push(item);
+    });
+  }
+  return list;
+}
+
 async function _initDashboardStats(uid, prodSnap) {
   try {
+    const sourceProducts = normalizeProductCollection(prodSnap);
     let total = 0, emptyCount = 0, omsetEstimasi = 0;
-    const prodList = [];
-    prodSnap.forEach(d => {
-      const p = d.data();
+    const prodList = sourceProducts.map(p => {
       total++;
       if (Number(p.stok) === 0) emptyCount++;
-      const terjual = Math.max(0, (p.stokAwal || 0) - (p.stok || 0));
-      omsetEstimasi += terjual * (p.harga || 0);
-      prodList.push({ id: d.id, ...p, terjual });
+      const terjual = Math.max(0, (Number(p.stokAwal) || 0) - (Number(p.stok) || 0));
+      omsetEstimasi += terjual * (Number(p.harga) || 0);
+      return { ...p, terjual };
     });
-    const lowStock = prodList.filter(p => Number(p.stok) > 0 && Number(p.stok) <= 5).sort((a, b) => a.stok - b.stok);
-    const topProds = [...prodList].sort((a, b) => b.terjual - a.terjual).slice(0, 5);
+    const lowStock = prodList.filter(p => Number(p.stok) > 0 && Number(p.stok) <= 5).sort((a, b) => Number(a.stok) - Number(b.stok));
+    const topProds = [...prodList].sort((a, b) => Number(b.terjual) - Number(a.terjual)).slice(0, 5);
     if ($('stat-total')) $('stat-total').textContent = total;
     if ($('stat-empty')) $('stat-empty').textContent = emptyCount;
     if ($('stat-omset')) $('stat-omset').textContent = 'Rp' + rupiah(omsetEstimasi);
@@ -187,34 +240,69 @@ async function _initDashboardStats(uid, prodSnap) {
 
 async function loadDashboardStats(uid) {
   try {
-    const snap = await getDocs(produkCol(uid));
-    await _initDashboardStats(uid, snap);
+    const products = await productGetProducts(uid);
+    await _initDashboardStats(uid, products);
   } catch (e) { console.error('loadDashboardStats:', e); }
+}
+
+function renderEmptyActivity(el, message) {
+  el.replaceChildren();
+  const div = document.createElement('div');
+  div.style.cssText = 'padding:18px;text-align:center;font-size:13px;color:var(--text-3);';
+  div.textContent = message;
+  el.appendChild(div);
 }
 
 function renderLowStockList(items) {
   const el = $('low-stock-list');
   if (!el) return;
   if (!items.length) {
-    el.innerHTML = '<div style="padding:18px;text-align:center;font-size:13px;color:var(--text-3);">Semua stok aman</div>';
+    renderEmptyActivity(el, 'Semua stok aman');
     return;
   }
   const frag = document.createDocumentFragment();
   items.forEach((p, i) => {
+    const stock = Number(p.stok) || 0;
     const div = document.createElement('div');
     div.className = 'activity-item';
     div.style.borderBottom = i < items.length - 1 ? '1px solid var(--border)' : 'none';
-    div.innerHTML = `
-      <div class="activity-dot" style="background:${Number(p.stok) === 1 ? '#EF4444' : '#F59E0B'}"></div>
-      <div class="activity-text">
-        <strong>${escHtml(p.nama)}</strong> — Stok: <span style="color:${Number(p.stok)<=2?'var(--danger)':'var(--warning)'};font-weight:700">${Number(p.stok)}</span>
-        ${p.kategori ? `<span style="color:var(--text-3);font-size:11px"> · ${escHtml(p.kategori)}</span>` : ''}
-      </div>
-      <div class="activity-time" style="color:${Number(p.stok)<=2?'var(--danger)':'var(--warning)'};font-weight:700">${Number(p.stok)} sisa</div>`;
+
+    const dot = document.createElement('div');
+    dot.className = 'activity-dot';
+    dot.style.background = stock === 1 ? '#EF4444' : '#F59E0B';
+
+    const text = document.createElement('div');
+    text.className = 'activity-text';
+
+    const strong = document.createElement('strong');
+    strong.textContent = p.nama || 'Produk';
+    text.appendChild(strong);
+    text.appendChild(document.createTextNode(' — Stok: '));
+
+    const stockText = document.createElement('span');
+    stockText.style.color = stock <= 2 ? 'var(--danger)' : 'var(--warning)';
+    stockText.style.fontWeight = '700';
+    stockText.textContent = String(stock);
+    text.appendChild(stockText);
+
+    if (p.kategori) {
+      const category = document.createElement('span');
+      category.style.color = 'var(--text-3)';
+      category.style.fontSize = '11px';
+      category.textContent = ` · ${p.kategori}`;
+      text.appendChild(category);
+    }
+
+    const time = document.createElement('div');
+    time.className = 'activity-time';
+    time.style.color = stock <= 2 ? 'var(--danger)' : 'var(--warning)';
+    time.style.fontWeight = '700';
+    time.textContent = `${stock} sisa`;
+
+    div.append(dot, text, time);
     frag.appendChild(div);
   });
-  el.innerHTML = '';
-  el.appendChild(frag);
+  el.replaceChildren(frag);
 }
 
 function renderTopProducts(items) {
@@ -222,109 +310,91 @@ function renderTopProducts(items) {
   if (!el) return;
   const hasTerjual = items.some(p => p.terjual > 0);
   if (!items.length || !hasTerjual) {
-    el.innerHTML = '<div style="padding:18px;text-align:center;font-size:13px;color:var(--text-3);">Isi stok awal produk untuk melihat terlaris</div>';
+    renderEmptyActivity(el, 'Isi stok awal produk untuk melihat terlaris');
     return;
   }
-  const maxTerjual = Math.max(...items.map(p => p.terjual), 1);
+  const maxTerjual = Math.max(...items.map(p => Number(p.terjual) || 0), 1);
+  const filtered = items.filter(p => Number(p.terjual) > 0);
   const frag = document.createDocumentFragment();
-  items.filter(p => p.terjual > 0).forEach((p, i) => {
+
+  filtered.forEach((p, i) => {
+    const sold = Number(p.terjual) || 0;
     const div = document.createElement('div');
     div.className = 'activity-item';
-    div.style.cssText = `flex-direction:column;align-items:stretch;gap:6px;padding:13px 16px;border-bottom:${i < items.length - 1 ? '1px solid var(--border)' : 'none'}`;
-    div.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:13px;font-weight:600;color:var(--text)">${escHtml(p.nama)}</span>
-        <span style="font-size:12px;font-weight:700;color:var(--accent)">${p.terjual} terjual</span>
-      </div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${Math.round(p.terjual / maxTerjual * 100)}%"></div></div>`;
+    div.style.cssText = `flex-direction:column;align-items:stretch;gap:6px;padding:13px 16px;border-bottom:${i < filtered.length - 1 ? '1px solid var(--border)' : 'none'}`;
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;';
+
+    const name = document.createElement('span');
+    name.style.cssText = 'font-size:13px;font-weight:600;color:var(--text)';
+    name.textContent = p.nama || 'Produk';
+
+    const soldText = document.createElement('span');
+    soldText.style.cssText = 'font-size:12px;font-weight:700;color:var(--accent)';
+    soldText.textContent = `${sold} terjual`;
+
+    const barWrap = document.createElement('div');
+    barWrap.className = 'progress-bar-wrap';
+
+    const bar = document.createElement('div');
+    bar.className = 'progress-bar-fill';
+    bar.style.width = `${Math.round(sold / maxTerjual * 100)}%`;
+
+    row.append(name, soldText);
+    barWrap.appendChild(bar);
+    div.append(row, barWrap);
     frag.appendChild(div);
   });
-  el.innerHTML = '';
-  el.appendChild(frag);
+
+  el.replaceChildren(frag);
 }
 
 // ── TODAY VISITS ───────────────────────────────────────────────────────────
 async function loadTodayVisits(uid) {
   try {
-    const today = new Date().toISOString().slice(0, 10);
-    const snap  = await getDoc(doc(db, 'toko', uid, 'stats', today));
-    if ($('stat-visits-dash')) $('stat-visits-dash').textContent = snap.exists() ? (snap.data().visits || 0) : 0;
+    const todayStats = await getTodayStats(uid);
+    if ($('stat-visits-dash')) $('stat-visits-dash').textContent = todayStats.visits || 0;
   } catch { if ($('stat-visits-dash')) $('stat-visits-dash').textContent = '—'; }
 }
 
 // ── PRODUCTS ───────────────────────────────────────────────────────────────
 async function _initProducts(uid, prodSnap) {
   if (!productsList) return;
-  productsList.innerHTML = [1,2,3].map(() =>
-    `<div class="skel-card"><div class="skel" style="height:130px;border-radius:12px 12px 0 0"></div><div style="padding:10px 12px"><div class="skel" style="height:12px;width:70%;margin-bottom:7px"></div><div class="skel" style="height:13px;width:45%"></div></div></div>`
-  ).join('');
+  renderProductSkeleton(productsList, 3);
   try {
-    allProductsCache = [];
-    prodSnap.forEach(ds => allProductsCache.push({ id: ds.id, ...ds.data() }));
+    allProductsCache = Array.isArray(prodSnap) ? prodSnap : [];
     renderProductGrid(allProductsCache, uid);
     const lbl = $('prod-count-label');
     if (lbl) lbl.textContent = allProductsCache.length + ' produk terdaftar';
   } catch {
-    productsList.innerHTML = `<div class="empty-state"><p>Gagal memuat produk. Coba refresh halaman.</p></div>`;
+    renderProductError(productsList, 'Gagal memuat produk. Coba refresh halaman.');
   }
 }
 
 async function loadProducts(uid) {
   if (!productsList) return;
-  productsList.innerHTML = [1,2,3].map(() =>
-    `<div class="skel-card"><div class="skel" style="height:130px;border-radius:12px 12px 0 0"></div><div style="padding:10px 12px"><div class="skel" style="height:12px;width:70%;margin-bottom:7px"></div><div class="skel" style="height:13px;width:45%"></div></div></div>`
-  ).join('');
+  renderProductSkeleton(productsList, 3);
   try {
-    const snap = await getDocs(query(produkCol(uid), orderBy('createdAt', 'desc')));
-    allProductsCache = [];
-    snap.forEach(ds => allProductsCache.push({ id: ds.id, ...ds.data() }));
+    allProductsCache = await productGetProducts(uid);
     renderProductGrid(allProductsCache, uid);
     const lbl = $('prod-count-label');
     if (lbl) lbl.textContent = allProductsCache.length + ' produk terdaftar';
   } catch {
-    productsList.innerHTML = `<div class="empty-state"><p>Gagal memuat produk. Coba refresh halaman.</p></div>`;
+    renderProductError(productsList, 'Gagal memuat produk. Coba refresh halaman.');
   }
 }
 
 function renderProductGrid(list, uid) {
   if (!productsList) return;
   if (!list.length) {
-    productsList.innerHTML = `<div class="empty-state">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-      <h3>Belum ada produk</h3><p>Klik "Tambah Produk" untuk mulai berjualan.</p>
-    </div>`;
+    renderProductEmpty(productsList);
     return;
   }
-  const frag = document.createDocumentFragment();
-  list.forEach(p => {
-    const stokNol = Number(p.stok) === 0;
-    const div = document.createElement('div');
-    div.className = 'p-card';
-    div.innerHTML = `
-      <img class="p-img" src="${safeImgUrl(p.img || '') || 'https://placehold.co/200x200/111/333?text=Foto'}" alt="${escHtml(p.nama)}"
-           loading="lazy" decoding="async" data-fallback="product">
-      <div class="p-body">
-        <div class="p-name">${escHtml(p.nama)}${p.unggulan ? ' <span style="color:#F59E0B;font-size:11px;">★</span>' : ''}</div>
-        <div class="p-price">Rp${rupiah(p.harga)}${p.hargaAsli > p.harga ? `<span style="text-decoration:line-through;color:var(--text-3);font-size:11px;font-weight:400;margin-left:5px">Rp${rupiah(p.hargaAsli)}</span>` : ''}</div>
-        <div class="p-stock">Stok: ${Number(p.stok)}${stokNol ? ' · <span style="color:var(--danger);font-weight:600">Habis</span>' : ''}${p.kategori ? ` · ${escHtml(p.kategori)}` : ''}</div>
-        <div class="p-acts">
-          <button type="button" class="btn-ed" data-id="${escHtml(p.id)}">Edit</button>
-          <button type="button" class="btn-del" data-id="${escHtml(p.id)}">Hapus</button>
-        </div>
-      </div>`;
-    frag.appendChild(div);
+  renderAdminProductGrid(productsList, list, {
+    formatPrice: rupiah,
+    safeImgUrl,
   });
-  productsList.innerHTML = '';
-  if (!productsList._imgErrBound) {
-    productsList._imgErrBound = true;
-    productsList.addEventListener('error', e => {
-      if (e.target.tagName === 'IMG' && e.target.dataset.fallback === 'product') {
-        e.target.onerror = null;
-        e.target.src = 'https://placehold.co/400x300/F4F4F4/AAA?text=Foto';
-      }
-    }, true);
-  }
-  productsList.appendChild(frag);
 }
 
 window.filterProducts = function() {
@@ -354,9 +424,8 @@ productsList?.addEventListener('click', async e => {
 
   if (btn.classList.contains('btn-ed')) {
     try {
-      const snap = await getDoc(produkDoc(uid, id));
-      if (!snap.exists()) { showToast('Produk tidak ditemukan', 'error'); return; }
-      const p = snap.data();
+      const p = await productGetProduct(uid, id);
+      if (!p) { showToast('Produk tidak ditemukan', 'error'); return; }
       $('inp-prod-id').value         = id;
       $('inp-prod-name').value        = p.nama       || '';
       $('inp-prod-price').value       = p.harga      || 0;
@@ -387,7 +456,7 @@ productsList?.addEventListener('click', async e => {
   if (btn.classList.contains('btn-del')) {
     if (!confirm('Yakin hapus produk "' + (allProductsCache.find(p => p.id === id)?.nama || 'ini') + '"?')) return;
     try {
-      await deleteDoc(produkDoc(uid, id));
+      await productDeleteProduct(uid, id);
       showToast('Produk dihapus.');
       clearPublicCache(uid);
       await loadProducts(uid);
@@ -455,12 +524,12 @@ $('product-form')?.addEventListener('submit', async e => {
   if (saveBtn) saveBtn.disabled = true;
   try {
     if (file) {
-      if (saveBtn) saveBtn.innerHTML = '<span class="spinner"></span> Upload foto...';
+      setButtonBusy(saveBtn, 'Upload foto...');
       // FIX [SEC-01]: Gunakan signed upload
       imgUrl = await uploadToCloudinary(file, CLOUD_NAME);
       if (!imgUrl) throw new Error('Upload foto gagal.');
     }
-    if (saveBtn) saveBtn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+    setButtonBusy(saveBtn, 'Menyimpan...');
 
     const stok = Number($('inp-prod-stock').value);
     const rawData = {
@@ -476,7 +545,7 @@ $('product-form')?.addEventListener('submit', async e => {
       hargaAsli: Number($('inp-prod-harga-asli').value) || 0,
       unggulan:  $('inp-prod-unggulan').checked,
     };
-    validateProduct(rawData);
+    validateProductPayload(rawData);
     const data = { ...rawData, updatedAt: serverTimestamp() };
     if (id) {
       const existingProd = allProductsCache.find(p => p.id === id);
@@ -484,12 +553,12 @@ $('product-form')?.addEventListener('submit', async e => {
         const diff = stok - Number(existingProd.stok);
         data.stokAwal = (Number(existingProd.stokAwal) || Number(existingProd.stok)) + diff;
       }
-      await updateDoc(produkDoc(uid, id), data);
+      await productUpdateProduct(uid, id, data);
       showToast('Produk diperbarui!');
     } else {
       data.createdAt = serverTimestamp();
       data.stokAwal  = stok;
-      await addDoc(produkCol(uid), data);
+      await productCreateProduct(uid, data);
       showToast('Produk ditambahkan!');
     }
     clearPublicCache(uid);
@@ -503,25 +572,14 @@ $('product-form')?.addEventListener('submit', async e => {
     _submitting = false;
     if (saveBtn) {
       saveBtn.disabled = false;
-      saveBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg> Simpan Produk';
+      setButtonReady(saveBtn, 'Simpan Produk');
     }
   }
 });
 
 // ── VALIDATION ─────────────────────────────────────────────────────────────
 function validateProduct(data) {
-  if (!data.nama || typeof data.nama !== 'string' || data.nama.trim().length === 0)
-    throw new Error('Nama produk tidak boleh kosong');
-  if (data.nama.length > 100) throw new Error('Nama produk maksimal 100 karakter');
-  if (isNaN(data.harga) || data.harga < 0) throw new Error('Harga harus berupa angka positif');
-  if (data.harga > 100000000) throw new Error('Harga terlalu tinggi');
-  if (isNaN(data.stok) || data.stok < 0) throw new Error('Stok harus berupa angka positif');
-  if (data.deskripsi && data.deskripsi.length > 500) throw new Error('Deskripsi maksimal 500 karakter');
-  if (data.shopee && !/^https?:\/\/.+/.test(data.shopee)) throw new Error('Link Shopee harus valid (https)');
-  if (data.wa && !/^https?:\/\/.+/.test(data.wa)) throw new Error('Link WhatsApp harus valid');
-  if (!data.img || typeof data.img !== 'string') throw new Error('Foto produk wajib diupload');
-  if (!/^https?:\/\//i.test(data.img)) throw new Error('URL foto tidak valid');
-  return true;
+  return validateProductPayload(data);
 }
 
 // ── SETTINGS ───────────────────────────────────────────────────────────────
@@ -570,7 +628,7 @@ $('btn-save-settings')?.addEventListener('click', async () => {
   _savingSettings = true;
   const uid = auth.currentUser?.uid;
   const btn = $('btn-save-settings');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Menyimpan...'; }
+  setButtonBusy(btn, 'Menyimpan...');
   try {
     let logoUrl = $('inp-logo-url').value;
     const file  = $('inp-logo-file').files[0];
@@ -595,7 +653,7 @@ $('btn-save-settings')?.addEventListener('click', async () => {
       youtube:   $('inp-youtube').value.trim()   ? safeUrl($('inp-youtube').value.trim())   : '',
       logo:      logoUrl,
     };
-    await updateDoc(doc(db, 'toko', uid), updateData);
+    await updateTokoFields(uid, updateData);
     clearPublicCache(uid);
     currentTokoData = { ...currentTokoData, ...updateData };
     showToast('Pengaturan disimpan!');
@@ -604,7 +662,7 @@ $('btn-save-settings')?.addEventListener('click', async () => {
     _savingSettings = false;
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Simpan Pengaturan`;
+      setButtonReady(btn, 'Simpan Pengaturan');
     }
   }
 });
@@ -622,7 +680,7 @@ $('btn-save-account')?.addEventListener('click', async () => {
 
   _savingAccount = true;
   const btn = $('btn-save-account');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Memverifikasi...'; }
+  setButtonBusy(btn, 'Memverifikasi...');
   try {
     await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, oldPass));
     if (newEmail !== user.email) {
@@ -651,7 +709,7 @@ $('btn-save-account')?.addEventListener('click', async () => {
     _savingAccount = false;
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> Perbarui Akun`;
+      setButtonReady(btn, 'Perbarui Akun');
     }
   }
 });
@@ -687,7 +745,7 @@ function updatePremiumUI() {
     const label = end.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
     const exEl  = $('premium-expiry');
     if (exEl) {
-      exEl.innerHTML = '';
+      exEl.textContent = '';
       const planName = plan === 'premium' ? 'Premium' : 'Basic';
       const strong = document.createElement('strong');
       strong.textContent = label;
@@ -714,37 +772,19 @@ async function loadStats(uid) {
   const isPrem = checkPlan(currentTokoData) === 'premium';
   if (!isPrem) return;
   try {
-    const today = new Date();
-    const days  = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(today); d.setDate(today.getDate() - (6 - i));
-      return d.toISOString().slice(0, 10);
-    });
-    const q    = query(collection(db, 'toko', uid, 'stats'), where('__name__', '>=', days[0]), where('__name__', '<=', days[6]), orderBy('__name__'));
-    const snap = await getDocs(q);
-    const data = {};
-    snap.forEach(d => { data[d.id] = d.data(); });
+    const days = getLastDays(7);
+    const stats = await getStatsRange(uid, days);
     let tV = 0, tW = 0, tS = 0;
-    const chartData = days.map(day => {
-      const d = data[day] || {};
-      tV += d.visits || 0; tW += d.waClicks || 0; tS += d.shopeeClicks || 0;
-      return { label: formatDate(day), visits: d.visits || 0 };
+    const chartData = stats.map(item => {
+      tV += Number(item.visits) || 0;
+      tW += Number(item.waClicks) || 0;
+      tS += Number(item.shopeeClicks) || 0;
+      return { label: formatDate(item.id), visits: Number(item.visits) || 0 };
     });
     if ($('stat-visits')) $('stat-visits').textContent = tV;
     if ($('stat-wa'))     $('stat-wa').textContent     = tW;
     if ($('stat-shopee')) $('stat-shopee').textContent = tS;
-    const chartEl = $('stats-chart');
-    if (!chartEl) return;
-    const max  = Math.max(...chartData.map(d => d.visits), 1);
-    const frag = document.createDocumentFragment();
-    chartData.forEach(d => {
-      const h   = Math.max(Math.round((d.visits / max) * 100), 3);
-      const col = document.createElement('div');
-      col.className = 'chart-col';
-      col.innerHTML = `<div class="chart-val">${d.visits || ''}</div><div class="chart-bar" style="height:${h}%"></div><div class="chart-label">${d.label}</div>`;
-      frag.appendChild(col);
-    });
-    chartEl.innerHTML = '';
-    chartEl.appendChild(frag);
+    renderStatsChart($('stats-chart'), chartData);
   } catch (e) { console.error('loadStats:', e); }
 }
 
@@ -753,9 +793,18 @@ let _colorPickerDelegated = false;
 function renderColorPicker() {
   const wrap = $('color-options');
   if (!wrap) return;
-  wrap.innerHTML = ACCENT_COLORS.map(clr =>
-    `<button type="button" class="color-circle${clr.hex === currentAccent ? ' active' : ''}" data-color="${clr.hex}" style="background:${clr.hex}" title="${clr.label}" aria-label="Warna ${clr.label}"></button>`
-  ).join('');
+  const frag = document.createDocumentFragment();
+  ACCENT_COLORS.forEach(clr => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `color-circle${clr.hex === currentAccent ? ' active' : ''}`;
+    btn.dataset.color = clr.hex;
+    btn.style.background = clr.hex;
+    btn.title = clr.label;
+    btn.setAttribute('aria-label', `Warna ${clr.label}`);
+    frag.appendChild(btn);
+  });
+  wrap.replaceChildren(frag);
   if (!_colorPickerDelegated) {
     _colorPickerDelegated = true;
     wrap.addEventListener('click', async e => {
@@ -768,7 +817,7 @@ function renderColorPicker() {
       const uid = auth.currentUser?.uid;
       if (!uid) return;
       try {
-        await updateDoc(doc(db, 'toko', uid), { 'premium.accentColor': color });
+        await updatePremiumAccent(uid, color);
         clearPublicCache(uid);
         showToast('Warna aksen diperbarui!');
       } catch { showToast('Gagal simpan warna', 'error'); }
@@ -861,7 +910,7 @@ function bgRenderPreset() {
   const activeBg = (_pendingBgType && _pendingBgType !== 'none')
     ? (_pendingBgUrl || '')
     : (_pendingBgType === 'none' ? '__none__' : _savedBgUrl);
-  wrap.innerHTML = '';
+  wrap.textContent = '';
   const frag = document.createDocumentFragment();
   TEMPLATE_LIST.forEach(t => {
     const bgKey    = t.bg || '';
@@ -882,7 +931,13 @@ function bgRenderPreset() {
     thumb.appendChild(ov2);
     const mock = document.createElement('div');
     mock.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;';
-    mock.innerHTML = `<div style="width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.3);border:1.5px solid rgba(255,255,255,.6);"></div><div style="height:3px;width:36px;background:${t.accent};border-radius:3px;opacity:.9;"></div><div style="height:3px;width:24px;background:rgba(255,255,255,.25);border-radius:3px;"></div>`;
+    const avatar = document.createElement('div');
+    avatar.style.cssText = 'width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.3);border:1.5px solid rgba(255,255,255,.6);';
+    const primaryLine = document.createElement('div');
+    primaryLine.style.cssText = `height:3px;width:36px;background:${t.accent};border-radius:3px;opacity:.9;`;
+    const secondaryLine = document.createElement('div');
+    secondaryLine.style.cssText = 'height:3px;width:24px;background:rgba(255,255,255,.25);border-radius:3px;';
+    mock.append(avatar, primaryLine, secondaryLine);
     thumb.appendChild(mock);
     if (isActive) { const badge = document.createElement('div'); badge.style.cssText = 'position:absolute;top:4px;right:4px;background:var(--accent);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:99px;letter-spacing:.5px;'; badge.textContent = 'AKTIF'; thumb.appendChild(badge); }
     const lbl = document.createElement('div'); lbl.style.cssText = 'padding:6px 8px 8px;';
@@ -900,7 +955,7 @@ function bgRenderGallery() {
   if (!wrap) return;
   const raw    = currentTokoData?.gallery || [];
   const photos = raw.map(p => typeof p === 'string' ? { url: p, caption: '' } : p).filter(p => p?.url && /^https?:\/\//i.test(p.url));
-  wrap.innerHTML = '';
+  wrap.textContent = '';
   if (!photos.length) {
     const msg = document.createElement('div');
     msg.style.cssText = 'grid-column:1/-1;padding:24px;text-align:center;font-size:12px;color:var(--text-3);line-height:1.6;';
@@ -976,11 +1031,11 @@ async function bgSave() {
   const saveBtn = $('btn-save-bg');
   const canBtn  = $('btn-cancel-bg');
   const ICON    = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>';
-  if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<span class="spinner"></span> Menyimpan...'; }
+  setButtonBusy(saveBtn, 'Menyimpan...');
   if (canBtn)  canBtn.disabled = true;
   try {
     const bgUrl = _pendingBgType === 'none' ? '' : (_pendingBgUrl || '');
-    await updateDoc(doc(db, 'toko', uid), { 'premium.templateBg': bgUrl });
+    await updatePremiumBackground(uid, bgUrl);
     if (!currentTokoData.premium) currentTokoData.premium = {};
     currentTokoData.premium.templateBg = bgUrl;
     _savedBgUrl = bgUrl; _pendingBgUrl = null; _pendingBgType = null;
@@ -988,7 +1043,7 @@ async function bgSave() {
     bgUpdatePreview(bgUrl); bgUpdateBar(false); bgRenderPreset();
     showToast(bgUrl ? 'Background disimpan!' : 'Background dihapus!', 'success');
   } catch (e) { showToast('Gagal simpan: ' + e.message, 'error'); }
-  finally { _savingBgNow = false; if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = ICON + ' Simpan Background'; } if (canBtn) canBtn.disabled = false; }
+  finally { _savingBgNow = false; setButtonReady(saveBtn, 'Simpan Background'); if (canBtn) canBtn.disabled = false; }
 }
 
 // Legacy aliases
@@ -1002,30 +1057,24 @@ function renderBgGalleryPicker(){ bgRenderGallery(); }
 function renderPremiumTemplatePicker() {
   const wrap = $('premium-template-options');
   if (!wrap) return;
+
   const currentTemplate = currentTokoData?.premium?.templateTheme || '';
-  const hasTemplate     = !!currentTemplate;
-  const templates       = getAllTemplates();
-  wrap.innerHTML = templates.map(template => {
-    const preview  = getThemePreviewData(template.id);
-    const isActive = template.id === currentTemplate;
-    return `<div class="premium-template-card${isActive ? ' active' : ''}" data-template="${template.id}" role="button" tabindex="0" aria-pressed="${isActive}">
-      <div class="premium-template-preview" style="background:linear-gradient(135deg,${preview.colors.primary} 0%,${preview.colors.secondary} 100%);">${template.icon}</div>
-      <div class="premium-template-content">
-        <div class="premium-template-title">${escHtml(template.name)}</div>
-        <div class="premium-template-category">${escHtml(template.category)}</div>
-        <div class="premium-template-desc">${escHtml(template.description)}</div>
-        <div class="premium-template-features">${template.features.map(f => `<span class="premium-template-tag">${escHtml(f)}</span>`).join('')}</div>
-      </div></div>`;
-  }).join('');
+  const hasTemplate = !!currentTemplate;
+  const templates = getAllTemplates().map(template => ({
+    ...template,
+    preview: getThemePreviewData(template.id)
+  }));
+
+  renderPremiumTemplateOptions(wrap, templates, currentTemplate);
 
   let cancelWrap = $('tpl-cancel-wrap');
-  if (!cancelWrap) { cancelWrap = document.createElement('div'); cancelWrap.id = 'tpl-cancel-wrap'; cancelWrap.style.cssText = 'margin-top:12px;'; wrap.after(cancelWrap); }
-  if (hasTemplate) {
-    cancelWrap.innerHTML = `<button type="button" id="btn-cancel-template" class="btn btn-outline btn-w" style="font-size:13px;color:var(--danger);border-color:rgba(239,68,68,.3);">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      Batalkan Template (Gunakan Default)</button>`;
-    $('btn-cancel-template')?.addEventListener('click', cancelTemplate);
-  } else { cancelWrap.innerHTML = ''; }
+  if (!cancelWrap) {
+    cancelWrap = document.createElement('div');
+    cancelWrap.id = 'tpl-cancel-wrap';
+    cancelWrap.style.cssText = 'margin-top:12px;';
+    wrap.after(cancelWrap);
+  }
+  renderCancelTemplateButton(cancelWrap, hasTemplate, cancelTemplate);
 
   if (!_premTplDelegated) {
     _premTplDelegated = true;
@@ -1035,20 +1084,35 @@ function renderPremiumTemplatePicker() {
       const templateId = card.dataset.template;
       const uid = auth.currentUser?.uid;
       if (!uid) return;
-      card.style.opacity = '0.6'; card.style.pointerEvents = 'none';
+      card.style.opacity = '0.6';
+      card.style.pointerEvents = 'none';
       try {
-        await updateDoc(doc(db, 'toko', uid), { 'premium.templateTheme': templateId, 'premium.templateBg': '' });
+        await updatePremiumTemplate(uid, templateId);
         if (!currentTokoData.premium) currentTokoData.premium = {};
         currentTokoData.premium.templateTheme = templateId;
-        currentTokoData.premium.templateBg    = '';
-        _savedBgUrl = ''; _pendingBgUrl = null; _pendingBgType = null;
-        updateLivePreview(''); updateBgSaveBar(false); renderPresetCards();
-        wrap.querySelectorAll('.premium-template-card').forEach(el => { el.classList.remove('active'); el.style.opacity = ''; el.style.pointerEvents = ''; el.setAttribute('aria-pressed', 'false'); });
-        card.classList.add('active'); card.setAttribute('aria-pressed', 'true');
+        currentTokoData.premium.templateBg = '';
+        _savedBgUrl = '';
+        _pendingBgUrl = null;
+        _pendingBgType = null;
+        updateLivePreview('');
+        updateBgSaveBar(false);
+        renderPresetCards();
+        wrap.querySelectorAll('.premium-template-card').forEach(el => {
+          el.classList.remove('active');
+          el.style.opacity = '';
+          el.style.pointerEvents = '';
+          el.setAttribute('aria-pressed', 'false');
+        });
+        card.classList.add('active');
+        card.setAttribute('aria-pressed', 'true');
         clearPublicCache(uid);
         renderPremiumTemplatePicker();
         showToast('Template diaktifkan! ✓', 'success');
-      } catch (err) { showToast('Gagal menyimpan template: ' + err.message, 'error'); card.style.opacity = ''; card.style.pointerEvents = ''; }
+      } catch (err) {
+        showToast('Gagal menyimpan template: ' + err.message, 'error');
+        card.style.opacity = '';
+        card.style.pointerEvents = '';
+      }
     });
   }
 }
@@ -1058,7 +1122,7 @@ async function cancelTemplate() {
   const btn = $('btn-cancel-template');
   if (btn) { btn.disabled = true; btn.textContent = 'Menghapus...'; }
   try {
-    await updateDoc(doc(db, 'toko', uid), { 'premium.templateTheme': '', 'premium.templateBg': '' });
+    await resetPremiumTemplate(uid);
     if (!currentTokoData.premium) currentTokoData.premium = {};
     currentTokoData.premium.templateTheme = ''; currentTokoData.premium.templateBg = '';
     _savedBgUrl = ''; _pendingBgUrl = null; _pendingBgType = null;
@@ -1068,7 +1132,7 @@ async function cancelTemplate() {
 }
 
 // ── CUSTOM BUTTONS ─────────────────────────────────────────────────────────
-const BTN_COLORS = ['#FF6B35','#EE4D2D','#25D366','#3B82F6','#8B5CF6','#EC4899','#F59E0B','#111111','#06B6D4','#10B981'];
+const BTN_COLORS = CUSTOM_BUTTON_COLORS;
 
 function renderCustomButtonEditor() {
   customBtns = Array.isArray(currentTokoData?.customButtons) ? [...currentTokoData.customButtons] : [];
@@ -1078,41 +1142,29 @@ function renderCustomButtonEditor() {
 function renderCustomBtnList() {
   const list = $('custom-btn-list');
   if (!list) return;
-  if (!customBtns.length) {
-    list.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:var(--text-3);">Belum ada tombol. Klik "+ Tambah Tombol".</div>';
-    return;
-  }
-  list.innerHTML = customBtns.map((btn, i) => {
-    const clr = btn.color || '#3B82F6';
-    return `<div class="custom-btn-item" data-idx="${i}" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:7px;">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <div class="color-swatch-btn" data-action="cycle-color" data-idx="${i}" title="Ganti warna" style="width:28px;height:28px;border-radius:6px;background:${escHtml(clr)};cursor:pointer;flex-shrink:0;border:2px solid rgba(255,255,255,0.15);transition:transform .15s;" role="button" aria-label="Ganti warna tombol"></div>
-        <input type="text" placeholder="Label (cth: GoFood)" value="${escHtml(btn.label || '')}" data-field="label" data-idx="${i}" style="flex:1;background:var(--input-bg,rgba(255,255,255,0.06));border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);min-width:0;">
-        <button type="button" class="cb-remove" data-idx="${i}" aria-label="Hapus" style="background:rgba(239,68,68,.12);border:none;border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#EF4444;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <input type="text" placeholder="https://link.com" value="${escHtml(btn.url || '')}" data-field="url" data-idx="${i}" style="width:100%;background:var(--input-bg,rgba(255,255,255,0.06));border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);">
-      <input type="text" placeholder="Deskripsi singkat (opsional)" value="${escHtml(btn.desc || '')}" data-field="desc" data-idx="${i}" style="width:100%;background:var(--input-bg,rgba(255,255,255,0.06));border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--text);opacity:.85;">
-    </div>`;
-  }).join('');
 
-  list.querySelectorAll('input[data-field]').forEach(inp => {
-    inp.addEventListener('input', () => {
-      const idx = parseInt(inp.dataset.idx); const field = inp.dataset.field;
+  renderCustomButtonList(list, customBtns, {
+    onInput(input) {
+      const idx = parseInt(input.dataset.idx, 10);
+      const field = input.dataset.field;
       if (!customBtns[idx]) customBtns[idx] = { label: '', url: '', color: '#3B82F6', desc: '' };
-      customBtns[idx][field] = inp.value;
-    });
+      customBtns[idx][field] = input.value;
+    }
   });
 
   if (!list._cbDelegated) {
     list._cbDelegated = true;
     list.addEventListener('click', e => {
       const removeBtn = e.target.closest('.cb-remove');
-      if (removeBtn) { customBtns.splice(parseInt(removeBtn.dataset.idx), 1); renderCustomBtnList(); return; }
+      if (removeBtn) {
+        customBtns.splice(parseInt(removeBtn.dataset.idx, 10), 1);
+        renderCustomBtnList();
+        return;
+      }
+
       const swatchBtn = e.target.closest('[data-action="cycle-color"]');
       if (swatchBtn) {
-        const idx = parseInt(swatchBtn.dataset.idx);
+        const idx = parseInt(swatchBtn.dataset.idx, 10);
         if (!customBtns[idx]) return;
         const cur = customBtns[idx].color || BTN_COLORS[0];
         const pos = BTN_COLORS.indexOf(cur);
@@ -1144,7 +1196,7 @@ $('btn-save-custom-btns')?.addEventListener('click', async () => {
   _savingCustomBtns = true;
   if (btn) btn.disabled = true;
   try {
-    await updateDoc(doc(db, 'toko', uid), { customButtons: cleaned });
+    await updateCustomButtons(uid, cleaned);
     clearPublicCache(uid);
     showToast(`${cleaned.length} tombol kustom disimpan!`);
     currentTokoData.customButtons = cleaned;
@@ -1154,75 +1206,31 @@ $('btn-save-custom-btns')?.addEventListener('click', async () => {
 
 // ── GALLERY ────────────────────────────────────────────────────────────────
 function normalizeGalleryItem(item) {
-  if (typeof item === 'string') return { url: item, caption: '', kategori: '' };
-  return { url: item?.url || '', caption: item?.caption || '', kategori: item?.kategori || '' };
+  return normalizeGalleryEntry(item);
 }
 
 function getGalleryKategoriList() {
-  return [...new Set(galleryPhotos.map(p => p.kategori).filter(Boolean))];
+  return getGalleryKategoriEntries(galleryPhotos);
 }
 
 function renderGalleryEditor() {
   galleryPhotos = (Array.isArray(currentTokoData?.gallery) ? currentTokoData.gallery : [])
-    .map(normalizeGalleryItem).filter(p => p.url);
+    .map(normalizeGalleryItem)
+    .filter(p => p.url);
   renderGalleryGrid();
 }
 
 function renderGalleryGrid() {
   const grid = $('gallery-grid');
   if (!grid) return;
-  if (!galleryPhotos.length) {
-    grid.innerHTML = '<div style="grid-column:1/-1;padding:20px;text-align:center;font-size:12px;color:var(--text-3);">Belum ada foto gallery. Klik "+ Tambah Foto".</div>';
-    return;
-  }
-  const cats = getGalleryKategoriList();
-  const datalistId = 'gal-kat-list';
-  const frag = document.createDocumentFragment();
-  const datalist = document.createElement('datalist');
-  datalist.id = datalistId;
-  cats.forEach(c => { const opt = document.createElement('option'); opt.value = c; datalist.appendChild(opt); });
-  frag.appendChild(datalist);
 
-  galleryPhotos.forEach((p, i) => {
-    const card = document.createElement('div');
-    card.className = 'gal-edit-card'; card.dataset.idx = i;
-    card.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;';
-    const imgWrap = document.createElement('div');
-    imgWrap.style.cssText = 'position:relative;aspect-ratio:1;overflow:hidden;background:rgba(0,0,0,.3);flex-shrink:0;';
-    const img = document.createElement('img');
-    img.src = safeImgUrl(p.url) || 'https://placehold.co/200x200/111/333?text=Error';
-    img.alt = `Gallery ${i + 1}`; img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
-    img.loading = 'lazy'; img.decoding = 'async';
-    img.onerror = function() { this.onerror = null; this.src = 'https://placehold.co/200x200/111/333?text=Error'; };
-    imgWrap.appendChild(img);
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button'; removeBtn.dataset.action = 'remove-gallery'; removeBtn.dataset.idx = i;
-    removeBtn.style.cssText = 'position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.75);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;z-index:2;';
-    removeBtn.setAttribute('aria-label', 'Hapus foto');
-    removeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" width="10" height="10"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-    imgWrap.appendChild(removeBtn); card.appendChild(imgWrap);
-    const inputWrap = document.createElement('div');
-    inputWrap.style.cssText = 'padding:8px 8px 10px;display:flex;flex-direction:column;gap:5px;';
-    const inpKat = document.createElement('input');
-    inpKat.type = 'text'; inpKat.placeholder = 'Kategori (cth: Interior)'; inpKat.value = p.kategori || '';
-    inpKat.dataset.field = 'kategori'; inpKat.dataset.idx = i; inpKat.setAttribute('list', datalistId);
-    inpKat.style.cssText = 'width:100%;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;color:var(--text);outline:none;';
-    const inpCap = document.createElement('input');
-    inpCap.type = 'text'; inpCap.placeholder = 'Caption foto...'; inpCap.value = p.caption || '';
-    inpCap.dataset.field = 'caption'; inpCap.dataset.idx = i;
-    inpCap.style.cssText = 'width:100%;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;color:var(--text);outline:none;';
-    inputWrap.append(inpKat, inpCap); card.appendChild(inputWrap);
-    frag.appendChild(card);
-  });
-
-  grid.innerHTML = '';
-  grid.appendChild(frag);
-
-  grid.querySelectorAll('input[data-field]').forEach(inp => {
-    inp.addEventListener('input', () => {
-      const idx = parseInt(inp.dataset.idx); const field = inp.dataset.field;
-      if (galleryPhotos[idx]) galleryPhotos[idx][field] = inp.value;
-    });
+  renderGalleryEditorGrid(grid, galleryPhotos, {
+    safeImgUrl,
+    onInput(input) {
+      const idx = parseInt(input.dataset.idx, 10);
+      const field = input.dataset.field;
+      if (galleryPhotos[idx]) galleryPhotos[idx][field] = input.value;
+    }
   });
 
   if (!grid._galDelegated) {
@@ -1230,8 +1238,11 @@ function renderGalleryGrid() {
     grid.addEventListener('click', e => {
       const btn = e.target.closest('[data-action="remove-gallery"]');
       if (!btn) return;
-      const idx = parseInt(btn.dataset.idx);
-      if (!isNaN(idx)) { galleryPhotos.splice(idx, 1); renderGalleryGrid(); }
+      const idx = parseInt(btn.dataset.idx, 10);
+      if (!Number.isNaN(idx)) {
+        galleryPhotos.splice(idx, 1);
+        renderGalleryGrid();
+      }
     });
   }
 }
@@ -1281,7 +1292,7 @@ $('btn-save-gallery')?.addEventListener('click', async () => {
       if (galleryPhotos[idx]) galleryPhotos[idx][inp.dataset.field] = inp.value;
     });
     const clean = galleryPhotos.filter(p => p.url);
-    await updateDoc(doc(db, 'toko', uid), { gallery: clean });
+    await updateGallery(uid, clean);
     clearPublicCache(uid);
     showToast(`Gallery (${clean.length} foto) disimpan!`);
     currentTokoData.gallery = [...clean];

@@ -227,7 +227,7 @@
       <div class="progress-inner"></div>
     </div>
 
-    <button type="button" class="refresh-btn" onclick="location.reload()">
+    <button type="button" class="refresh-btn" data-maintenance-action="reload">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
         <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
       </svg>
@@ -240,51 +240,6 @@
     </p>
   </div>
 
-  <script>
-    // Baca info maintenance dari sessionStorage (diisi oleh maintenance.js)
-    (function () {
-      try {
-        const raw = sessionStorage.getItem('lf_maint');
-        if (!raw) return;
-        const data = JSON.parse(raw);
-
-        if (data.title) document.getElementById('maint-title').textContent = data.title;
-        if (data.message) document.getElementById('maint-msg').textContent = data.message;
-
-        if (data.estimatedDone) {
-          const end = data.estimatedDone?.seconds
-            ? new Date(data.estimatedDone.seconds * 1000)
-            : new Date(data.estimatedDone);
-
-          if (end > new Date()) {
-            // Tampilkan countdown
-            document.getElementById('countdown-wrap').style.display = 'flex';
-
-            // Fallback text juga tampil di bawah countdown
-            const estEl = document.getElementById('est-text');
-            const estLbl = document.getElementById('est-label');
-            estEl.style.display = 'inline-flex';
-            estLbl.textContent = 'Estimasi selesai: ' + end.toLocaleString('id-ID', {
-              weekday: 'long', day: 'numeric', month: 'long',
-              hour: '2-digit', minute: '2-digit'
-            });
-
-            // Countdown ticker — uses only transform/opacity, zero repaint
-            function tick() {
-              const diff = Math.max(0, end - Date.now());
-              const h = Math.floor(diff / 3600000);
-              const m = Math.floor((diff % 3600000) / 60000);
-              const s = Math.floor((diff % 60000) / 1000);
-              document.getElementById('cd-hours').textContent = String(h).padStart(2, '0');
-              document.getElementById('cd-mins').textContent  = String(m).padStart(2, '0');
-              document.getElementById('cd-secs').textContent  = String(s).padStart(2, '0');
-              if (diff > 0) requestAnimationFrame(tick);
-            }
-            tick();
-          }
-        }
-      } catch { /* non-critical */ }
-    })();
-  </script>
+  <script defer src="./js/maintenance-page.js?v=20260602"></script>
 </body>
 </html>

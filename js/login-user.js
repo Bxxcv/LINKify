@@ -19,7 +19,7 @@ import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function showError(msg) {
   const el = document.getElementById('errorMsg');
-  // SECURITY: textContent — TIDAK pernah innerHTML
+  // SECURITY: textContent only
   if (el) el.textContent = typeof msg === 'string' ? msg : 'Terjadi kesalahan.';
 }
 
@@ -135,7 +135,10 @@ function handleLogin() {
   _lastLoginAttempt = now;
 
   if (btn) {
-    btn.innerHTML = '<span class="spinner"></span> Memproses...';
+    btn.replaceChildren();
+    const spinner = document.createElement('span');
+    spinner.className = 'spinner';
+    btn.append(spinner, ' Memproses...');
     btn.disabled  = true;
   }
 
@@ -159,7 +162,7 @@ function handleLogin() {
     .finally(() => {
       _loginInProgress = false;
       if (btn) {
-        btn.innerHTML = 'Masuk';
+        btn.textContent = 'Masuk';
         btn.disabled  = false;
       }
     });

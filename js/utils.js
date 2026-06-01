@@ -165,7 +165,7 @@ export function showToast(msg, type = 'info', duration = 3200) {
     document.body.appendChild(_toastEl);
   }
 
-  // SECURITY: textContent only — never innerHTML
+  // SECURITY: textContent only
   _toastEl.textContent = String(msg || '');
 
   const bg = { success:'#10B981', ok:'#10B981', error:'#EF4444', err:'#EF4444', warn:'#F59E0B', info:'#3B82F6' };
