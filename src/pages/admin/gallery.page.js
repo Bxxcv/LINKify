@@ -1,0 +1,1 @@
+export async function initGalleryPage() { return true; }

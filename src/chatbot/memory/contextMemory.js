@@ -1,0 +1,1 @@
+export class ContextMemory { constructor(){ this.state=new Map(); } }

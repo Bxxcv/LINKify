@@ -1,0 +1,1 @@
+export async function initProductsPage() { return true; }

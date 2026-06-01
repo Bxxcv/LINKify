@@ -1,0 +1,11 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-md) 0;
+}
+
+.navbar a {
+  color: var(--color-text);
+  text-decoration: none;
+}
