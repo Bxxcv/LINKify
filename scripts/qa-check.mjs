@@ -26,6 +26,9 @@ const risky = [
   'new Function',
   'onclick=',
   'onerror=',
+  'oninput=',
+  'onchange=',
+  'onload=',
 ];
 
 let failed = false;
@@ -39,6 +42,18 @@ for (const token of risky) {
     failed = true;
     console.error(`Risk token "${token}" found in: ${hits.join(', ')}`);
   }
+}
+
+
+const inlineEventsPattern = /\son[a-z]+\s*=\s*["']/i;
+const eventHits = [];
+for (const file of files.filter(file => /\.html$/.test(file))) {
+  const text = readFileSync(file, 'utf8');
+  if (inlineEventsPattern.test(text)) eventHits.push(relative(root, file));
+}
+if (eventHits.length) {
+  failed = true;
+  console.error(`Inline event handler found in: ${eventHits.join(', ')}`);
 }
 
 if (failed) process.exit(1);

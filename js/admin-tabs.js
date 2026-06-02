@@ -35,3 +35,22 @@ document.addEventListener('click', event => {
     window.goTab('premium');
   }
 });
+
+
+document.addEventListener('input', event => {
+  if (event.target?.id === 'prod-search') window.debouncedFilter?.();
+});
+
+document.addEventListener('change', event => {
+  if (event.target?.id === 'prod-filter-kat') window.filterProducts?.();
+});
+
+// Close drawer after choosing a tab on mobile/tablet.
+document.addEventListener('click', event => {
+  const tabButton = event.target.closest('.sidebar .tab-btn[data-tab]');
+  if (!tabButton || window.innerWidth > 1180) return;
+  window.setTimeout(() => {
+    document.getElementById('sidebar')?.classList.remove('open');
+    document.getElementById('overlay')?.classList.remove('show');
+  }, 80);
+});

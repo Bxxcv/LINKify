@@ -27,3 +27,19 @@ document.addEventListener('change', event => {
   if (thumb) thumb.style.transform = event.target.checked ? 'translateX(20px)' : 'translateX(0)';
   window.toggleMaintenance?.();
 });
+
+
+document.addEventListener('input', event => {
+  if (event.target?.id === 'searchInput') window.filterTable?.();
+});
+
+document.addEventListener('change', event => {
+  if (event.target?.id === 'filterStatus') window.filterTable?.();
+});
+
+// Close owner-admin drawer after tab/action click on mobile/tablet.
+document.addEventListener('click', event => {
+  const tabButton = event.target.closest('.sidebar .tab-btn[data-tab]');
+  if (!tabButton || window.innerWidth > 1180) return;
+  window.setTimeout(() => window.closeSidebar?.(), 80);
+});
