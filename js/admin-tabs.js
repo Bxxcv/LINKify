@@ -4,10 +4,9 @@ window.goTab = function goTab(tab) {
   document.querySelectorAll('.page').forEach(page => page.classList.remove('show'));
 
   const safeTab = String(tab).replace(/[^a-z0-9_-]/gi, '');
-  const button = document.querySelector(`.tab-btn[data-tab="${safeTab}"]`);
   const page = document.getElementById(`tab-${safeTab}`);
 
-  button?.classList.add('active-tab');
+  document.querySelectorAll(`.tab-btn[data-tab="${safeTab}"]`).forEach(button => button.classList.add('active-tab'));
   page?.classList.add('show');
 };
 
@@ -50,7 +49,13 @@ document.addEventListener('click', event => {
   const tabButton = event.target.closest('.sidebar .tab-btn[data-tab]');
   if (!tabButton || window.innerWidth > 1180) return;
   window.setTimeout(() => {
-    document.getElementById('sidebar')?.classList.remove('open');
-    document.getElementById('overlay')?.classList.remove('show');
+    if (window.closeAdminSidebar) {
+      window.closeAdminSidebar();
+    } else {
+      document.getElementById('sidebar')?.classList.remove('open');
+      document.getElementById('overlay')?.classList.remove('show');
+      document.getElementById('btn-hamburger')?.classList.remove('is-open');
+      document.getElementById('btn-hamburger')?.setAttribute('aria-expanded', 'false');
+    }
   }, 80);
 });

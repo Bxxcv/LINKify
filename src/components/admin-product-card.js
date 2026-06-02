@@ -151,6 +151,21 @@ export function renderAdminProductGrid(container, list, options = {}) {
       stockRow.appendChild(document.createTextNode(` · ${product.kategori}`));
     }
 
+    const links = document.createElement('div');
+    links.className = 'p-links';
+    if (product.wa) {
+      const wa = document.createElement('span');
+      wa.className = 'p-link-badge p-link-wa';
+      wa.textContent = 'WA';
+      links.appendChild(wa);
+    }
+    if (product.shopee) {
+      const shopee = document.createElement('span');
+      shopee.className = 'p-link-badge p-link-shopee';
+      shopee.textContent = 'Shopee';
+      links.appendChild(shopee);
+    }
+
     const actions = document.createElement('div');
     actions.className = 'p-acts';
 
@@ -167,7 +182,9 @@ export function renderAdminProductGrid(container, list, options = {}) {
     del.textContent = 'Hapus';
 
     actions.append(edit, del);
-    body.append(name, priceRow, stockRow, actions);
+    body.append(name, priceRow, stockRow);
+    if (links.childNodes.length) body.appendChild(links);
+    body.appendChild(actions);
     card.append(image, body);
     frag.appendChild(card);
   });

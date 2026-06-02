@@ -1,0 +1,951 @@
+/* ============================================================
+   LINKify Admin App Redesign — Phase 13
+   Mobile-first dashboard based on requested mockup.
+   Loaded after all legacy CSS. Scope: admin.html only.
+   ============================================================ */
+
+body.admin-v2 {
+  --bg: #f7f8fc;
+  --surface: #ffffff;
+  --surface2: #f0edff;
+  --border: #e1e7f0;
+  --border2: #cdd6e3;
+  --text: #111827;
+  --text-2: #637083;
+  --text-3: #8b96a7;
+  --accent: #5146e8;
+  --accent-soft: #eeeaff;
+  --accent-hover: #4338ca;
+  --ember-deep: #5146e8;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, .05);
+  --shadow-md: 0 10px 30px rgba(15, 23, 42, .07);
+  --shadow-lg: 0 24px 70px rgba(15, 23, 42, .12);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body.admin-v2 .wrapper { background: var(--bg); }
+body.admin-v2 .main { background: var(--bg); min-width: 0; }
+body.admin-v2 .page-wrap {
+  width: min(100%, 1220px);
+  margin: 0 auto;
+  padding: 28px clamp(18px, 3vw, 42px) 92px;
+}
+
+/* Top app header */
+body.admin-v2 .admin-app-header {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 78px;
+  padding: max(14px, env(safe-area-inset-top)) clamp(18px, 3vw, 42px) 14px;
+  background: rgba(255, 255, 255, .92);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, .03);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+body.admin-v2 .admin-app-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+body.admin-v2 .admin-app-title {
+  color: var(--accent);
+  font-family: var(--font-display, Inter, sans-serif);
+  font-size: clamp(18px, 3.9vw, 32px);
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  white-space: nowrap;
+}
+
+body.admin-v2 .admin-online-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #e9efff, #eeeaff);
+  color: #22c55e;
+  font-size: clamp(14px, 3vw, 22px);
+  font-weight: 900;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.75), 0 8px 24px rgba(81,70,232,.12);
+}
+
+body.admin-v2 .admin-online-pill span {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #4ade80;
+  box-shadow: 0 0 0 6px rgba(74, 222, 128, .18);
+}
+
+body.admin-v2 .admin-avatar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  color: #111827;
+  min-width: auto;
+  padding: 0;
+  cursor: pointer;
+}
+
+body.admin-v2 .admin-avatar-btn img {
+  width: clamp(42px, 9vw, 64px);
+  height: clamp(42px, 9vw, 64px);
+  border-radius: 999px;
+  object-fit: cover;
+  background: #111827;
+  box-shadow: 0 0 0 4px #fff, 0 10px 26px rgba(15,23,42,.16);
+}
+
+body.admin-v2 .admin-avatar-chevron { flex: 0 0 auto; opacity: .88; }
+
+/* Welcome block */
+body.admin-v2 .admin-welcome-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 0 20px;
+}
+
+body.admin-v2 .admin-kicker {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+body.admin-v2 .admin-welcome-copy h1 {
+  margin: 0;
+  max-width: 760px;
+  color: var(--text);
+  font-family: var(--font-display, Inter, sans-serif);
+  font-size: clamp(28px, 5vw, 46px);
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: -0.06em;
+}
+
+body.admin-v2 .admin-wave { letter-spacing: 0; }
+
+body.admin-v2 .admin-welcome-copy p:last-child {
+  max-width: 520px;
+  margin: 10px 0 0;
+  color: var(--text-2);
+  font-size: clamp(15px, 2.4vw, 19px);
+  line-height: 1.55;
+}
+
+body.admin-v2 .admin-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 58px;
+  padding: 0 24px;
+  border: 2px solid var(--border2);
+  border-radius: 16px;
+  background: rgba(255,255,255,.84);
+  color: #334155;
+  font-size: 16px;
+  font-weight: 850;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+body.admin-v2 .admin-preview-btn svg { width: 20px; height: 20px; color: #64748b; }
+body.admin-v2 .admin-preview-btn:hover { border-color: #b9c4d3; background: #fff; }
+
+/* Segmented mobile/app tabs */
+body.admin-v2 .admin-segment-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px;
+  margin: 8px 0 26px;
+  border-radius: 22px;
+  background: #eee8ff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+body.admin-v2 .admin-segment-tabs .tab-btn {
+  justify-content: center;
+  gap: 9px;
+  min-height: 60px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 17px;
+  color: #6b21a8;
+  font-size: clamp(13px, 2.8vw, 18px);
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
+}
+
+body.admin-v2 .admin-segment-tabs .tab-btn svg { width: 19px; height: 19px; opacity: 1; }
+body.admin-v2 .admin-segment-tabs .tab-btn.active-tab {
+  background: #fff;
+  color: var(--accent);
+  box-shadow: 0 10px 22px rgba(81,70,232,.10), inset 0 0 0 1px rgba(255,255,255,.65);
+}
+
+/* Sidebar desktop refinement */
+body.admin-v2 .sidebar {
+  border-right: 1px solid var(--border);
+  background: rgba(255,255,255,.96);
+  box-shadow: 1px 0 0 rgba(15,23,42,.03);
+}
+body.admin-v2 .sidebar-brand-icon,
+body.admin-v2 .sidebar-user-avatar {
+  background: linear-gradient(135deg, #1f2937, #5146e8);
+}
+body.admin-v2 .sidebar-brand-text { color: #111827; }
+body.admin-v2 .tab-btn.active-tab { color: var(--accent); background: var(--accent-soft); border-left-color: transparent; }
+body.admin-v2 .tab-btn:hover { background: #f4f3ff; }
+body.admin-v2 .sidebar-user-avatar {
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* Page titles */
+body.admin-v2 .page-title {
+  font-size: clamp(23px, 3vw, 32px);
+  margin: 0;
+  color: #172033;
+  letter-spacing: -0.05em;
+}
+body.admin-v2 .page-sub { color: var(--text-2); margin-top: 6px; }
+body.admin-v2 .sec-head { margin-bottom: 20px; }
+
+/* Cards/forms */
+body.admin-v2 .card,
+body.admin-v2 .f-card,
+body.admin-v2 .stat-card,
+body.admin-v2 .prem-stat-card,
+body.admin-v2 .skel-card,
+body.admin-v2 .p-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: 0 1px 2px rgba(15,23,42,.03);
+}
+body.admin-v2 .card:hover,
+body.admin-v2 .stat-card:hover,
+body.admin-v2 .p-card:hover { box-shadow: var(--shadow-md); }
+
+body.admin-v2 .f-card {
+  max-width: none !important;
+  padding: clamp(18px, 3vw, 26px);
+}
+body.admin-v2 .f-label {
+  color: #667085;
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: .01em;
+  text-transform: none;
+}
+body.admin-v2 .f-input,
+body.admin-v2 .f-area,
+body.admin-v2 .f-select {
+  min-height: 54px;
+  border: 1px solid #cfd8e3;
+  border-radius: 14px;
+  background: #f9fafb;
+  color: #253044;
+  font-size: 16px;
+  padding: 13px 16px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+}
+body.admin-v2 .f-area { min-height: 96px; resize: vertical; }
+body.admin-v2 .f-input:focus,
+body.admin-v2 .f-area:focus,
+body.admin-v2 .f-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(81,70,232,.10);
+}
+body.admin-v2 .f-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+body.admin-v2 .btn,
+body.admin-v2 .clock-link-btn {
+  border-radius: 16px;
+  font-weight: 850;
+}
+body.admin-v2 .btn-primary {
+  background: linear-gradient(135deg, #5b4df0, #4737d6);
+  border-color: transparent;
+  box-shadow: 0 10px 22px rgba(81,70,232,.20);
+}
+body.admin-v2 .btn-primary:hover { filter: brightness(1.04); transform: translateY(-1px); }
+body.admin-v2 .btn-outline { border-color: #d3dce8; background: #fff; }
+
+/* Product page like mobile app list */
+body.admin-v2 #tab-products .sec-head {
+  align-items: center;
+}
+body.admin-v2 #btn-add-product {
+  min-height: 58px;
+  padding: 0 26px;
+  border-radius: 16px;
+  font-size: 18px;
+}
+body.admin-v2 .prod-grid {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+body.admin-v2 .p-card {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+body.admin-v2 .p-img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  height: auto;
+  object-fit: cover;
+  background: #eef2f7;
+}
+body.admin-v2 .p-body { padding: 16px; }
+body.admin-v2 .p-name { color: #172033; font-size: 18px; font-weight: 900; letter-spacing: -0.03em; }
+body.admin-v2 .p-price { color: #687589; font-size: 18px; font-weight: 900; margin-top: 6px; }
+body.admin-v2 .p-stock { color: #8b96a7; font-size: 13px; margin-top: 6px; }
+body.admin-v2 .p-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+
+body.admin-v2 .p-card { position: relative; }
+body.admin-v2 .p-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+body.admin-v2 .p-link-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+}
+body.admin-v2 .p-link-wa { background: #22c55e; }
+body.admin-v2 .p-link-shopee { background: #f04f15; }
+
+body.admin-v2 .btn-ed,
+body.admin-v2 .btn-del {
+  min-height: 44px;
+  border-radius: 14px;
+  border: 0;
+  font-weight: 850;
+  cursor: pointer;
+}
+body.admin-v2 .btn-ed { background: #edf4ff; color: #2563eb; }
+body.admin-v2 .btn-del { background: #fff1f2; color: #ef4444; }
+
+/* Dashboard/stat/premium */
+body.admin-v2 .clock-widget {
+  background: linear-gradient(135deg, #151a2c, #3d2c72);
+  box-shadow: 0 18px 40px rgba(45,39,99,.16);
+}
+body.admin-v2 .stat-grid,
+body.admin-v2 .prem-stat-grid { gap: 16px; }
+body.admin-v2 .stat-card,
+body.admin-v2 .prem-stat-card { padding: clamp(16px, 3vw, 24px); }
+body.admin-v2 .stat-card-val,
+body.admin-v2 .prem-stat-val { color: #172033; font-size: clamp(26px, 4vw, 36px); }
+body.admin-v2 .stats-chart { min-height: 260px; }
+
+/* Settings/profile */
+body.admin-v2 #tab-settings .page-title,
+body.admin-v2 #tab-settings .page-sub { margin-left: 0; }
+body.admin-v2 .logo-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px;
+  border: 1px dashed #cfd8e3;
+  border-radius: 18px;
+  background: #f9fafb;
+}
+body.admin-v2 #logo-preview {
+  width: 78px;
+  height: 78px;
+  border-radius: 24px;
+  object-fit: cover;
+  box-shadow: 0 0 0 4px #fff, 0 12px 26px rgba(15,23,42,.13);
+}
+
+/* Modal */
+body.admin-v2 .modal-bg { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+body.admin-v2 .modal-box {
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+body.admin-v2 .upload-zone {
+  border-radius: 18px;
+  border-color: #cfd8e3;
+  background: #f9fafb;
+}
+
+/* Desktop composition */
+@media (min-width: 1181px) {
+  body.admin-v2 .sidebar { width: 268px; }
+  body.admin-v2 .main { margin-left: 268px; }
+  body.admin-v2 .admin-app-header { padding-left: 36px; padding-right: 42px; }
+  body.admin-v2 .admin-segment-tabs { max-width: 760px; }
+  body.admin-v2 #tab-settings .f-card { max-width: 980px !important; }
+  body.admin-v2 #tab-account .f-card { max-width: 560px !important; }
+}
+
+/* Tablet */
+@media (max-width: 1180px) {
+  body.admin-v2 .sidebar { background: #fff !important; }
+  body.admin-v2 .main { margin-left: 0 !important; }
+  body.admin-v2 .page-wrap { padding-top: 22px !important; }
+}
+
+/* Mobile */
+@media (max-width: 720px) {
+  body.admin-v2 .admin-app-header {
+    min-height: 88px;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+  body.admin-v2 .admin-app-brand { gap: 8px; }
+  body.admin-v2 .admin-app-title { font-size: clamp(20px, 6vw, 30px); }
+  body.admin-v2 .admin-online-pill {
+    min-height: 33px;
+    gap: 8px;
+    padding: 6px 12px;
+    font-size: clamp(15px, 4.5vw, 24px);
+  }
+  body.admin-v2 .admin-online-pill span { width: 17px; height: 17px; }
+  body.admin-v2 .admin-avatar-btn img { width: 54px; height: 54px; }
+  body.admin-v2 .admin-avatar-chevron { width: 17px; height: 17px; }
+
+  body.admin-v2 .page-wrap {
+    padding: 26px 20px calc(84px + env(safe-area-inset-bottom)) !important;
+  }
+  body.admin-v2 .admin-welcome-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    padding: 14px 0 22px;
+  }
+  body.admin-v2 .admin-kicker { display: none; }
+  body.admin-v2 .admin-welcome-copy h1 { font-size: clamp(28px, 9vw, 38px); }
+  body.admin-v2 .admin-welcome-copy p:last-child {
+    max-width: 270px;
+    font-size: clamp(15px, 4vw, 20px);
+    line-height: 1.45;
+  }
+  body.admin-v2 .admin-preview-btn {
+    min-height: 72px;
+    align-self: center;
+    padding: 0 18px;
+    font-size: clamp(14px, 4.2vw, 18px);
+  }
+  body.admin-v2 .admin-preview-btn svg { width: 18px; height: 18px; }
+
+  body.admin-v2 .admin-segment-tabs {
+    margin: 14px 0 36px;
+    padding: 7px;
+    border-radius: 20px;
+    gap: 5px;
+  }
+  body.admin-v2 .admin-segment-tabs .tab-btn {
+    min-height: 78px !important;
+    padding: 0 8px !important;
+    border-radius: 16px;
+    font-size: clamp(13px, 4vw, 18px) !important;
+  }
+  body.admin-v2 .admin-segment-tabs .tab-btn svg { width: 17px; height: 17px; }
+
+  body.admin-v2 #tab-products .sec-head {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+  }
+  body.admin-v2 #tab-products .sec-head > div { width: auto !important; flex: 1 1 auto; }
+  body.admin-v2 #tab-products .page-title { font-size: clamp(24px, 6.5vw, 30px); }
+  body.admin-v2 #tab-products .page-sub { display: none; }
+  body.admin-v2 #btn-add-product {
+    width: auto !important;
+    min-height: 68px !important;
+    padding: 0 20px !important;
+    font-size: clamp(17px, 5vw, 23px) !important;
+  }
+
+  body.admin-v2 #tab-products > div[style*="display:flex"] {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 10px !important;
+  }
+  body.admin-v2 .prod-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  body.admin-v2 .p-card {
+    min-height: 152px;
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 24px;
+    border-radius: 21px;
+  }
+  body.admin-v2 .p-img {
+    width: 96px;
+    height: 96px;
+    aspect-ratio: auto;
+    border-radius: 16px;
+  }
+  body.admin-v2 .p-body { padding: 0; min-width: 0; }
+  body.admin-v2 .p-name {
+    font-size: clamp(19px, 5.4vw, 25px);
+    line-height: 1.08;
+  }
+  body.admin-v2 .p-price { font-size: clamp(18px, 4.8vw, 23px); line-height: 1.2; }
+  body.admin-v2 .p-stock { display: none; }
+  body.admin-v2 .p-acts {
+    position: absolute;
+    right: 26px;
+    bottom: 26px;
+    grid-template-columns: repeat(2, 52px);
+    gap: 10px;
+    margin: 0;
+  }
+  body.admin-v2 .btn-ed,
+  body.admin-v2 .btn-del {
+    width: 52px;
+    height: 52px;
+    min-height: 52px;
+    padding: 0;
+    font-size: 0;
+  }
+  body.admin-v2 .btn-ed::before { content: "✎"; font-size: 25px; }
+  body.admin-v2 .btn-del::before { content: "⌫"; font-size: 25px; }
+
+  body.admin-v2 .f-row { grid-template-columns: 1fr; gap: 12px; }
+  body.admin-v2 .f-card { padding: 20px; border-radius: 18px; }
+  body.admin-v2 .f-input,
+  body.admin-v2 .f-area,
+  body.admin-v2 .f-select { border-radius: 0; min-height: 50px; }
+  body.admin-v2 .logo-row { display: grid; grid-template-columns: auto 1fr; }
+  body.admin-v2 #logo-preview { width: 72px; height: 72px; }
+
+  body.admin-v2 .prem-stat-grid,
+  body.admin-v2 .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+@media (max-width: 430px) {
+  body.admin-v2 .admin-app-header { padding-left: 16px !important; padding-right: 16px !important; }
+  body.admin-v2 .page-wrap { padding-left: 16px !important; padding-right: 16px !important; }
+  body.admin-v2 .admin-app-title { font-size: 21px; }
+  body.admin-v2 .admin-online-pill { font-size: 16px; min-height: 30px; padding: 5px 10px; }
+  body.admin-v2 .admin-online-pill span { width: 14px; height: 14px; box-shadow: 0 0 0 5px rgba(74, 222, 128, .16); }
+  body.admin-v2 .admin-avatar-btn img { width: 48px; height: 48px; }
+  body.admin-v2 .admin-avatar-btn { gap: 6px; }
+
+  body.admin-v2 .admin-welcome-card { grid-template-columns: 1fr; }
+  body.admin-v2 .admin-preview-btn { justify-self: start; min-height: 54px; margin-top: 2px; }
+  body.admin-v2 .admin-welcome-copy p:last-child { max-width: 100%; }
+  body.admin-v2 .admin-segment-tabs .tab-btn { min-height: 64px !important; font-size: 13px !important; }
+  body.admin-v2 .admin-segment-tabs .tab-btn svg { display: none; }
+
+  body.admin-v2 .p-card {
+    grid-template-columns: 80px 1fr;
+    gap: 14px;
+    min-height: 132px;
+    padding: 18px;
+  }
+  body.admin-v2 .p-img { width: 80px; height: 80px; }
+  body.admin-v2 .p-acts { right: 18px; bottom: 18px; grid-template-columns: repeat(2, 46px); }
+  body.admin-v2 .btn-ed,
+  body.admin-v2 .btn-del { width: 46px; height: 46px; min-height: 46px; }
+  body.admin-v2 .prem-stat-grid,
+  body.admin-v2 .stat-grid { grid-template-columns: 1fr !important; }
+}
+
+
+/* ============================================================
+   LINKify Admin App Redesign — Phase 14 Fix
+   Fixes: mobile overflow, ugly avatar near Online, animated hamburger,
+   drawer sizing, and Bootstrap sidebar brand icon.
+   ============================================================ */
+
+body.admin-v2,
+body.admin-v2 .wrapper,
+body.admin-v2 .main,
+body.admin-v2 .page-wrap {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+body.admin-v2.sidebar-open {
+  overflow: hidden;
+}
+
+body.admin-v2 .admin-app-header {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 70px;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+body.admin-v2 .admin-app-brand {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: calc(100% - 58px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+body.admin-v2 .admin-app-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--accent);
+  font-size: clamp(18px, 4.8vw, 30px);
+  letter-spacing: -0.055em;
+}
+
+body.admin-v2 .admin-online-pill {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 5px 11px;
+  gap: 8px;
+  font-size: clamp(12px, 3.1vw, 15px);
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.76), 0 8px 18px rgba(81,70,232,.10);
+}
+
+body.admin-v2 .admin-online-pill span {
+  width: 11px;
+  height: 11px;
+  box-shadow: 0 0 0 5px rgba(74,222,128,.16);
+}
+
+/* Replaces old avatar/chevron button. Avatar stays in sidebar/user profile. */
+body.admin-v2 .admin-menu-toggle {
+  position: relative;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(148,163,184,.28);
+  border-radius: 16px;
+  background: rgba(255,255,255,.88);
+  color: #111827;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(15,23,42,.08);
+  transition: transform .22s ease, background .22s ease, box-shadow .22s ease, border-color .22s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+body.admin-v2 .admin-menu-toggle:hover {
+  background: #fff;
+  border-color: rgba(81,70,232,.28);
+  box-shadow: 0 12px 28px rgba(81,70,232,.12);
+}
+
+body.admin-v2 .admin-menu-toggle:active {
+  transform: scale(.96);
+}
+
+body.admin-v2 .admin-menu-toggle span {
+  position: absolute;
+  width: 20px;
+  height: 2.4px;
+  border-radius: 99px;
+  background: currentColor;
+  transition: transform .26s cubic-bezier(.2,.8,.2,1), opacity .18s ease, width .22s ease;
+  will-change: transform, opacity;
+}
+
+body.admin-v2 .admin-menu-toggle span:nth-child(1) { transform: translateY(-7px); }
+body.admin-v2 .admin-menu-toggle span:nth-child(2) { transform: translateY(0); width: 16px; }
+body.admin-v2 .admin-menu-toggle span:nth-child(3) { transform: translateY(7px); }
+
+body.admin-v2 .admin-menu-toggle.is-open {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, #5b4df0, #4338ca);
+  box-shadow: 0 14px 32px rgba(81,70,232,.24);
+}
+
+body.admin-v2 .admin-menu-toggle.is-open span:nth-child(1) { transform: rotate(45deg); }
+body.admin-v2 .admin-menu-toggle.is-open span:nth-child(2) { opacity: 0; transform: scaleX(.4); }
+body.admin-v2 .admin-menu-toggle.is-open span:nth-child(3) { transform: rotate(-45deg); }
+
+/* Bootstrap icon brand in sidebar */
+body.admin-v2 .sidebar-brand {
+  border-radius: 18px;
+}
+
+body.admin-v2 .sidebar-brand-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #5146e8, #7c3aed);
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(81,70,232,.22);
+}
+
+body.admin-v2 .sidebar-brand-icon i {
+  font-size: 22px;
+  line-height: 1;
+}
+
+body.admin-v2 .sidebar-user-avatar {
+  box-shadow: 0 0 0 4px #eef2ff;
+}
+
+/* Drawer: slimmer, smoother, faster. */
+@media (max-width: 1180px) {
+  body.admin-v2 .sidebar {
+    width: min(78vw, 334px) !important;
+    max-width: 334px !important;
+    transform: translate3d(-108%, 0, 0) !important;
+    transition: transform .28s cubic-bezier(.2,.8,.2,1) !important;
+    will-change: transform;
+    contain: layout paint;
+  }
+
+  body.admin-v2 .sidebar.open {
+    transform: translate3d(0, 0, 0) !important;
+  }
+
+  body.admin-v2 .overlay.show {
+    background: rgba(15, 23, 42, .42) !important;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+  }
+
+  body.admin-v2 .sidebar-inner {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Tablet layout */
+@media (min-width: 721px) and (max-width: 1180px) {
+  body.admin-v2 .admin-app-header {
+    padding-left: 28px !important;
+    padding-right: 28px !important;
+  }
+
+  body.admin-v2 .page-wrap {
+    max-width: 900px !important;
+    padding-left: 28px !important;
+    padding-right: 28px !important;
+  }
+}
+
+/* Mobile layout */
+@media (max-width: 720px) {
+  body.admin-v2 .admin-app-header {
+    min-height: 68px !important;
+    padding: max(10px, env(safe-area-inset-top)) 16px 10px !important;
+  }
+
+  body.admin-v2 .admin-app-brand {
+    gap: 8px;
+    max-width: calc(100% - 52px);
+  }
+
+  body.admin-v2 .admin-app-title {
+    font-size: clamp(17px, 5.2vw, 21px) !important;
+    letter-spacing: -0.05em;
+  }
+
+  body.admin-v2 .admin-online-pill {
+    min-height: 27px !important;
+    padding: 5px 9px !important;
+    gap: 6px !important;
+    font-size: clamp(11px, 3.3vw, 13px) !important;
+  }
+
+  body.admin-v2 .admin-online-pill span {
+    width: 9px !important;
+    height: 9px !important;
+    box-shadow: 0 0 0 4px rgba(74,222,128,.15) !important;
+  }
+
+  body.admin-v2 .admin-menu-toggle {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+  }
+
+  body.admin-v2 .admin-menu-toggle span {
+    width: 18px;
+    height: 2.2px;
+  }
+
+  body.admin-v2 .page-wrap {
+    padding-top: 18px !important;
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+
+  body.admin-v2 .admin-welcome-card {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  body.admin-v2 .admin-welcome-copy h1 {
+    font-size: clamp(30px, 10vw, 42px) !important;
+    letter-spacing: -0.065em;
+  }
+
+  body.admin-v2 .admin-welcome-copy p:last-child {
+    max-width: 100%;
+  }
+
+  body.admin-v2 .admin-preview-btn {
+    justify-self: start;
+    min-height: 54px !important;
+  }
+
+  body.admin-v2 .admin-segment-tabs {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    margin-top: 12px !important;
+    margin-bottom: 28px !important;
+  }
+
+  body.admin-v2 .admin-segment-tabs .tab-btn {
+    min-width: 0 !important;
+    min-height: 58px !important;
+    padding: 0 6px !important;
+    font-size: clamp(12px, 3.7vw, 15px) !important;
+    line-height: 1.15;
+  }
+
+  body.admin-v2 .admin-segment-tabs .tab-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  body.admin-v2 .sidebar {
+    width: min(84vw, 306px) !important;
+    max-width: 306px !important;
+  }
+
+  body.admin-v2 .sidebar-brand {
+    padding: 14px !important;
+  }
+
+  body.admin-v2 .sidebar-brand-icon {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+    border-radius: 14px;
+  }
+
+  body.admin-v2 .sidebar-brand-icon i {
+    font-size: 19px;
+  }
+
+  body.admin-v2 .sidebar-menu .tab-btn {
+    min-height: 46px !important;
+    font-size: 15px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  body.admin-v2 .admin-app-header {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  body.admin-v2 .admin-app-title {
+    font-size: 17px !important;
+  }
+
+  body.admin-v2 .admin-online-pill {
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+  }
+
+  body.admin-v2 .admin-menu-toggle {
+    width: 40px;
+    height: 40px;
+  }
+
+  body.admin-v2 .page-wrap {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  body.admin-v2 .admin-welcome-copy h1 {
+    font-size: clamp(29px, 10.5vw, 39px) !important;
+  }
+
+  body.admin-v2 .sidebar {
+    width: min(88vw, 302px) !important;
+    max-width: 302px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  body.admin-v2 .admin-app-title {
+    max-width: 148px;
+  }
+
+  body.admin-v2 .admin-online-pill {
+    font-size: 10px !important;
+    padding: 4px 7px !important;
+  }
+
+  body.admin-v2 .admin-menu-toggle {
+    width: 38px;
+    height: 38px;
+  }
+}

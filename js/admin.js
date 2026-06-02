@@ -110,17 +110,55 @@ initOfflineDetection();
 // ── SIDEBAR ────────────────────────────────────────────────────────────────
 const sidebar = $('sidebar');
 const overlay = $('overlay');
-function openSidebar()  { sidebar?.classList.add('open');    overlay?.classList.add('show'); }
-function closeSidebar() { sidebar?.classList.remove('open'); overlay?.classList.remove('show'); }
-$('btn-hamburger')?.addEventListener('click', openSidebar);
+const menuToggle = $('btn-hamburger');
+
+function setSidebarState(open) {
+  sidebar?.classList.toggle('open', open);
+  overlay?.classList.toggle('show', open);
+  menuToggle?.classList.toggle('is-open', open);
+  menuToggle?.setAttribute('aria-expanded', open ? 'true' : 'false');
+  document.body.classList.toggle('sidebar-open', open);
+}
+
+function openSidebar()  { setSidebarState(true); }
+function closeSidebar() { setSidebarState(false); }
+function toggleSidebar() { setSidebarState(!sidebar?.classList.contains('open')); }
+
+window.openAdminSidebar = openSidebar;
+window.closeAdminSidebar = closeSidebar;
+window.toggleAdminSidebar = toggleSidebar;
+function syncAdminIdentity(user, toko = {}) {
+  const email = user?.email || '';
+  const name = sanitizeText(toko?.namaToko || email?.split('@')[0] || 'Demo Account', 80);
+  const logo = safeImgUrl(toko?.logo || '') || 'asset/img/icone-admin.jpg';
+
+  const shopName = $('admin-shop-name');
+  if (shopName) shopName.textContent = name;
+
+  const mobileAvatar = $('mobile-admin-avatar');
+  if (mobileAvatar) {
+    mobileAvatar.src = logo;
+    mobileAvatar.alt = name ? `Avatar ${name}` : 'Avatar toko';
+  }
+
+  const avatarEl = $('sidebar-avatar');
+  if (avatarEl) {
+    avatarEl.textContent = logo ? '' : (email || 'U').charAt(0).toUpperCase();
+    avatarEl.style.backgroundImage = logo ? `url("${logo}")` : '';
+    avatarEl.style.backgroundSize = 'cover';
+    avatarEl.style.backgroundPosition = 'center';
+  }
+}
+menuToggle?.addEventListener('click', toggleSidebar);
 overlay?.addEventListener('click', closeSidebar);
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeSidebar(); });
 
 // ── TABS ───────────────────────────────────────────────────────────────────
 document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
     document.querySelectorAll('.page').forEach(p => p.classList.remove('show'));
-    btn.classList.add('active-tab');
+    document.querySelectorAll(`.tab-btn[data-tab="${btn.dataset.tab}"]`).forEach(b => b.classList.add('active-tab'));
     $('tab-' + btn.dataset.tab)?.classList.add('show');
     closeSidebar();
     if (btn.dataset.tab === 'dashboard') {
@@ -173,9 +211,8 @@ onAuthStateChanged(auth, async user => {
   }
 
   const emailEl  = $('admin-email');
-  const avatarEl = $('sidebar-avatar');
   if (emailEl)  emailEl.textContent  = user.email;
-  if (avatarEl) avatarEl.textContent = (user.email || 'U').charAt(0).toUpperCase();
+  syncAdminIdentity(user, currentTokoData);
   if ($('inp-new-email')) $('inp-new-email').value = user.email;
 
   const prodSnap = await productGetProducts(user.uid);
@@ -605,6 +642,7 @@ async function _initSettings(uid) {
         lp.onerror = () => { lp.src = 'https://placehold.co/200x200/F3F4F6/999?text=Logo'; };
       }
     }
+    syncAdminIdentity(auth.currentUser, s);
     updatePremiumUI();
     await loadTodayVisits(uid);
   } catch (e) { console.error('_initSettings:', e); }
@@ -619,6 +657,13 @@ $('inp-logo-file')?.addEventListener('change', () => {
   if (logoBlobUrl) URL.revokeObjectURL(logoBlobUrl);
   logoBlobUrl = URL.createObjectURL(file);
   if ($('logo-preview')) $('logo-preview').src = logoBlobUrl;
+  const mobileAvatar = $('mobile-admin-avatar');
+  if (mobileAvatar) mobileAvatar.src = logoBlobUrl;
+  const sidebarAvatar = $('sidebar-avatar');
+  if (sidebarAvatar) {
+    sidebarAvatar.textContent = '';
+    sidebarAvatar.style.backgroundImage = `url("${logoBlobUrl}")`;
+  }
 });
 
 // FIX [FIX-01]: flag di finally
@@ -656,6 +701,7 @@ $('btn-save-settings')?.addEventListener('click', async () => {
     await updateTokoFields(uid, updateData);
     clearPublicCache(uid);
     currentTokoData = { ...currentTokoData, ...updateData };
+    syncAdminIdentity(auth.currentUser, currentTokoData);
     showToast('Pengaturan disimpan!');
   } catch (err) { showToast('Gagal: ' + err.message, 'error'); }
   finally {
