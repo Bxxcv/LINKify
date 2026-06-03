@@ -13,7 +13,8 @@ export const APP_CONFIG = {
   
   cloudinary: {
     cloudName: "dxq06iq2r",
-    uploadPreset: "tokobudi_unsigned"
+    // Signed upload endpoint. Jangan gunakan unsigned preset di frontend.
+    signEndpoint: "https://asia-southeast1-toko-budi-81421.cloudfunctions.net/getCloudinarySignature"
   },
   
   theme: {

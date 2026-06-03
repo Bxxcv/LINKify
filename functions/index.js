@@ -140,6 +140,7 @@ exports.getCloudinarySignature = onRequest(
       api_key:    apiKey,
       cloud_name: cloudName,
       folder,
+      allowed_formats: paramsToSign.allowed_formats,
     });
   }
 );

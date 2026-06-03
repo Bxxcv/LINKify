@@ -10,6 +10,7 @@
  *  [FIX-05]  closeConfirm → confirm-modal
  *  [FIX-06]  confirm-cancel button tidak ada di HTML → dibuat via JS
  *  [SEC-01]  Ganti client-side email check → isAdminUser() via custom claims
+ *  [SEC-02]  Email fallback admin wajib emailVerified
  */
 
 import { APP_CONFIG } from '../config.js';
@@ -81,10 +82,10 @@ async function isAdminUser(user) {
   try {
     const idTokenResult = await user.getIdTokenResult(true);
     if (idTokenResult.claims.admin === true) return true;
-    return user.email === EMAIL_ADMIN;
+    return user.email === EMAIL_ADMIN && user.emailVerified === true;
   } catch {
-    // fallback: email check
-    return user?.email === EMAIL_ADMIN;
+    // fallback sementara: email admin tetap wajib verified
+    return user?.email === EMAIL_ADMIN && user?.emailVerified === true;
   }
 }
 
