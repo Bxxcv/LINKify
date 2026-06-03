@@ -10,6 +10,7 @@ rules_version = '2';
 // ║   [SEC-01] isAdmin() ditambah custom claim fallback                         ║
 // ║   [SEC-02] Pengecekan affectedKeys lebih ketat (size limit)                 ║
 // ║   [SEC-03] Validasi nested field lebih dalam                                ║
+// ║   [SEC-04] Admin email fallback wajib email_verified                         ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
 
 service cloud.firestore {
@@ -29,19 +30,17 @@ service cloud.firestore {
 
     // isAdmin() — dual check:
     //   1. Custom claim (preferred): set via admin.auth().setCustomUserClaims(uid, {admin: true})
-    //   2. Email fallback (requires email_verified): backwards-compat
+    //   2. Email fallback + email_verified: backwards-compat sementara
     // Jika sudah set custom claim, kondisi kedua tidak pernah dicek (short-circuit).
     function isAdmin() {
       return isAuth() && (
         // Primary: custom claim — paling aman, set via Admin SDK
         request.auth.token.admin == true
         ||
-        // Fallback: email hardcoded match. Tidak butuh email_verified karena
-        // email ini fixed & hanya owner Firebase Auth project yg bisa pakai akun ini.
-        // (Sebelumnya wajib email_verified → menyebabkan semua aksi admin gagal
-        // ketika email belum diverifikasi, sehingga "Daftarkan member" & update
-        // selalu menghasilkan "Missing or insufficient permissions".)
-        request.auth.token.email == 'unrageunrage@gmail.com'
+        // Fallback sementara: email hardcoded wajib verified.
+        // Rekomendasi produksi: hapus fallback ini setelah custom claim admin aktif.
+        (request.auth.token.email == 'unrageunrage@gmail.com'
+          && request.auth.token.email_verified == true)
       );
     }
 
@@ -258,8 +257,10 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════════════════════
     match /toko/{uid} {
 
-      // Storefront publik — diperlukan untuk halaman pengunjung
-      allow read: if true;
+      // Storefront publik perlu get dokumen berdasarkan uid.
+      // Jangan izinkan list publik karena itu bisa enumerasi semua toko/user.
+      allow get:  if true;
+      allow list: if isAdmin();
 
       // Create: hanya admin yang bisa buat toko baru (registrasi via panel admin)
       allow create: if isAdmin();
@@ -344,7 +345,8 @@ service cloud.firestore {
     // /config/{docId}
     // ══════════════════════════════════════════════════════════════════════════
     match /config/{docId} {
-      allow read:  if true;      // diperlukan oleh maintenance.js
+      allow get:   if true;      // diperlukan oleh maintenance.js
+      allow list:  if isAdmin();
       allow write: if isAdmin();
     }
 

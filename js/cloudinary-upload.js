@@ -1,20 +1,19 @@
 /**
  * LINKify — Cloudinary Upload Helper (js/cloudinary-upload.js)
- * FIX: Unsigned upload langsung berfungsi via config uploadPreset
- * Signed upload dipakai jika Cloud Function sudah di-deploy
+ * SECURITY: gunakan signed upload Cloudinary via Cloud Function saja.
+ * Unsigned preset tidak boleh menjadi fallback karena bisa disalahgunakan publik.
  */
 
 import { APP_CONFIG } from '../config.js';
 import { auth } from '../firebase.js';
 
-// Ganti dengan URL Cloud Function setelah deploy (untuk signed upload)
-const SIGN_ENDPOINT = null; // 'https://us-central1-toko-budi-81421.cloudfunctions.net/getCloudinarySignature'
+const SIGN_ENDPOINT = APP_CONFIG.cloudinary.signEndpoint || '';
 
 const UPLOAD_TIMEOUT_MS = 30_000;
 
 /**
  * Upload gambar ke Cloudinary.
- * Otomatis pakai signed jika SIGN_ENDPOINT tersedia, fallback ke unsigned.
+ * Wajib memakai signed upload agar Cloudinary preset tidak terekspos sebagai jalur upload publik.
  */
 export async function uploadToCloudinary(file, cloudName) {
   if (!file) throw new Error('Tidak ada file yang dipilih.');
@@ -28,19 +27,11 @@ export async function uploadToCloudinary(file, cloudName) {
     throw new Error('Ukuran file terlalu besar (maks. 5 MB).');
   }
 
-  // Signed upload (jika endpoint tersedia)
-  if (SIGN_ENDPOINT) {
-    try {
-      return await _signedUpload(file, cloudName || APP_CONFIG.cloudinary.cloudName);
-    } catch (err) {
-      console.warn('[Cloudinary] Signed upload gagal, fallback unsigned:', err.message);
-    }
+  if (!SIGN_ENDPOINT) {
+    throw new Error('Endpoint signed upload Cloudinary belum dikonfigurasi.');
   }
 
-  // Unsigned upload via config preset
-  const preset = (APP_CONFIG.cloudinary.uploadPreset || '').trim();
-  if (!preset) throw new Error('Upload preset Cloudinary belum dikonfigurasi di config.js');
-  return await _unsignedUpload(file, cloudName || APP_CONFIG.cloudinary.cloudName, preset);
+  return await _signedUpload(file, cloudName || APP_CONFIG.cloudinary.cloudName);
 }
 
 async function _signedUpload(file, cloudName) {
@@ -55,18 +46,18 @@ async function _signedUpload(file, cloudName) {
   }, 10_000);
 
   if (!signRes.ok) throw new Error(`Signature gagal (HTTP ${signRes.status})`);
-  const { signature, timestamp, api_key, upload_preset } = await signRes.json();
+  const { signature, timestamp, api_key, cloud_name, folder, allowed_formats } = await signRes.json();
 
   const fd = new FormData();
   fd.append('file', file);
   fd.append('api_key', api_key);
   fd.append('timestamp', timestamp);
   fd.append('signature', signature);
-  fd.append('folder', `linkify/${user.uid}`);
-  if (upload_preset) fd.append('upload_preset', upload_preset);
+  fd.append('folder', folder || `linkify/${user.uid}`);
+  if (allowed_formats) fd.append('allowed_formats', allowed_formats);
 
   const res = await _fetchTimeout(
-    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    `https://api.cloudinary.com/v1_1/${cloud_name || cloudName}/image/upload`,
     { method: 'POST', body: fd }, UPLOAD_TIMEOUT_MS
   );
   if (!res.ok) {
@@ -75,26 +66,6 @@ async function _signedUpload(file, cloudName) {
   }
   const data = await res.json();
   if (!data.secure_url) throw new Error('Response upload tidak valid.');
-  return data.secure_url;
-}
-
-async function _unsignedUpload(file, cloudName, preset) {
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('upload_preset', preset);
-
-  const res = await _fetchTimeout(
-    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-    { method: 'POST', body: fd }, UPLOAD_TIMEOUT_MS
-  );
-
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({}));
-    throw new Error(errData.error?.message || `Upload gagal (HTTP ${res.status}). Pastikan upload preset "${preset}" benar di Cloudinary Dashboard.`);
-  }
-
-  const data = await res.json();
-  if (!data.secure_url) throw new Error('Response Cloudinary tidak valid.');
   return data.secure_url;
 }
 
